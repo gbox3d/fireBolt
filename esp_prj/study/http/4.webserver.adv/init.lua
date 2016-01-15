@@ -44,10 +44,12 @@ function setupSTMode()
 
     cfg = {ip = "192.168.9.20",netmask = "255.255.255.0",gateway="192.168.9.1"}
     wifi.sta.setip(cfg)
-
+    --[[
     wifi.sta.config("esptest","",
         1 --오토모드의 부활
     )
+    --]]
+    wifi.sta.config("RD2GUNPOWER","808671004",1)
 
     wifi.sta.connect()
     --wifi.setphymode(wifi.PHYMODE_B) -- 모드 N에 비해 한바이트씩 전송하는것은 오히려 속도가 빠름
@@ -100,7 +102,7 @@ function sendLongFile(option)
 
         function _loop()
             local q=file.read(1024)
-            print(q)
+            --print(q)
             if q ~= nil then
                 conn:send(q,_loop)
             else
@@ -133,6 +135,13 @@ function startServer()
                 print(json)
                 local jsn_obj = cjson.decode(json)
                 print(jsn_obj.fn);
+                if jsn_obj.fn == 'gpio' then
+
+                    gpio.write(0,jsn_obj.val[1])
+                    gpio.write(1,jsn_obj.val[2])
+                    gpio.write(2,jsn_obj.val[3])
+
+                    end
 
                 --크로스도메인 허용하기위한 헤더
                 conn:send('HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin:*\r\n\r\n' .. '{"result":"ok"}',function() conn:close() end)
