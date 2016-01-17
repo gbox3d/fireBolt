@@ -1,13 +1,13 @@
 wifi.setmode(wifi.STATION)
-cfg = {ip = "192.168.0.20",netmask = "255.255.255.0",gateway="192.168.0.1"}
+cfg = {ip = "192.168.219.20",netmask = "255.255.255.0",gateway="192.168.219.1"}
 wifi.sta.setip(cfg)
-wifi.sta.config("RD2GUNPOWER","808671004")
+wifi.sta.config("9-2001","1403028064")
 wifi.sta.connect()
 srv=net.createServer(net.TCP)
 srv:listen(80,function(conn)
     conn:on("receive",function(conn,payload)
         _, _, method, path, vars = string.find(payload, "([A-Z]+) /([^?]*)%??(.*) HTTP");print(path)
-        conn:send("<h1> Hello, NodeMCU.</h1>")
-        conn:close()
+        conn:send("<h1> Hello, NodeMCU.</h1>",function() conn:close() print(node.heap())  end)
+        --conn:close()
     end)
 end)
