@@ -1,5 +1,5 @@
 wifi.setmode(wifi.STATION)
-wifi.sta.config("9-2001","1403028064")
+wifi.sta.config("GUNPIE","")
 wifi.sta.connect()
 
 --s 는 server sub module 이다.

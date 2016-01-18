@@ -1,7 +1,7 @@
 wifi.setmode(wifi.STATION)
 cfg = {ip = "192.168.219.20",netmask = "255.255.255.0",gateway="192.168.219.1"}
 wifi.sta.setip(cfg)
-wifi.sta.config("9-2001","1403028064")
+wifi.sta.config("","")
 wifi.sta.connect()
 srv=net.createServer(net.TCP)
 srv:listen(80,function(conn)
