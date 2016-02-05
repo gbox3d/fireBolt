@@ -8,7 +8,7 @@ wifi.sta.eventMonReg(wifi.STA_GOTIP, function() if OnSTAGetIp then OnSTAGetIp() 
 wifi.sta.eventMonStart()
 
 wifi.setmode(wifi.STATION)
-wifi.sta.config("9-2001","1403028064")
+wifi.sta.config("mypie","3.141592")
 wifi.sta.connect()
 
 function OnSTAGetIp()
