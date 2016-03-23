@@ -1,0 +1,18 @@
+api json
+
+-사용 형식
+접속주소/json?data=사용자json코드
+
+
+
+-기본 기능
+파일읽기
+fn='rf',name=,[offset=]
+name : 파일이름
+offset : 읽기 시작할위치 생략되면 처음부터
+
+예>
+{
+    fn : 'rf',
+    name : 'config.json'
+    }

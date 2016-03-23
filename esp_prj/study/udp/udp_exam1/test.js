@@ -23,6 +23,9 @@ var udp_socket = dgram.createSocket( "udp4" );
 udp_socket.on( "message", function( msg, rinfo ) {
 
     console.log( 'remote :' + rinfo.address + ':' + rinfo.port + ' - ' + msg );
+
+    remote.address = rinfo.address;
+    //remote.port =  rinfo.port;
     //remote_client = rinfo;
     //udp_socket.send( Buffer([0x02,0x03]), 0,2, rinfo.port, rinfo.address ); // added missing bracket
     //udp_socket.send( Buffer('hello'), 0,5, remote.port ,remote.address); // added missing bracket
@@ -38,6 +41,11 @@ var theApp = {
     testMsg : 'hello repl',
     udp_socket : udp_socket
 }
+theApp.sendTest = function() {
+    udp_socket.send( Buffer('hello'), 0,5, remote.port ,remote.address);
+}
+
+
 
 var repl_context = repl.start({
     prompt: 'Node.js via stdin> ',
