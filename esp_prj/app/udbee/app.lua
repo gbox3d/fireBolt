@@ -12,6 +12,6 @@ function start_Udp2Uart(remote_port,remote_ip,parser,safe_delay)
     --cu:on("receive",function(cu,c) uart.write(0,c) end)
     --string.char(0x0d)
     safe_sender = AsyncTCPSender_Safe({getsocket = function() return cu end,delay=safe_delay})
-    uart.on("data", 0 , safe_sender, 0) 
+    uart.on("data", parser , safe_sender, 0) 
     
 end
