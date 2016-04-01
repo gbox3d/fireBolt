@@ -19,7 +19,7 @@ if(app_config.ap_cfg ~= nil) then
     wifi.ap.setip(cfg)
 end
 
-if(app_config.station_cfg ~=nil ) then
+if(app_config.station_cfg ~=nil) then
     wifi.sta.config(app_config.station_cfg[1],app_config.station_cfg[2])
     if(app_config.station_cfg[3] ~= nil) then
         local cfg = {
@@ -27,7 +27,6 @@ if(app_config.station_cfg ~=nil ) then
             ip="192.168.".. app_config.station_cfg[3] .."." .. app_config.station_cfg[4],
             netmask="255.255.255.0",
             gateway="192.168." .. app_config.station_cfg[3] .. ".1"
-
         }
         wifi.sta.setip(cfg)
     end

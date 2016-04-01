@@ -24,7 +24,6 @@ function AsyncTCPSender_Safe(option)
         if socket~=nil then _send(data) end
     end --function
 end
-
 --한바이트씩보내기
 function AsyncTCPSender_Safe_cs(option)
     local test_set = false;

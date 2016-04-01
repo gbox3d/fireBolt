@@ -2,7 +2,7 @@
  * Created by gunpower on 2016. 3. 31..
  */
 var local = {
-    port : 1471
+    port : 5683
 }
 
 var remote = {
