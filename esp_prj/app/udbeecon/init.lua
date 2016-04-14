@@ -36,16 +36,19 @@ wifi.sta.eventMonReg(wifi.STA_GOTIP, function()
     print(ip_class)
     start_UdpController(device_id,ip,ip_class,app_config.port,app_config.safe_delay)
 end)
-wifi.sta.eventMonStart()
-wifi.sta.config(app_config.ssid,app_config.passwd,1)
-wifi.sta.connect()
+
+if(app_config.ssid ~= nil) then
+    wifi.sta.eventMonStart()
+    wifi.sta.config(app_config.ssid,app_config.passwd,1)
+    wifi.sta.connect()
+end
 
 http_server = BeaconHttpServer({
     callback = function(json_obj)end
 })
 http_server.startup();
 
-print('start udbeeCon version : 0.0.1')
+print('start udbeeCon version : 0.0.2')
 --for word in c:gmatch("%d.d.d.") do print(word) end
 -- = c:find("(%d).(%d+).(%d+).");
 -- = c:find("(%d+%.%d+%.%d+.)");
