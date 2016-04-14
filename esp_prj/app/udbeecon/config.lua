@@ -1,6 +1,6 @@
 app_config={
-    ssid = "RD2GUNPOWER",
-    passwd = "808671004",
+    ssid = "myap",
+    passwd = "passwd",
     port=2714,
     safedelay=25
 }
