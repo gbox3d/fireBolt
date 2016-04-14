@@ -2,9 +2,13 @@ dofile("config.lua")
 dofile('tcp_safe_sender.lua')
 dofile('app.lua')
 dofile('BeanconHttpServer.lua')
+dofile('blinker.lua')
 
 status_led = 0;
 gpio.mode(status_led,gpio.OUTPUT)
+
+gpio.mode(1,gpio.OUTPUT)
+gpio.write(1,0)
 
 device_id = "udbCon"..node.chipid();
 wifi.setmode(wifi.STATIONAP)
@@ -46,20 +50,6 @@ print('start udbeeCon version : 0.0.1')
 -- = c:find("(%d).(%d+).(%d+).");
 -- = c:find("(%d+%.%d+%.%d+.)");
 
-function blink_led(option)
-    local status,pin,delay,tmid=1,option.pin,option.delay,option.tmid
-    gpio.mode(pin,gpio.OUTPUT)
-    gpio.write(pin,gpio.HIGH)
-    return function(option)
-        --local function loop() gpio.write(0,status);if(status) then status=0 else status=1 end end
-        if(option=='stop-off') then tmr.stop(1);gpio.write(pin,gpio.LOW)
-        elseif option=='stop-on' then tmr.stop(1);gpio.write(pin,gpio.HIGH)
-        else
-            local function loop() gpio.write(pin,status);if(status==1) then status=0 else status=1 end tmr.alarm(tmid,delay,0,loop) end
-            loop()
-        end
-    end
-end
 
-blinker_status_led=blink_led({pin=status_led,delay=500,tmid=1})
+blinker_status_led=blink_led({pin=status_led,delay=500,tmid=1,max_count=0})
 blinker_status_led("start")

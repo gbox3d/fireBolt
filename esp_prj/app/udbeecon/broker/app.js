@@ -5,7 +5,7 @@
 var config = require('./config');
 
 var theApp = {
-    version : '0.0.1',
+    version : '0.0.2',
     broadcast : {
         port : 2714
     },
@@ -115,12 +115,19 @@ function process_get(req, res){
                 header['Content-Type'] = 'text/plain';
                 res.writeHead(200,header);
 
-                console.log(theApp.device_list[result.query.device_id].ip + ',' + result.query.msg)
+                var device = theApp.device_list[result.query.device_id];
+                var rst = {result : 'ok'}
 
-                udp_socket.send( new Buffer(result.query.msg), 0,result.query.msg.length, theApp.broadcast.port ,theApp.device_list[result.query.device_id].ip);
+                if(device) {
+                    console.log(device.ip + ',' + result.query.msg)
+                    udp_socket.send( new Buffer(result.query.msg), 0,result.query.msg.length, theApp.broadcast.port ,device.ip);
+                }
+                else {
+                    rst.result = 'device not found';
+                }
 
                 res.end(
-                    JSON.stringify({result : 'ok'})
+                    JSON.stringify(rst)
                 );
 
             })();
