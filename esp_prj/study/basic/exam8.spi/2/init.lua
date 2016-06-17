@@ -6,8 +6,6 @@
 -- To change this template use File | Settings | File Templates.
 --
 
-
-
 --[[ ESP8266 connected to a 74hc595 port expander
 By using SPI.
 
@@ -25,13 +23,13 @@ Output Enable (/OE) i connect directly to GND as i dont need high impedance mode
 ]]
 
 print("clock div 200, 400K start");
-pin=8
+pin=8 --gpio15
 spi.setup(1, spi.MASTER, spi.CPOL_HIGH, spi.CPHA_LOW, spi.DATABITS_8,
     --8000); --10k
     200); -- 80M/200 = 400k
 
 --pin=12
---spi.setup(0, spi.MASTER, spi.CPOL_HIGH, spi.CPHA_LOW, spi.DATABITS_8, 800);
+--spi.setup(0, spi.MASTER, spi.CPOL_HIGH, spi.CPHA_LOW,혀 spi.DATABITS_8, 800);
 gpio.mode(pin, gpio.OUTPUT)
 
 

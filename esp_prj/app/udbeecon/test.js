@@ -22,8 +22,8 @@ var udp_socket = dgram.createSocket( "udp4" );
 //80414243444546474881
 udp_socket.on( "message", function( msg, rinfo ) {
 
-    console.log( 'remote :' + rinfo.address + ':' + rinfo.port + ' - ' + (new Date()).getTime() );
-    console.log(msg.toString());
+    //console.log( 'remote :' + rinfo.address + ':' + rinfo.port + ' - ' + (new Date()).getTime() );
+    //console.log(msg.toString());
     remote.address = rinfo.address;
     
     
@@ -40,8 +40,15 @@ var theApp = {
     testMsg : 'hello repl',
     udp_socket : udp_socket
 }
-theApp.sendTest = function() {
-    udp_socket.send( Buffer('hello'), 0,5, remote.port ,remote.address);
+theApp.sendTest = function(step,dir) {
+    var cmd = {
+        fn : 'stm',
+        step : step,
+        dir : dir,
+        delay : 1
+    }
+    cmd = JSON.stringify(cmd)
+    udp_socket.send( new Buffer( cmd), 0,cmd.length, 2714,"192.168.9.7");
 }
 
 var repl_context = repl.start({

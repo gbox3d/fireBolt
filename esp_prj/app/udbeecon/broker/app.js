@@ -5,7 +5,7 @@
 var config = require('./config');
 
 var theApp = {
-    version : '0.0.2',
+    version : '0.0.3',
     broadcast : {
         port : 2714
     },
@@ -33,11 +33,26 @@ udp_socket.on( "message", function( msg, rinfo ) {
     //remote.address = rinfo.address;
     try {
         var obj = JSON.parse(msg.toString());
-        if(obj.device_id) {
-            theApp.device_list[obj.device_id] = {
-                device_id : obj.device_id,
-                ip : rinfo.address
+
+        if(obj.pkt == 'bcast') {
+            //console.log(obj);
+            if(obj.device_id) {
+                theApp.device_list[obj.device_id] = {
+                    device_id : obj.device_id,
+                    ip : rinfo.address
+                }
+
+                var strPacket = JSON.stringify({
+                    fn : 'checkin',
+                    ip : theApp.ipAddress
+                })
+
+                udp_socket.send( new Buffer(strPacket), 0, strPacket.length, theApp.broadcast.port ,rinfo.address);
             }
+        }
+        else if(obj.pkt == 'stm') {
+            console.log(obj)
+
         }
 
     }
@@ -50,6 +65,18 @@ udp_socket.on( "message", function( msg, rinfo ) {
 });
 udp_socket.bind( theApp.broadcast.port );
 console.log('local : bind udp port :' +  theApp.broadcast.port );
+
+//디바이스 리스트 클리어
+(function scanLoop() {
+    function _scanLoop() {
+        //console.log('clear list')
+        //console.log(theApp.device_list);
+        theApp.device_list = {};
+        setTimeout(_scanLoop,30000);
+    }
+    _scanLoop();
+})();
+
 
 /////////////////////////////////////////////////////////////////
 //---------------------------------------------------------------
@@ -104,6 +131,9 @@ function process_get(req, res){
         case '/get-device-list':
             (function() {
                 header['Content-Type'] = 'text/plain';
+
+                console.log(theApp.device_list);
+
                 res.writeHead(200,header);
                 res.end(JSON.stringify( theApp.device_list ) );
 
@@ -166,3 +196,34 @@ var repl_context = repl.start({
 //콘텍스트객체 설정
 //theApp을 repl에서 볼수있다
 repl_context.theApp = theApp;
+
+///////////////////////
+//주소출력
+function displayAddress() {
+    var os = require('os');
+    var ifaces = os.networkInterfaces();
+//console.log(ifaces);
+
+    Object.keys(ifaces).forEach(function (ifname) {
+        var alias = 0;
+
+        ifaces[ifname].forEach(function (iface) {
+            if ('IPv4' !== iface.family || iface.internal !== false) {
+                // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+                return;
+            }
+
+            if (alias >= 1) {
+                // this single interface has multiple ipv4 addresses
+                console.log(ifname + ':' + alias, iface.address);
+            } else {
+                // this interface has only one ipv4 adress
+                console.log(ifname, iface.address);
+                theApp.ipAddress = iface.address;
+            }
+            ++alias;
+        });
+    });
+}
+
+displayAddress();

@@ -14,9 +14,6 @@ function start_UdpController(device_id,ip,ip_class,port,safe_delay)
                 print(c)
                 local jsn_obj = cjson.decode(c)
                 if jsn_obj.fn == 'test' then
-                    --gpio.write(0,gpio.HIGH)
-                    --tmr.alarm(3,5000,0,function() gpio.write(0,gpio.LOW) print('ok')end)
-                    --gpio.serout(control_led,1,{500,500},3)
                     blinker_control_led=blink_led({pin=control_led,delay=500,tmid=1,max_count=3})
                     blinker_control_led("start")
                 elseif jsn_obj.fn == 'blink' then
@@ -31,10 +28,8 @@ function start_UdpController(device_id,ip,ip_class,port,safe_delay)
                 elseif jsn_obj.fn == 'blink-stop' then
                     blinker("stop-off")
                 elseif jsn_obj.fn=='gpio-set' then
-                    --blinker_control_led("start")
                     gpio.mode(jsn_obj.pin,gpio.OUTPUT)
                     gpio.write(jsn_obj.pin,jsn_obj.val)
-
                 end
 
 
@@ -42,6 +37,7 @@ function start_UdpController(device_id,ip,ip_class,port,safe_delay)
         udp_server:listen(port)
     end
 
+    --broadcast
     udp_socket=net.createConnection(net.UDP)
     udp_socket:connect(port,ip_class .. "255")
     safe_sender = AsyncTCPSender_Safe({getsocket = function() return udp_socket end,delay=safe_delay})
