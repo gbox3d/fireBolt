@@ -19,8 +19,9 @@ function startApp()
         function(data)
             if data=="+++quit\r" then
                 print("uart mode quit ")
-                uart.setup(0,9600,8,0,1,1)
+                uart.setup(0,115200,8,0,1,1)
                 uart.on("data")
+
             else
                 print("receive from uart:", data)
             end

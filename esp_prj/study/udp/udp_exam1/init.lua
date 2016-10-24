@@ -1,5 +1,5 @@
 wifi.setmode(wifi.STATION)
-wifi.sta.config("GUNPIE","")
+wifi.sta.config("RD2GUNPOWER","808671004")
 wifi.sta.connect()
 
 --s 는 server sub module 이다.
@@ -19,7 +19,7 @@ cu=net.createConnection(net.UDP)
 cu:on("receive",function(cu,c) print('bind :' .. c) end)
 
 -- 첫번째 인자는 원격지의 포트번호이다.
-cu:connect(5683,"192.168.219.7")
+cu:connect(1471,"192.168.9.3")
 count = 0
 tmr.alarm(0,1000,1,function()
     cu:send("hello")
