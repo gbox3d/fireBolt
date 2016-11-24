@@ -42,7 +42,7 @@ function test() {
 
     let seq_index = 0;
     let nSize = Buffer.byteLength(post_data);
-    let nStep = 100;
+    let nStep = 900;
     let nStart = 0;
     let nEnd = nStart + nStep;
 
@@ -67,7 +67,6 @@ function test() {
 
             if(seq == seq_index) {
                 clearTimeout(nHandle);
-
                 seq_index++;
 
                 if(nEnd < nSize ) {
@@ -78,40 +77,13 @@ function test() {
                 }
                 else {
                     console.log("complete");
-
                 }
             }
 
         }
-
         nHandle = setTimeout(send_next_step,1000);
-
     }
-
-
     send_next_step();
-
-
     console.log('send complete');
 }
-
-
 test();
-
-
-////////////////
-//
-
-/*
-process.stdin.resume();
-process.stdin.setEncoding('utf8');
-const util = require('util');
-
-process.stdin.on('data', function (text) {
-    var strText = text;
-    udp_socket.send( Buffer(text), 0, text.length, remote.port, remote.address ); // added missing bracket
-
-});
-
-console.log("start p2p(udp) tester at :" + port);
-    */

@@ -7,7 +7,6 @@
 --
 dofile('app.lua')
 
-
 wifi.setphymode(wifi.PHYMODE_B)
 wifi.sleeptype(wifi.NONE_SLEEP)
 
