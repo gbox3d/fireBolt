@@ -1,4 +1,4 @@
-firm_version = '0.0.2'
+firm_version = '0.0.1'
 dofile('wifi_setup.lua')
 tmr.delay(1000000)
 print('udp stub load')
