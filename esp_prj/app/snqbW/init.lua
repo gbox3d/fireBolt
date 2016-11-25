@@ -72,7 +72,7 @@ function system_start_up()
     if app_config.apmode then
         setupAP()
         boot_status.process = 'APOK'
-        saveStatus();
+        save_BootStatus();
     else
 
         setupSTA(
@@ -87,7 +87,7 @@ function system_start_up()
                     startup()
                     startUdpCast();
                     boot_status.process = 'STOK'
-                    saveStatus();
+                    save_BootStatus();
                 elseif evt ==  wifi.STA_FAIL or
                         evt ==  wifi.STA_APNOTFOUND or
                         evt ==  wifi.STA_WRONGPWD then

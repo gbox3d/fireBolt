@@ -5,16 +5,17 @@ app_status={}
 
 timerid_Udpcaster = 0;
 --timerid_UartChecker = 1;
+
 --udp_work_socket = net.createConnection(net.UDP)
-udp_work_socket=net.createServer(net.UDP)
+udp_server =net.createServer(net.UDP)
 
 
 packet_dic = {
-    default = function() local rt = {result = 'nocmd'} udp_work_socket:send(cjson.encode(rt))  end
+    default = function() local rt = {result = 'nocmd'} udp_server:send(cjson.encode(rt))  end
 }
 
 packet_dic["eval"] = function(packet) loadstring(packet.code)() end
-packet_dic["stat"] = function(packet) local rt = {result = 'ok',sta=app_status,ip=app_config.ip} udp_work_socket:send(cjson.encode(rt)) end
+packet_dic["stat"] = function(packet) local rt = {result = "ok",sta=app_status,ip=app_config.ip} udp_server:send(cjson.encode(rt)) end
 
 
 function startup()
@@ -26,11 +27,12 @@ function startup()
         local packet = cjson.decode(c)
         --local rt = {result = 'ok',id = 0,ip=app_config.ip} if packet.id then rt.id = packet.id end
 
-        if packet_dic[packet] ~= nil then
-            packet_dic[packet.cmd]()
+        if packet_dic[packet.cmd] ~= nil then
+            packet_dic[packet.cmd](packet)
         else
             print("unknown packet")
             print(c)
+            local rt = {result="nocmd"} udp_server:send(cjson.encode(rt))
             --rt.result='nocmd'
         end
 
@@ -45,8 +47,8 @@ function startup()
     ]]
         --udp_work_socket:send(cjson.encode(rt))
     end 
-    udp_work_socket:on("receive",processRecv)
-    udp_work_socket:listen(app_config.recv_port)
+    udp_server:on("receive",processRecv)
+    udp_server:listen(app_config.recv_port)
     print("udp listen at " .. app_config.recv_port)
 
     local ip = app_config.ip;
