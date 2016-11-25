@@ -96,22 +96,23 @@ function system_start_up()
 
     end
 
+
 end
 
 boot_status = {}
 gpio.mode(0,1)gpio.write(0,0)
-function saveStatus() file.open("status.json", 'w') file.write(cjson.encode(boot_status)) file.close() end
+function save_BootStatus() file.open("status.json", 'w') file.write(cjson.encode(boot_status)) file.close() end
 if file.exists("status.json") then
     file.open("status.json", 'r') local data = file.read() file.close()
     boot_status = cjson.decode(data)
     if boot_status.process == "startup" then
         print("system abnormal")gpio.write(0,1)
-        boot_status.process = "nook" saveStatus()
-    else print( "prev process is "..boot_status.process.." and now start system..") boot_status.process = "startup"saveStatus() system_start_up() end
+        boot_status.process = "nook" save_BootStatus()
+    else print( "prev process is "..boot_status.process.." and now start system..") boot_status.process = "startup" save_BootStatus() system_start_up() end
 
 else
     boot_status.process = "startup"
-    saveStatus();
+    save_BootStatus();
     print( "first bootup") system_start_up()
 end
 
