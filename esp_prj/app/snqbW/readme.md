@@ -3,10 +3,10 @@ snqbW 는 nodemcu 가지고 만든 network bootloader 입니다.
 최소한의 기본 기능만을 제공하고 나머지는 동적으로 확장 가능 하도록 했습니다.
 
 1999번 포트로 기본 정보(ip주소)를 브로드 캐스팅을 합니다.
-2012번 포트로 udp 패킷을 수신합니다.
+2012번 포트로 데이터를 송수신합니다.
 
 config.lua 에는 기본 설정 정보가 들어가며 수정할 수 없습니다.
-대신에
+대신에,
 config.json에 현재설정 정보를 저장합니다. 그리고 이것은 수정가능합니다.
 
 기본으로 제공되는 패킷은 "eval", "stat" 입니다.
@@ -80,6 +80,7 @@ echo 패킷추가
 ```
 {
 cmd:"eval",
-code : "packet_dic[\"echo\"] = function(packet) udp_work_socket:send(cjson.encode(packet.echo_msg))  end"
+code : "packet_dic[\"echo\"] = function(packet) local rt = {type=\"rs\",result=\"echo\",msg=packet.msg} udp_server:send(cjson.encode(rt))  end"
 }
+
 ```
