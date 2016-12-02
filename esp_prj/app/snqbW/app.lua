@@ -1,6 +1,6 @@
 --dofile("tcp_safe_sender.lua")
 --dofile("packet.lua")
-app_version='1.0.0'
+app_version='1.0.1'
 app_status={}
 
 timerid_Udpcaster = 0;
@@ -17,6 +17,9 @@ packet_dic = {
 packet_dic["eval"] = function(packet) loadstring(packet.code)() end
 packet_dic["stat"] = function(packet) local rt = {result = "ok",sta=app_status,ip=app_config.ip} udp_server:send(cjson.encode(rt)) end
 
+function udp_safe_sender(data)
+    udp_server:send(data)
+end
 
 function startup()
 
@@ -48,8 +51,8 @@ function startup()
         --udp_work_socket:send(cjson.encode(rt))
     end 
     udp_server:on("receive",processRecv)
-    udp_server:listen(app_config.recv_port)
-    print("udp listen at " .. app_config.recv_port)
+    udp_server:listen(app_config.bc_port)
+    print("udp listen at " .. app_config.bc_port)
 
     local ip = app_config.ip;
     local broad_ip = ip[1] .. ".".. ip[2].."." ..ip[3] .. ".255"
@@ -70,6 +73,7 @@ function startup()
     stopUdpCast = function()tmr.stop(timerid_Udpcaster) end
 
     --startUdpCast();
+    
 
 end
 
