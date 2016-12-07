@@ -8,10 +8,8 @@ function conn_helper_1()
     local current_ap_index = 1;
     aplist = {
         {name="ollehWiFi",ssid=""},
-        {name="T wifi zone",ssid=""},
-        {name="RD2GUNPOWER",ssid = "808671004"},
-        {name="9-2001",ssid=""},
-        {name="GUNPOWER_WIFI",ssid = "star1350"}
+        {name="T wifi zone",ssid=""},        
+        {name="9-2001",ssid=""},        
     }
 
     local step_connecting = 0;

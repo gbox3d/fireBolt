@@ -30,7 +30,7 @@ wifi.sta.eventMonStart()
 
 cfg = {ip = "192.168.9.60",netmask = "255.255.255.0",gateway="192.168.9.1"}
 wifi.sta.setip(cfg)
-wifi.sta.config("RD2GUNPOWER","808671004",1)
+wifi.sta.config("ssid_xxx","passwd_xxx",1)
 wifi.sta.connect()
 
 --wifi.setphymode(wifi.PHYMODE_B) -- 모드 N에 비해 한바이트씩 전송하는것은 오히려 속도가 빠름
