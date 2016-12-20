@@ -55,15 +55,19 @@ public class mainApp : MonoBehaviour
 	public IObservable<UdpState> _udpSequence;
 
 	[SerializeField] GameObject m_prefebDevice;
-
 	public Dictionary<string,GameObject> m_deviceObjList; 
+
+	GameObject m_Slider_left;
+	GameObject m_Slider_right;
 
 	// Use this for initialization
 	void Start()
 	{
-
 		m_deviceObjList = new  Dictionary<string,GameObject> ();
 		isAppQuitting = false;
+
+		m_Slider_left = transform.FindChild ("left_slide_panel").gameObject;
+		m_Slider_right = transform.FindChild ("right_slide_panel").gameObject;
 
 		_udpSequence = Observable.Create<UdpState>(observer =>
 		{
@@ -140,7 +144,7 @@ public class mainApp : MonoBehaviour
 			})
 			.AddTo(this);
 
-
+		//device click event 처리 
 		this.UpdateAsObservable().Subscribe( _ =>			
 			{
 				int cnt = Input.touchCount;
@@ -171,6 +175,11 @@ public class mainApp : MonoBehaviour
 				}
 				
 			});
+		
+		this.UpdateAsObservable ().Subscribe (_ => {
+			
+			
+		});
 
 
 
