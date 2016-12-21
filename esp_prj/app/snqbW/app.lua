@@ -4,6 +4,7 @@ app_version='1.0.1'
 app_status={}
 
 timerid_Udpcaster = 0;
+last_recv_Tick = tmr.now();
 --timerid_UartChecker = 1;
 
 --udp_work_socket = net.createConnection(net.UDP)
@@ -26,6 +27,7 @@ function startup()
     print("start application..")
     
     function processRecv(s,c)
+        last_recv_Tick = tmr.now();
         --print(c)
         local packet = cjson.decode(c)
         --local rt = {result = 'ok',id = 0,ip=app_config.ip} if packet.id then rt.id = packet.id end
