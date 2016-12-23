@@ -12,16 +12,18 @@ else
     file.open("config.json", 'w') file.write(cjson.encode(app_config)) file.close()
 end
 
+OnStart = function(...) end
+dofile('app.lua')
+dofile("ext.lua")
+
 function system_start_up()
-
-    dofile('app.lua')
-    dofile("ext.lua")
-
     --node.restart();
     --wifi.setphymode(wifi.PHYMODE_B)
     --wifi.setphymode(wifi.PHYMODE_N)
     wifi.setphymode(wifi.PHYMODE_G)
     wifi.sleeptype(wifi.NONE_SLEEP)
+
+    OnStart();
 
     function setupAP()
 
@@ -105,16 +107,21 @@ function system_start_up()
 end
 
 boot_status = {}
-gpio.mode(0,1)gpio.write(0,0)
+gpio.mode(0,1)gpio.write(0,0) --gpio 16
 function save_BootStatus() file.open("status.json", 'w') file.write(cjson.encode(boot_status)) file.close() end
 if file.exists("status.json") then
     file.open("status.json", 'r') local data = file.read() file.close()
-    boot_status = cjson.decode(data)
-    if boot_status.process == "startup" then
-        print("system abnormal")gpio.write(0,1)
-        boot_status.process = "nook" save_BootStatus()
-    else print( "prev process is "..boot_status.process.." and now start system..") boot_status.process = "startup" save_BootStatus() system_start_up() end
-
+    if data == nil then
+        boot_status.process = "startup"
+        save_BootStatus();
+        print( "first bootup") system_start_up()
+    else
+        boot_status = cjson.decode(data)
+        if boot_status.process == "startup" then --이전상태가 startup 상태에서 최종마무리되었다면...
+            print("system abnormal")gpio.write(0,1)
+            boot_status.process = "nook" save_BootStatus()
+        else print( "prev process is "..boot_status.process.." and now start system..") boot_status.process = "startup" save_BootStatus() system_start_up() end
+    end
 else
     boot_status.process = "startup"
     save_BootStatus();
