@@ -7,7 +7,7 @@ using UniRx.Triggers;
 
 using System.Net;
 using System.Net.Sockets;
-
+using System.Text;
 using System.Threading;
 
 using LitJson;
@@ -49,16 +49,39 @@ public class UdpState : System.IEquatable<UdpState>
 public class mainApp : MonoBehaviour
 {
 
-	private int listenPort = 1999;
+
+	private int m_nPort = 1999;
 	private static UdpClient myClient;
 	private bool isAppQuitting;
 	public IObservable<UdpState> _udpSequence;
+
 
 	[SerializeField] GameObject m_prefebDevice;
 	public Dictionary<string,GameObject> m_deviceObjList; 
 
 	GameObject m_Slider_left;
 	GameObject m_Slider_right;
+
+	IPEndPoint m_remoteEndPoint = null;
+	public void sendMsg(string message)
+	{
+		try
+		{
+			//if (message != "")
+			//{
+
+			// Daten mit der UTF8-Kodierung in das Binärformat kodieren.
+			byte[] data = Encoding.UTF8.GetBytes(message);
+
+			// Den message zum Remote-Client senden.
+			myClient.Send(data, data.Length, m_remoteEndPoint);
+			//}
+		}
+		catch (Exception err)
+		{
+			print(err.ToString());
+		}
+	}
 
 	// Use this for initialization
 	void Start()
@@ -74,7 +97,7 @@ public class mainApp : MonoBehaviour
 			Debug.Log(string.Format("_udpSequence thread : {0}", Thread.CurrentThread.ManagedThreadId));
 			try
 			{
-				myClient = new UdpClient(listenPort);
+				myClient = new UdpClient(m_nPort);
 			}
 			catch (SocketException ex)
 			{
@@ -89,7 +112,7 @@ public class mainApp : MonoBehaviour
 				{
 					remoteEP = null;
 					var receivedMsg = System.Text.Encoding.ASCII.GetString(myClient.Receive(ref remoteEP));
-					observer.OnNext(new UdpState(remoteEP, receivedMsg));
+					observer.OnNext(new UdpState(remoteEP, receivedMsg)); // UdpState 객체를 를 Subscribe 로 내보낸다.
 				}
 				catch (SocketException)
 				{
@@ -112,26 +135,32 @@ public class mainApp : MonoBehaviour
 			.ObserveOnMainThread()
 			.Subscribe(x =>
 			{
-					Debug.Log(x.EndPoint.Address);
-					Debug.Log(x.UdpMsg);
-					
+					//Debug.Log(x.EndPoint.Address);
+					//Debug.Log(x.UdpMsg);					
 					try {
 						var jsonObj = JsonMapper.ToObject(x.UdpMsg);
 						string str_ip = x.EndPoint.Address.ToString();
 
-						GameObject devobj;
-						if(m_deviceObjList.TryGetValue(str_ip,out devobj) ){
+						if (jsonObj["type"].Equals("bc"))
+						{
+							//디바이스 추가하기 
+							GameObject devobj;
+							if(m_deviceObjList.TryGetValue(str_ip,out devobj) ){
+							}
+							else {
+								devobj = Instantiate(m_prefebDevice,device_list_content);
+								devobj.transform.GetComponent<RectTransform>().localPosition = new Vector2(90,-100);
+								devobj.transform.FindChild("Text").GetComponent<Text>().text = str_ip;
+								m_deviceObjList[ str_ip] = devobj;
+							}
+							
+						}
+						else if (jsonObj["type"].Equals("res"))
+						{
+
 						}
 						else {
-							devobj = Instantiate(m_prefebDevice,device_list_content);
-							devobj.transform.GetComponent<RectTransform>().localPosition = new Vector2(90,-100);
-							devobj.transform.FindChild("Text").GetComponent<Text>().text = str_ip;
-
-							m_deviceObjList[ str_ip] = devobj;
 						}
-
-
-
 					}
 					catch(Exception e)
 					{
@@ -164,6 +193,8 @@ public class mainApp : MonoBehaviour
 							{
 								Debug.Log("hit " + item.transform.FindChild("Text").GetComponent<Text>().text);
 								item.transform.FindChild("Panel").GetComponent<Image>().color = Color.red;
+								m_remoteEndPoint = new IPEndPoint(IPAddress.Parse(key), m_nPort);
+								//sendMsg("lf_mt(256)");
 								break;
 							}
 							
@@ -177,7 +208,25 @@ public class mainApp : MonoBehaviour
 			});
 		
 		this.UpdateAsObservable ().Subscribe (_ => {
-			
+
+			//Debug.Log(m_Slider_left.GetComponent<slideControl>().m_fGraderValue + "," + m_Slider_right.GetComponent<slideControl>().m_fGraderValue);
+			int left_val = (int) Mathf.Clamp( Mathf.Round(m_Slider_left.GetComponent<slideControl>().m_fGraderValue) * 4,-900, 900);
+			int right_val = 0-(int)Mathf.Clamp(Mathf.Round(m_Slider_right.GetComponent<slideControl>().m_fGraderValue) * 4,-900, 900);
+			//int right_val =0;
+			if(m_remoteEndPoint != null) {
+				string strCode = "lf_mt("+  left_val + ")";
+				strCode += " rt_mt(" + right_val + ")";
+				//Debug.Log(strCode);
+				JsonData jsonObj = new JsonData();
+				jsonObj["cmd"] = "eval";
+				jsonObj["code"] = strCode;
+				sendMsg(jsonObj.ToJson());
+				//lf_mt(0)
+				//sendMsg("lf_mt("+m_Slider_left.GetComponent<slideControl>().m_fGraderValue+")");
+			}
+			else {
+					Debug.Log(left_val + "," + right_val);
+			}
 			
 		});
 
