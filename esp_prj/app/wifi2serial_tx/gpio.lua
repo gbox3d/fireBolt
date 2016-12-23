@@ -1,0 +1,2 @@
+new_gpio={[0]=3,[1]=10,[2]=4,[3]=9,[4]=2,[5]=1,[10]=12,[12]=6,[13]=7,[14]=5,[15]=8,[16]=0}pin_ap_led=new_gpio[4]pin_connection_led=new_gpio[5]softuart_tx_pin=new_gpio[12]pin_switch_sel_mode=new_gpio[14]gpio.mode(pin_ap_led,gpio.OUTPUT)gpio.mode(pin_connection_led,gpio.OUTPUT)gpio.mode(softuart_tx_pin,gpio.OUTPUT)gpio.mode(pin_switch_sel_mode,gpio.INPUT)gpio.write(pin_ap_led,gpio.LOW)gpio.write(pin_connection_led,gpio.LOW)
+

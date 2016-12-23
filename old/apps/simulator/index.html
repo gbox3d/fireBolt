@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <title> arduino html5 simulator </title>
+
+    <style>
+
+        .simdevice-led {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            line-height: 50px;
+            text-align: center;
+            color: #ffffff;
+            display: inline-block;
+        }
+        .simeffect-led-on {
+            background-color: red;
+        }
+        .simeffect-led-off {
+            background-color: gray;
+        }
+
+
+    </style>
+
+    <script src="../../libs/extra/jquery-2.0.3.min.js"></script>
+    <script src="../../libs/pig2d/js/core.js"></script>
+
+
+</head>
+
+<body>
+
+<div>
+    <div id="part-led"  >
+        <div class="simdevice-led led-port13 simeffect-led-off"  >13</div>
+        <div class="simdevice-led led-port12 simeffect-led-off"  >12</div>
+    </div>
+
+    <div id="control-panel" >
+        <div>
+            device id : <input id="inp-id" /> <button id="btn-play" > start </button>
+        </div>
+
+
+
+        <div id="led-network" style="
+        width: 100px;
+        height: 16px;
+        background-color: #000000;
+        -webkit-transition : background-color 1s;
+        " ></div>
+    </div>
+
+</div>
+
+<script src="app.js"></script>
+
+<script>
+
+
+
+    document.querySelector('#btn-play').addEventListener('click',function() {
+
+        if(this.innerText == 'start') {
+            theApp.deviceStatus = 'run';
+            this.innerText = 'stop';
+
+            theApp.deviceID = document.querySelector('#inp-id').value;
+
+        }
+        else {
+
+            theApp.deviceStatus = 'stop';
+            this.innerText = 'start';
+
+        }
+
+        device_loop();
+
+    });
+
+
+
+
+
+</script>
+
+
+
+
+</body>
+</html>

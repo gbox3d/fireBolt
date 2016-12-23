@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Air Tester </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+    <!--캐쉬제거-->
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+
+    <script src="./libs/extra/jquery-2.0.3.min.js"></script>
+    <script src="./libs/extra/async.js"></script>
+
+    <link rel="stylesheet" href="./libs/bootstrap/css/bootstrap.min.css">
+    <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
+
+    <script src="./libs/extra/titan/titanXhr.js"></script>
+
+
+</head>
+<body>
+
+<div style="display: none" id="templete-group">
+    <li class="list-item" role="presentation"><a role="menuitem" tabindex="-1" href="#">HTML</a></li>
+</div>
+
+<div class="container" >
+
+    <div class="well well-lg" >Air Soft Action</div>
+
+    <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" id="menu1" type="button" data-toggle="dropdown">Toggle this Dropdown
+            <span class="caret"></span></button>
+        <ul class="dropdown-menu" role="menu" aria-labelledby="menu1">
+            <!--<li role="presentation"><a role="menuitem" tabindex="-1" href="#">HTML</a></li>-->
+        </ul>
+    </div>
+
+    <div class="btn btn-block btn-lg btn-primary" id="btn-scan-device" >Scan</div>
+
+    <div class="btn btn-block btn-lg btn-primary" id="btn-on" > On </div>
+    <div class="btn btn-block btn-lg btn-primary" id="btn-off" > Off </div>
+    <div>
+        delay : <input class="form-control" value="250" id="shot-delay" >
+        count : <input class="form-control" value="3" id="shot-count" >
+        </div>
+    <div class="btn btn-block btn-lg btn-primary" id="btn-shot" >Shot</div>
+    <div class="btn btn-block btn-lg btn-primary" id="btn-stop" >Stop</div>
+
+</div>
+
+<script>
+    /*
+     http://192.168.9.181:10080/send-msg?device_id=udbCon929599&msg={%22fn%22:%22test%22}
+     http://192.168.9.181:10080/send-msg?device_id=udbCon929599&msg={"fn":"gpio-set","pin":1,"val":1}
+     http://192.168.9.181:10080/send-msg?device_id=udbCon929599&msg={"fn":"blink","pin":1,"delay":300,"max_count":5}
+     */
+
+
+
+    theApp = {
+        baseUrl : 'http://192.168.9.181',
+        device_id : ''
+    }
+
+    if(location.hostname != 'localhost') {
+        theApp.baseUrl = location.origin
+    }
+
+    function sendMsg(arg) {
+        titanXhr({
+                    url : theApp.baseUrl + ':10080/send-msg?device_id=' + theApp.device_id + '&msg=' + JSON.stringify(arg),
+                    timeout : 1000
+                },
+                function(err, resp, body) {
+                    if(err) {
+
+                        console.log(err);
+
+                    }
+                    else  {
+                        console.log(resp);
+                        console.log(JSON.parse(body));
+
+                    }
+
+                } );
+
+    }
+
+    //샐랙트
+    document.querySelector('.dropdown-menu').addEventListener('click',function(e) {
+        console.log(e.target.innerText);
+
+        theApp.device_id = e.target.innerText;
+        document.getElementById('menu1').innerHTML = e.target.innerText + '<span class="caret"></span>';
+
+    })
+
+    document.querySelector('#btn-scan-device').addEventListener('click',function () {
+        titanXhr({
+                    url : theApp.baseUrl + ':10080/get-device-list',
+                    timeout : 1000
+                },
+                function(err, resp, body) {
+                    if(err) {
+
+                        console.log(err);
+
+                    }
+                    else  {
+                        console.log(resp);
+                        console.log(JSON.parse(body));
+                        var obj = JSON.parse(body);
+
+                        var ul = document.querySelector('.dropdown-menu')
+                        ul.innerHTML = '';
+
+                        for(var key in obj) {
+                            console.log(key)
+                            var item = document.querySelector('#templete-group .list-item').cloneNode(true);
+                            item.classList.remove('list-item');
+                            item.innerText = key;
+                            ul.appendChild(item)
+                        }
+
+                        alert('get list ok');
+
+                    }
+
+                } );
+
+    });
+
+
+    document.querySelector('#btn-on').addEventListener('click',function () {
+        sendMsg({
+            fn : 'gpio-set',
+            pin : 1,
+            val : 1
+        });
+
+    });
+
+    document.querySelector('#btn-off').addEventListener('click',function () {
+        sendMsg({
+            fn : 'gpio-set',
+            pin : 1,
+            val : 0
+        });
+
+    })
+
+    document.querySelector('#btn-shot').addEventListener('click',function () {
+        sendMsg({
+            fn : 'blink',
+            pin : 1,
+            delay : parseInt(document.querySelector('#shot-delay').value),
+            max_count : parseInt(document.querySelector('#shot-count').value)
+        });
+
+    })
+    document.querySelector('#btn-stop').addEventListener('click',function () {
+        sendMsg({
+            fn : 'blink-stop'
+        });
+
+    })
+
+
+    console.log(location);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+    <!--캐쉬제거-->
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+
+    <title>setup app</title>
+
+    <script src="libs/jquery-2.0.3.min.js" ></script>
+
+    <style>
+
+        .frame {
+            margin-top: 20px;
+            border: 1px solid black;
+            padding: 5px;
+            background-color: #eec981;
+        }
+
+        #admin-cmd div span {
+            width: 100px;
+            display: inline-block;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<div>
+
+    <div id="wifi-info" class="frame">
+        broker ip : <input class="bro-ip">
+        central ip : <input class="central-ip">
+        target ip : <input class="ip">
+        <div>
+            <button class="scan" >scan</button>
+        </div>
+    </div>
+
+    <div id="wnd-setup" class="frame">
+        <div style="margin-top: 3px">
+            <span> ip: <input class="ip"></span>
+            <span> net mask: <input class="netmask"></span>
+            <span> gate way: <input class="gateway"></span>
+        </div>
+        <div style="margin-top: 3px">
+            <span>ssid: <input class="ssid"></span>
+            <span>passwd: <input class="passwd"></span>
+        </div>
+        <div style="margin-top: 3px">
+            <button class="save"> save </button>
+        </div>
+
+    </div>
+
+    <div id="admin-cmd" class="frame">
+
+        <div class="reboot" style="height: 32px;" >
+            <button > restart </button>
+        </div>
+
+        <div class="ping" style="height: 32px;" >
+            <button > ping </button>
+        </div>
+
+        <div class="uart" >
+            <span>uart :</span>
+            <input  >
+            <button class="send" > send </button>
+        </div>
+
+        <div class="uart-bin">
+
+            <span>uart-bin :</span>
+
+            <input>
+            <button > send </button>
+
+        </div>
+
+        <div class="to-ip">
+            <span>to-ip :</span>
+
+            <input>
+            <button> send </button>
+
+        </div>
+
+        <div class="uart-reset">
+            <span>reset uart</span>
+            <span>baud rate : <input class="baudrate" value="9600" ></span>
+            <button> send </button>
+        </div>
+
+
+
+
+    </div>
+
+
+
+</div>
+
+<div id="wnd-log">
+
+</div>
+
+
+<script>
+
+    function restoreFormlocalStageALL() {
+
+        function _restore(input_component,storage_key,default_value) {
+
+            var storage_value = localStorage[storage_key]
+
+            if(storage_value) {
+                input_component.value = storage_value;
+            }
+            else {
+                storage_value = input_component.value = default_value;
+            }
+
+            input_component.addEventListener('input',function(evt) {
+
+                storage_value = evt.target.value;
+                localStorage[storage_key] = storage_value;
+            })
+
+            localStorage[storage_key] = storage_value;
+
+        }
+
+        _restore(document.querySelector('#wifi-info input.ip'),'target_ip','192.168.9.20')
+        _restore(document.querySelector('#wifi-info input.central-ip'),'central_ip','192.168.9.180')
+        _restore(document.querySelector('#wifi-info input.bro-ip'),'broker_ip','192.168.9.177:1480')
+
+    }
+
+    restoreFormlocalStageALL()
+
+
+    if(localStorage.ip == undefined) {
+
+        document.querySelector('#wnd-setup input.ip').value = '192.168.9.20';
+        document.querySelector('#wnd-setup input.netmask').value = '255.255.255.0';
+        document.querySelector('#wnd-setup input.gateway').value = '192.168.9.177';
+
+        document.querySelector('#wnd-setup input.ssid').value = 'GUNPOWER_PI_1';
+        document.querySelector('#wnd-setup input.passwd').value = '';
+
+    }
+    else {
+
+        document.querySelector('#wnd-setup input.ip').value = localStorage.ip ;
+        document.querySelector('#wnd-setup input.netmask').value = localStorage.netmask;
+        document.querySelector('#wnd-setup input.gateway').value = localStorage.gateway;
+
+        document.querySelector('#wnd-setup input.ssid').value = localStorage.ssid;
+        document.querySelector('#wnd-setup input.passwd').value = localStorage.passwd;
+
+    }
+
+
+    /*
+     if(localStorage.file_to_compile) {
+     document.querySelector('#compiler input.file-name').value = localStorage.file_to_compile;
+     }
+     else {
+     document.querySelector('#compiler input.file-name').value = 'wifi_config.lua';
+     }
+     */
+
+
+
+    function add_log(msg) {
+
+        var dom_log = document.querySelector('#wnd-log');
+
+        var text = document.createElement('div');
+        text.innerText = msg;
+        dom_log.appendChild(text);
+
+    }
+
+    document.querySelector('#wnd-setup button.save').addEventListener('click',function() {
+
+        var target_ip = document.querySelector('#wifi-info input.ip').value;
+        var cuurent_url = localStorage.broker_ip;
+
+        localStorage.ip = document.querySelector('#wnd-setup input.ip').value;
+        localStorage.netmask = document.querySelector('#wnd-setup input.netmask').value;
+        localStorage.gateway = document.querySelector('#wnd-setup input.gateway').value;
+
+
+        localStorage.ssid = document.querySelector('#wnd-setup input.ssid').value;
+        localStorage.passwd = document.querySelector('#wnd-setup input.passwd').value;
+
+        var udp_requst = {
+            address :target_ip,
+            port : 1471,
+            timeout : 1500,
+            packet : {
+                id : (new Date()).getTime() + '__',
+                cmd:'save',
+                name:'wifi_setup.lua',
+                content : 'wifi.setmode(wifi.STATION) cfg = {ip = "'  + localStorage.ip  +
+                '",netmask = "' + localStorage.netmask +
+                '",gateway="'+ localStorage.gateway +
+                '"} wifi.sta.setip(cfg) wifi.sta.connect() wifi.sta.config("' + localStorage.ssid +
+                '","' + localStorage.passwd  + '")' +
+                ' central_server_ip = "'+ localStorage.central_ip +'" '
+            }
+        }
+
+
+
+        console.log(udp_requst);
+
+        $.ajax({
+
+            url : 'http://'+ cuurent_url +'/send',
+            type:'POST',
+            dataType : 'text',
+            timeout : 5000,
+            data : JSON.stringify( udp_requst),
+            success : function(data,text,xhr) {
+
+                console.log(data);
+
+                var json_data = JSON.parse(data);
+
+                if(json_data.result == 'ok') {
+                    add_log('config file save success')
+                }
+                else {
+
+                    add_log(json_data.result);
+                }
+
+
+
+
+            },
+            error : function(xhr,text,err) {
+
+            },
+            complete : function(xhr,text) {
+
+            }
+
+        });
+    });
+
+    document.querySelector('#admin-cmd .reboot button').addEventListener('click',function() {
+
+        var cuurent_url = localStorage.broker_ip;
+        var target_ip = document.querySelector('#wifi-info input.ip').value;
+
+        var udp_requst = {
+            address :target_ip,
+            port : 1471,
+            timeout : 1500,
+            packet : {
+                id : (new Date()).getTime() + '__',
+                cmd:'reboot'
+            }
+        }
+        console.log(udp_requst);
+
+        $.ajax({
+
+            url : 'http://'+ cuurent_url +'/send',
+            type:'POST',
+            dataType : 'text',
+            timeout : 3000,
+            data : JSON.stringify( udp_requst),
+            success : function(data,text,xhr) {
+
+                console.log(data);
+
+                var json_data = JSON.parse(data);
+
+                if(json_data.result == 'ok') {
+                    add_log('reboot cmd send success')
+                }
+                else {
+
+                    add_log(json_data.result);
+                }
+            },
+            error : function(xhr,text,err) {
+
+            },
+            complete : function(xhr,text) {
+
+            }
+
+        });
+    });
+    document.querySelector('#admin-cmd .ping button').addEventListener('click',function() {
+
+        var cuurent_url = localStorage.broker_ip;
+        var target_ip = document.querySelector('#wifi-info input.ip').value;
+        var udp_requst = {
+            address :target_ip,
+            port : 1471,
+            timeout : 1500,
+            packet : {
+                id : (new Date()).getTime() + '__',
+                cmd:'ping'
+            }
+        }
+        console.log(udp_requst);
+
+        $.ajax({
+            url : 'http://'+ cuurent_url +'/send',
+            type:'POST',
+            dataType : 'text',
+            timeout : 3000,
+            data : JSON.stringify( udp_requst),
+            success : function(data,text,xhr) {
+
+                console.log(data);
+
+                var json_data = JSON.parse(data);
+
+                if(json_data.result == 'ok') {
+                    add_log('ping cmd send success')
+                }
+                else {
+
+                    add_log(json_data.result);
+                }
+            },
+            error : function(xhr,text,err) {
+
+            },
+            complete : function(xhr,text) {
+
+            }
+        });
+    });
+    document.querySelector('#admin-cmd .uart button').addEventListener('click',function() {
+
+        var cuurent_url = localStorage.broker_ip;
+        var target_ip = document.querySelector('#wifi-info input.ip').value;
+
+
+        var udp_requst = {
+            address :target_ip,
+            port : 1471,
+            timeout : 1500,
+            packet : {
+                id : (new Date()).getTime() + '__',
+                cmd:'uart',
+                data : document.querySelector('#admin-cmd .uart input').value
+            }
+        }
+
+
+
+        console.log(udp_requst);
+
+        $.ajax({
+
+            url : 'http://'+ cuurent_url +'/send',
+            type:'POST',
+            dataType : 'text',
+            timeout : 3000,
+            data : JSON.stringify( udp_requst),
+            success : function(data,text,xhr) {
+
+                console.log(data);
+
+                var json_data = JSON.parse(data);
+
+                if(json_data.result == 'ok') {
+                    add_log('uart cmd send success')
+                }
+                else {
+
+                    add_log(json_data.result);
+                }
+
+
+
+
+            },
+            error : function(xhr,text,err) {
+
+            },
+            complete : function(xhr,text) {
+
+            }
+
+        });
+    });
+    document.querySelector('#admin-cmd .uart-bin button').addEventListener('click',function() {
+
+        var cuurent_url = localStorage.broker_ip;
+        var target_ip = document.querySelector('#wifi-info input.ip').value;
+
+        //아스키코드배열을 문자열로 변환
+        var _data = '[' + document.querySelector('#admin-cmd .uart-bin input').value + ']';
+
+        var data = JSON.parse(_data);
+
+//        var strData = ""
+//        for(var i=0;i<data.length;i++) {
+//            strData += String.fromCharCode( parseInt(data[i]) );
+//        }
+
+        var udp_requst = {
+            address :target_ip,
+            port : 1471,
+            timeout : 1500,
+            packet : {
+                id : (new Date()).getTime() + '__',
+                cmd:'uart_bin',
+                data : data
+            }
+        }
+
+
+
+        console.log(udp_requst);
+
+        $.ajax({
+
+            url : 'http://'+ cuurent_url +'/send',
+            type:'POST',
+            dataType : 'text',
+            timeout : 3000,
+            data : JSON.stringify( udp_requst),
+            success : function(data,text,xhr) {
+
+                console.log(data);
+
+                var json_data = JSON.parse(data);
+
+                if(json_data.result == 'ok') {
+                    add_log('uart cmd send success')
+                }
+                else {
+
+                    add_log(json_data.result);
+                }
+
+
+
+
+            },
+            error : function(xhr,text,err) {
+
+            },
+            complete : function(xhr,text) {
+
+            }
+
+        });
+
+    });
+    document.querySelector('#admin-cmd .uart-reset button').addEventListener('click',function() {
+
+        var cuurent_url = localStorage.broker_ip;
+        var target_ip = document.querySelector('#wifi-info input.ip').value;
+        var baudrate = document.querySelector('#admin-cmd .uart-reset input').value;
+
+        var udp_requst = {
+            address :target_ip,
+            port : 1471,
+            timeout : 1500,
+            packet : {
+                id : (new Date()).getTime() + '__',
+                cmd:'uart_reset',
+                baudrate : baudrate
+            }
+        }
+
+        console.log(udp_requst);
+
+        $.ajax({
+            url : 'http://'+ cuurent_url +'/send',
+            type:'POST',
+            dataType : 'text',
+            timeout : 3000,
+            data : JSON.stringify( udp_requst),
+            success : function(data,text,xhr) {
+                console.log(data);
+                var json_data = JSON.parse(data);
+                if(json_data.result == 'ok') {
+                    add_log('uart-reset cmd send success')
+                }
+                else {
+                    add_log(json_data.result);
+                }
+            },
+            error : function(xhr,text,err) {
+
+            },
+            complete : function(xhr,text) {
+
+            }
+
+        });
+
+    });
+    document.querySelector('#admin-cmd .to-ip button').addEventListener('click',function() {
+
+        var cuurent_url = localStorage.broker_ip;
+        var target_ip = document.querySelector('#wifi-info input.ip').value;
+
+        var udp_requst = {
+            address :target_ip,
+            port : 1471,
+            timeout : 1500,
+            packet : {
+                id : (new Date()).getTime() + '__',
+                cmd:'to-ip',
+                ip : document.querySelector('#admin-cmd .to-ip input').value
+            }
+        }
+
+        console.log(udp_requst);
+
+        $.ajax({
+            url : 'http://'+ cuurent_url +'/send',
+            type:'POST',
+            dataType : 'text',
+            timeout : 3000,
+            data : JSON.stringify( udp_requst),
+            success : function(data,text,xhr) {
+                console.log(data);
+                var json_data = JSON.parse(data);
+                if(json_data.result == 'ok') {
+                    add_log('uart cmd send success')
+                }
+                else {
+                    add_log(json_data.result);
+                }
+            },
+            error : function(xhr,text,err) {
+
+            },
+            complete : function(xhr,text) {
+
+            }
+
+        });
+
+    });
+
+</script>
+
+
+</body>
+</html>
