@@ -1,6 +1,6 @@
 --dofile("tcp_safe_sender.lua")
 --dofile("packet.lua")
-app_version='1.0.1'
+app_version='1.1.0'
 app_status={}
 
 timerid_Udpcaster = 0;
