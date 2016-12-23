@@ -1,5 +1,5 @@
 majorVer, minorVer, devVer, chipid, flashid, flashsize, flashmode, flashspeed = node.info()
-lua_botloader_version = "1.0"
+lua_botloader_version = "1.1"
 print("\nfind init.lua now startup lua bootloader " .. lua_botloader_version)
 
 
@@ -108,13 +108,21 @@ end
 
 boot_status = {}
 gpio.mode(0,1)gpio.write(0,0) --gpio 16
-function save_BootStatus() file.open("status.json", 'w') file.write(cjson.encode(boot_status)) file.close() end
+
+function save_BootStatus() 
+    file.open("status.json", 'w') 
+    file.write(cjson.encode(boot_status)) 
+    file.close() 
+end
+local first_act = function ()
+    boot_status.process = "startup"
+    save_BootStatus();
+    print( "first bootup") system_start_up()
+end
 if file.exists("status.json") then
     file.open("status.json", 'r') local data = file.read() file.close()
     if data == nil then
-        boot_status.process = "startup"
-        save_BootStatus();
-        print( "first bootup") system_start_up()
+        first_act()
     else
         boot_status = cjson.decode(data)
         if boot_status.process == "startup" then --이전상태가 startup 상태에서 최종마무리되었다면...
@@ -123,9 +131,7 @@ if file.exists("status.json") then
         else print( "prev process is "..boot_status.process.." and now start system..") boot_status.process = "startup" save_BootStatus() system_start_up() end
     end
 else
-    boot_status.process = "startup"
-    save_BootStatus();
-    print( "first bootup") system_start_up()
+    first_act()
 end
 
 
