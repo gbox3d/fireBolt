@@ -39,8 +39,6 @@ function udpTest()
     local udp_conn =net.createConnection(net.UDP)
     -- 첫번째 인자는 원격지의 포트번호이다.
     udp_conn:connect(1471,test_ip)
-    --udp_conn:listen(1471)
-    --udp_conn:on("receive",function(cu,c) print('data : ' .. c) end)
 
     local safe_sender_1 = AsyncSender_Safe( {getsocket = function() return udp_conn end} )
     test_str:gsub(".", function(code)
