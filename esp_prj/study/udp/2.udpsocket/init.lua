@@ -27,6 +27,7 @@ test_ip = "192.168.9.3"
 --받기 설정
 local udp_socket = net.createUDPSocket()
 udp_socket:on("receive",function(cu,c) print('recv : ' .. c) end)
+--udp_socket:on("received",function(data,port,ip) print('recv : ' .. c .. ',' .. port .. ',' .. ip) end)
 udp_socket:listen(1471) -- 첫번째 인자는 데이터를 받을 로컬포트 번호이다
 
 function test()
