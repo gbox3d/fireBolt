@@ -9,7 +9,7 @@ wifi.sta.eventMonReg(wifi.STA_GOTIP, function() if OnSTAGetIp then OnSTAGetIp() 
 wifi.sta.eventMonStart()
 
 
-wifi.sta.config("mypie","3.141592")
+wifi.sta.config("--","--")
 wifi.sta.connect()
 
 function OnSTAGetIp()

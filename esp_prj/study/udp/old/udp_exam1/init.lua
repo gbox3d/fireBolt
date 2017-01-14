@@ -1,5 +1,5 @@
 wifi.setmode(wifi.STATION)
-wifi.sta.config("RD2GUNPOWER","808671004")
+wifi.sta.config("--","--")
 wifi.sta.connect()
 
 --s 는 server sub module 이다.

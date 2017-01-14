@@ -1,5 +1,5 @@
 majorVer, minorVer, devVer, chipid, flashid, flashsize, flashmode, flashspeed = node.info()
-lua_botloader_version = "1.1"
+lua_botloader_version = "1.1.0"
 print("\nfind init.lua now startup lua bootloader " .. lua_botloader_version)
 
 
@@ -12,18 +12,16 @@ else
     file.open("config.json", 'w') file.write(cjson.encode(app_config)) file.close()
 end
 
-OnStart = function(...) end
-dofile('app.lua')
-dofile("ext.lua")
-
 function system_start_up()
+
+    dofile('app.lua')
+    dofile("ext.lua")
+
     --node.restart();
     --wifi.setphymode(wifi.PHYMODE_B)
     --wifi.setphymode(wifi.PHYMODE_N)
     wifi.setphymode(wifi.PHYMODE_G)
     wifi.sleeptype(wifi.NONE_SLEEP)
-
-    OnStart();
 
     function setupAP()
 
@@ -76,25 +74,28 @@ function system_start_up()
         startUdpCast();
         boot_status.process = 'APOK'
         save_BootStatus();
+        ext_main(1000,6);
     else
 
         setupSTA(
             function(evt)
                 if evt ==  wifi.STA_GOTIP then
                     print("STATION_GOT_IP")
-                    print(wifi.sta.getip());
-                    print("dhcp mode");
+                    print(wifi.sta.getip());                    
                     local strip = wifi.sta.getip();
                     --print(strip)
-                    if app_config.dhcp then app_config.ip = {string.match(strip,"(%d+).(%d+).(%d+).(%d+)" )} end
+                    if app_config.dhcp then print("dhcp mode")app_config.ip = {string.match(strip,"(%d+).(%d+).(%d+).(%d+)" )} end
                     startup()
                     startUdpCast();
                     boot_status.process = 'STOK'
                     save_BootStatus();
+                    --print("master ip:" .. app_config.master_ip)
+                    ext_main(1000,6);
+                    
                 elseif evt ==  wifi.STA_FAIL or
                         evt ==  wifi.STA_APNOTFOUND or
                         evt ==  wifi.STA_WRONGPWD then
-                    wifi.sta.disconnect() 
+                    wifi.sta.disconnect()
                     setupAP()
                     startUdpCast();
                     boot_status.process = 'APOK'
@@ -107,31 +108,24 @@ function system_start_up()
 end
 
 boot_status = {}
-gpio.mode(0,1)gpio.write(0,0) --gpio 16
+gpio.mode(0,1)gpio.write(0,0)
+function save_BootStatus() file.open("status.json", 'w') file.write(cjson.encode(boot_status)) file.close() end
+if file.exists("status.json") then
+    file.open("status.json", 'r') local data = file.read() file.close()
+    if data == nil then boot_status.process = "nook"
+    else
+        boot_status = cjson.decode(data)
+    end
+    --이전실행상태 검사 
+    if boot_status.process == "startup" or boot_status.process == "repair" then
+        print("repair mode")gpio.write(0,1)
+        boot_status.process = "nook" save_BootStatus()
+    else print( "prev process is "..boot_status.process.." and now start system..") boot_status.process = "startup" save_BootStatus() system_start_up() end
 
-function save_BootStatus() 
-    file.open("status.json", 'w') 
-    file.write(cjson.encode(boot_status)) 
-    file.close() 
-end
-local first_act = function ()
+else
     boot_status.process = "startup"
     save_BootStatus();
     print( "first bootup") system_start_up()
-end
-if file.exists("status.json") then
-    file.open("status.json", 'r') local data = file.read() file.close()
-    if data == nil then
-        first_act()
-    else
-        boot_status = cjson.decode(data)
-        if boot_status.process == "startup" then --이전상태가 startup 상태에서 최종마무리되었다면...
-            print("system abnormal")gpio.write(0,1)
-            boot_status.process = "nook" save_BootStatus()
-        else print( "prev process is "..boot_status.process.." and now start system..") boot_status.process = "startup" save_BootStatus() system_start_up() end
-    end
-else
-    first_act()
 end
 
 
