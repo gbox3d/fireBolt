@@ -71,10 +71,10 @@ function system_start_up()
 
     if app_config.apmode then
         setupAP()
-        startUdpCast();
+        --startUdpCast();
         boot_status.process = 'APOK'
         save_BootStatus();
-        ext_main(1000,6);
+        ext_main(1000);
     else
 
         setupSTA(
@@ -86,11 +86,11 @@ function system_start_up()
                     --print(strip)
                     if app_config.dhcp then print("dhcp mode")app_config.ip = {string.match(strip,"(%d+).(%d+).(%d+).(%d+)" )} end
                     startup()
-                    startUdpCast();
+                    --startUdpCast();
                     boot_status.process = 'STOK'
                     save_BootStatus();
                     --print("master ip:" .. app_config.master_ip)
-                    ext_main(1000,6);
+                    ext_main(1000);
 
                 elseif evt ==  wifi.STA_FAIL or
                         evt ==  wifi.STA_APNOTFOUND or
