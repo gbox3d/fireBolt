@@ -1,4 +1,4 @@
-dofile('async_safe_sender.lua')
+dofile('udp_safe_sender.lua')
 dofile('stub.lua')
 dofile('app.lua')
 dofile("ext.lua")

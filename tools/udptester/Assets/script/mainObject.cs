@@ -5,6 +5,10 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 
+using System.Collections;
+using System.Collections.Generic;
+
+
 using UniRx;
 using UniRx.Triggers;
 
@@ -24,9 +28,9 @@ public class mainObject : MonoBehaviour
 
 	dg_PacketCallback m_rsPacketCallback = null;
 
-
 	string m_strIp = "192.168.9.1";
-	int m_nPort = 1999;
+	int m_nBCPort = 1999;
+	int m_nPort = 2012;
 
 	// sendData
 	private void sendString(string message)
@@ -49,17 +53,27 @@ public class mainObject : MonoBehaviour
 		}
 	}
 
+	Dictionary<int,Subject<JsonData>> m_dicOnRsPacketReceive = new Dictionary<int,Subject<JsonData>>();
 
 	// Use this for initialization
 	void Start()
 	{
+		//Debug.Log ( LocalIPAddress() );
+		//local ip address
+		Debug.Log (Network.player.ipAddress);
 
+		//m_strLocalIp = Network.player.ipAddress;
 		//remoteEndPoint = new IPEndPoint(IPAddress.Parse("192.168.9.15"), 2012);
 
 		transform.FindChild("target_ip/InputField").GetComponent<InputField>().text = "192.168.9.11";
 
-		m_rsPacketCallback = (jsonDat) => { Debug.Log(jsonDat.ToJson()); };
+		//rs packet process
+		m_rsPacketCallback = (jsonDat) => { 
+			Debug.Log(jsonDat.ToJson()); 
 
+			m_dicOnRsPacketReceive[ (int)jsonDat["id"]].OnNext(jsonDat);
+
+		};
 
 		m_dlgScanDevice = transform.FindChild("Dlg_scanDevice").GetComponent<Dlg_scanDevice>();
 		m_dlgScanDevice.gameObject.SetActive(false);
@@ -67,7 +81,6 @@ public class mainObject : MonoBehaviour
 		m_dlgScanDevice.m_callback = new Dlg_scanDevice.MyDelegateType((item) =>
 		{
 			m_strIp = transform.FindChild("target_ip/InputField").GetComponent<InputField>().text = item.m_strIP;
-
 		});
 
 		InputField inputfield_msgbox = transform.FindChild("InputField_msg").GetComponent<InputField>();
@@ -76,7 +89,8 @@ public class mainObject : MonoBehaviour
 		//InputField inpf_ipaddress = transform.FindChild("ip_address").GetComponent<InputField>();
 		//inpf_ipaddress.text = m_strIp;
 
-		mUdpClient = new UdpClient(m_nPort);
+		//listen broad casting
+		mUdpClient = new UdpClient(m_nBCPort);
 		IObservable<JsonData> heavyMethod = Observable.Start(() =>
 			{
 				try
@@ -93,12 +107,7 @@ public class mainObject : MonoBehaviour
 					jsonObj["ip"] = anyIP.Address.ToString();
 					jsonObj["port"] = anyIP.Port;
 
-					//remoteEndPoint = anyIP;
-
-					//Debug.Log(text);
-
 					return jsonObj;
-
 				}
 				catch (Exception err)
 				{
@@ -171,6 +180,8 @@ public class mainObject : MonoBehaviour
 					 inputfield_msgbox.text = myFileUtils.readStringFromFile("../lua_script/" + filename);
 
 				 });
+
+		//text editor -> esp 
 		transform.FindChild("btn_group/savescript/Button").GetComponent<Button>().onClick.AsObservable()
 				 .Subscribe((obj) =>
 				 {
@@ -195,7 +206,7 @@ end)([[" + filename + "]],[["
 				 });
 
 		//file -> esp 
-		transform.FindChild("btn_group/savescript_2/Button").GetComponent<Button>().OnClickAsObservable().Subscribe(_ =>
+		transform.FindChild("btn_group/upload_script/Button").GetComponent<Button>().OnClickAsObservable().Subscribe(_ =>
 		{
 
 			int nFsm = 0;
@@ -363,6 +374,39 @@ end)([[" + filename + "]],[["
 
 		});
 
+
+		transform.FindChild ("btn_group/download_script/Button").GetComponent<Button> ().OnClickAsObservable ()
+			.Subscribe (_ => {
+
+				int packet_id = "download_script".GetHashCode();
+
+				Subject<JsonData> stream = new Subject<JsonData>();
+				m_dicOnRsPacketReceive[packet_id] = stream;
+
+				stream.Subscribe( (jsonDat)=> {
+					inputfield_msgbox.text = jsonDat["d"].ToString();
+					
+				});
+
+				string filename = transform.FindChild("btn_group/download_script/InputField").GetComponent<InputField>().text;
+				string strCode ="file.open(\"" +filename  + "\",\"r\") local data = file.read() print(data) " +
+					"local rt={type=\"rs\",result=\"ok\",d=data,id="+ packet_id  + "}";
+
+				strCode += "udp_safe_sender("+ m_nBCPort +",\""+ Network.player.ipAddress + "\",cjson.encode(rt) )";
+
+				JsonData jsonObj = new JsonData();
+				jsonObj["cmd"] = "eval";
+				//jsonObj["id"] = strCode.GetHashCode();
+				jsonObj["code"] = strCode;
+				remoteEndPoint = new IPEndPoint(IPAddress.Parse(m_strIp), m_nPort);
+				sendString(jsonObj.ToJson());
+
+
+					
+				Debug.Log(jsonObj.ToJson());
+
+				
+		});
 
 
 		transform.FindChild("target_ip/Button").GetComponent<Button>().OnClickAsObservable()
