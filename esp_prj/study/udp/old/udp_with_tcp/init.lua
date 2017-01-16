@@ -6,7 +6,7 @@ cfg = {
     gateway="192.168.9.177"
 }
 wifi.sta.setip(cfg)
-wifi.sta.config("GUNPOWER_PI_1","")
+wifi.sta.config("--","")
 wifi.sta.connect()
 
 function startServer(port)
