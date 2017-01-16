@@ -1,6 +1,6 @@
 --dofile("tcp_safe_sender.lua")
 
-app_version='1.4.2'
+app_version='0.0.2'
 app_status = {fsm=0};
 
 timerid_Udpcaster = tmr.create();
