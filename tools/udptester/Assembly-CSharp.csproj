@@ -70,7 +70,7 @@
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/UnityVR/RuntimeEditor/UnityEngine.VR.dll</HintPath>
  </Reference>
  <Reference Include="LitJson">
- <HintPath>/Users/gunpower/Desktop/gbox3d/work/software/work/prj/gunpower2016/gprOnline/mainApplication/udptester/Assets/lit_json/LitJson.dll</HintPath>
+ <HintPath>/Users/gbox3d/Desktop/eldorado/fireBolt/tools/udptester/Assets/lit_json/LitJson.dll</HintPath>
  </Reference>
   </ItemGroup>
   <ItemGroup>
