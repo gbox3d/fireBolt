@@ -1,0 +1,129 @@
+{
+    "play_config": {
+        "play_mode": 2,
+        "start_mode": 1,
+        "extra_play_mode": 1,
+        "play_duration_time": 0,
+        "game_timer": 1,
+        "play_option": {
+            "respawn": true,
+            "active_start_ment": true,
+            "active_end_ment": true,
+            "active_alert_remain_time": false,
+            "active_start_alram_popup": false,
+            "active_pause_popup": false,
+            "active_timer_down_counter": false,
+            "active_score_down_counter": false
+        },
+        "respawn_option": {
+            "check_side": true,
+            "arena1_signal": true,
+            "arena2_signal": false,
+            "arena3_signal": false
+        },
+        "remocon_option": {
+            "active_start": false,
+            "menual_mode": 0
+        }
+    },
+    "gun_config": {
+        "trigger_select": 0,
+        "over_speed": {
+            "limit": 90,
+            "count": 3,
+            "process": 0
+        },
+        "over_bullet": {
+            "limit": 30,
+            "process": 0
+
+        }
+    },
+    "sound_config": {
+        "bgm": {
+            "auto_start": false,
+            "volume_control": {
+                "base_volume": 1,
+                "off_volume": 2
+            },
+            "halfFist": {
+                "path": "",
+                "volume": 1
+            },
+            "halfLast": {
+                "path": "",
+                "volume": 2
+            },
+            "afterFirst": {
+                "path": "",
+                "volume": 3
+            },
+            "afterLast": {
+                "path": "",
+                "volume": 4
+            },
+            "team_sound": {
+                "a": {
+                    "die": "nofile",
+                    "fire": "nofile",
+                    "alram": "nofile"
+                },
+                "b": {
+                    "die": "nofile",
+                    "fire": "nofile",
+                    "alram": "nofile"
+                }
+            }
+        }
+
+    },
+    "display_config": {
+        "team_name": {
+            "a": "Alpha",
+            "b": "Bravo"
+        },
+        "left_team_red": true,
+        "left_team_main_monitor": false,
+        "left_sub_monitor": true,
+        "msg_life_time": {
+            "start_game": 1,
+            "change_game_pos": 2,
+            "end_game_reset": 3,
+            "start_game_failed": 4,
+            "force_stop_game": 5,
+            "device_merge": 6,
+            "system_power_off": 7,
+            "request_team_select": 0,
+            "is_start_cancel": true,
+            "is_change": false,
+            "is_reset": false,
+            "is_confirm": false,
+            "is_gameover_continue": false,
+            "is_device_merge": false,
+            "is_power_off": false
+        }
+
+    },
+    "device_index_table": {},
+    "led_disp_config": {
+        "main_ip": 0,
+        "status_led": [
+            { "ip": 0, "left_red": false, "swap": false },
+            { "ip": 0, "left_red": false, "swap": false },
+            { "ip": 0, "left_red": false, "swap": false },
+            { "ip": 0, "left_red": false, "swap": false }
+        ],
+        "respawn_ip": [0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "score_ooption_setup": {
+        "base_score": 10,
+        "enermy_kill": 10,
+        "team_kill": 10,
+        "enermy_killed": 10,
+        "team_killed": 10,
+        "master_killed": 10,
+        "fire_count": 10,
+        "mag_count": 10
+    }
+
+}
