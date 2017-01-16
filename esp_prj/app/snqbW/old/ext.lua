@@ -1,0 +1,3 @@
+print('load extention')
+--dofile("")
+

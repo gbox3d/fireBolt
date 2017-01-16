@@ -30,12 +30,11 @@ test_ip = "192.168.9.3"
 
 local udp_socket = net.createUDPSocket()
 udp_socket:on("receive",function(cu,c) print('recv : ' .. c) end)
+--udp_socket:on("received",function(data,port,ip) print('recv : ' .. c .. ',' .. port .. ',' .. ip) end)
 udp_socket:listen(1471)
 local safe_sender_1 = AsyncSender_Safe_udp( {getsocket = function() return udp_socket end} )
 
 function udpTest()
-
-
 
     test_str:gsub(".", function(code)
         --udp_conn:send(code);
