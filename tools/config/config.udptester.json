@@ -1,7 +1,7 @@
 {
     "port": {
-        "BroadCast": 31486,
-        "Data": 31485
+        "BroadCast": 1999,
+        "Data": 2012
     },
     "macro": [
         "local rt = {type=\"rs\",result=\"echo back test\"} udp_safe_sender(cjson.encode(rt))",
