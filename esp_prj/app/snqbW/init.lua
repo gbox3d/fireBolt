@@ -1,3 +1,4 @@
+--it's' need lua for sdk 2.xx
 dofile('udp_safe_sender.lua')
 dofile('stub.lua')
 dofile('app.lua')
