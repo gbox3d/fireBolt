@@ -17,53 +17,67 @@ using LitJson;
 
 using System.Linq;
 
-public class AlertDlgBox : MonoBehaviour {
-
-	public Button m_close_Btn;
-	public delegate void dg_CallBack();
-
-	dg_CallBack m_CallbackBtn;
+namespace com_gunpower_ui
+{
 
 
-	public void show(string title, string msg, string btn_text,dg_CallBack callback)
+	public class AlertDlgBox : MonoBehaviour
 	{
-		transform.localPosition = new Vector3(0, 0, 0);
-		transform.FindChild("header/Text").GetComponent<Text>().text = title;
-		transform.FindChild("body/Text").GetComponent<Text>().text = msg;
-		transform.FindChild("body/Button/Text").GetComponent<Text>().text = btn_text;
 
-		m_CallbackBtn = callback;
+		public Text m_textMsg;
+		public Button m_close_Btn;
 
-		gameObject.SetActive(true);
+		public delegate void dg_CallBack ();
 
-	}
+		dg_CallBack m_CallbackBtn;
+		bool m_reUse = false;
 
-	public void close()
-	{
-		
-		m_CallbackBtn();
-		gameObject.SetActive(false);
-		Destroy(gameObject, 0.5f);
-	}
 
-	// Use this for initialization
-	void Start () {
+		public void show (string title, string msg, string btn_text, dg_CallBack callback = null, bool reuse = false)
+		{
+			m_reUse = reuse;
+			transform.localPosition = new Vector3 (0, 0, 0);
+			transform.FindChild ("header/Text").GetComponent<Text> ().text = title;
+			transform.FindChild ("body/Text").GetComponent<Text> ().text = msg;
+			transform.FindChild ("body/Button/Text").GetComponent<Text> ().text = btn_text;
 
-		//gameObject.SetActive(false);
-		m_close_Btn = transform.FindChild("body/Button").GetComponent<Button>();
+			m_CallbackBtn = callback;
 
-		m_close_Btn.OnClickAsObservable()
-		           .Subscribe((obj) => {
+			gameObject.SetActive (true);
+
+		}
+
+		public void close ()
+		{
+			if (m_CallbackBtn != null) {
+				m_CallbackBtn ();
+			}
+
+			gameObject.SetActive (false);
+			if (!m_reUse) {
+				Destroy (gameObject, 0.5f);
+			}
+		}
+
+		// Use this for initialization
+		void Start ()
+		{
+
+			//gameObject.SetActive(false);
+			//m_close_Btn = transform.FindChild ("body/Button").GetComponent<Button> ();
+
+			m_close_Btn.OnClickAsObservable ()
+		           .Subscribe ((obj) => {			
+				close ();			
+			}).AddTo (this);
 			
-					   close();
-			
-		}).AddTo(this);
-
-		
-	}
+		}
 	
-	// Update is called once per frame
-	void Update () {
+		// Update is called once per frame
+		void Update ()
+		{
 		
+		}
 	}
+
 }

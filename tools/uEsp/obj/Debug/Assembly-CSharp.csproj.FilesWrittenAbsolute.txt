@@ -22,3 +22,5 @@
 /Users/gunpower/Desktop/gbox3d/work/software/work/my_prj/fireBolt/tools/uEsp/Temp/bin/Debug/Unity.CecilTools.dll
 /Users/gunpower/Desktop/gbox3d/work/software/work/my_prj/fireBolt/tools/uEsp/Temp/bin/Debug/Mono.Cecil.Pdb.dll
 /Users/gunpower/Desktop/gbox3d/work/software/work/my_prj/fireBolt/tools/uEsp/Temp/bin/Debug/Mono.Cecil.Mdb.dll
+/Users/gunpower/Desktop/gbox3d/work/software/work/my_prj/fireBolt/tools/uEsp/Temp/bin/Debug/UnityEngine.Advertisements.dll
+/Users/gunpower/Desktop/gbox3d/work/software/work/my_prj/fireBolt/tools/uEsp/Temp/bin/Debug/UnityEngine.Purchasing.dll

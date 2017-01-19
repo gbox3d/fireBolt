@@ -4,7 +4,7 @@
         "Data": 2012
     },
     "macro": [
-        "local rt = {type=\"rs\",result=\"echo back test\"} udp_safe_sender(cjson.encode(rt))",
-        "local rt = {type=\"rs\",id=0} udp_safe_sender(cjson.encode(rt))"
+        "",
+        ""
     ]
 }
