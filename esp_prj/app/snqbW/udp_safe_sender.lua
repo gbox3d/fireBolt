@@ -4,7 +4,7 @@ function AsyncSender_Safe_udp(option)
     local test_set = false;
     local tempBuf = "";
     local _timer = tmr.create()
-    return function(_port,_ip,data)
+    return function(data,_port,_ip)
         local socket = option.getsocket()
         function _send(data)
             --print("buf : " .. data)

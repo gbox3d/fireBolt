@@ -33,12 +33,20 @@ function startup()
         default = function() local rt = {result = 'nocmd'} udp_server:send(cjson.encode(rt))  end
     }
 
-    packet_dic["eval"] = function(packet) loadstring(packet.code)() end    
+    packet_dic["eval"] = function(packet) 
+        local _f=loadstring(packet.code) 
+        if(_f) then _f() 
+        else 
+            print("script err " .. packet.code) 
+        end 
+    end    
 
     function processRecv(s,c,_port,_ip)
         last_nt_tick = tmr.now()        
+        print(_ip .. "," .. _port)
         if c:byte(1,1) == 123 then -- check '{}'
             local packet = cjson.decode(c)
+            --print(c)
             if packet.cmd ~= nil then
                 if packet_dic[packet.cmd] ~= nil then
                     packet_dic[packet.cmd](packet)
