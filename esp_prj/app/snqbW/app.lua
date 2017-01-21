@@ -1,16 +1,9 @@
---dofile("tcp_safe_sender.lua")
-
-app_version='0.0.2'
+app_version='0.0.2a'
 app_status = {fsm=0};
 
 timerid_Udpcaster = tmr.create();
---timerid_UartChecker = tmr.create();
 network_latency = 0;
 last_nt_tick = tmr.now();
-
---udp_work_socket = net.createServer(net.UDP)
---master_socket = net.createConnection(net.UDP)
---packet_dic["stat"] = function(packet) local rt = {result = "ok",sta=app_status,ip=app_config.ip} udp_server:send(cjson.encode(rt)) end
 
 function startup()
 
@@ -23,11 +16,8 @@ function startup()
     
     print("broad cast : " .. broad_ip .. "," .. app_config.bc_port)
 
-    --master_socket:connect(app_config.bc_port, broad_ip)
     udp_safe_sender = AsyncSender_Safe_udp({getsocket = function() return master_socket end})
-    --udp_safe_sender = function(port,ip,data)     
-        --master_socket:send(ip,port,data)
-    --end
+    --udp_safe_sender = function(port,ip,data) master_socket:send(ip,port,data) end
 
     packet_dic = {
         default = function() local rt = {result = 'nocmd'} udp_server:send(cjson.encode(rt))  end
@@ -69,6 +59,7 @@ function startup()
         timerid_Udpcaster:alarm(app_config.cast_delay,tmr.ALARM_AUTO,
             function()
                 local delta = tmr.now() - last_nt_tick
+                --print(delta)
                 --if delta < 0 then delta = delta + 2147483647 end -- proposed because of delta rolling over, https://github.com/hackhitchin/esp8266-co-uk/issues/2
                 if delta < 0 then delta = 0 last_nt_tick = tmr.now() end
                 network_latency = delta;
