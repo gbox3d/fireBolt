@@ -33,22 +33,18 @@ public class mainObject : MonoBehaviour
 	Subject<JsonData> m_OnPacketReceive;
 	Dictionary<int,Subject<JsonData>> m_dicOnRsPacketReceive = new Dictionary<int,Subject<JsonData>> ();
 
-	static string m_strVersion = "0.0.1";
+	static string m_strVersion = "0.0.2";
 
 	#if UNITY_STANDALONE_OSX
 	static string m_basePath = "../";
-	#elif UNITY_ANDROID
-	static string m_basePath = "./";
-	
-
-
-#else
+	#else
 	static string m_basePath = "./";
 	#endif
 
+	static string m_configFileName = "config.uesp.json";
+
 	static string m_configDirPath = m_basePath + "config";
 	static string m_configFilePath = m_configDirPath + "/config.uesp.json";
-
 	static string m_scriptDirPath = m_basePath + "lua_script";
 
 	string m_strIp = "192.168.9.1";
@@ -74,11 +70,17 @@ public class mainObject : MonoBehaviour
 	[SerializeField] Button m_btnSave;
 
 	[SerializeField] Button m_btnRun;
+	[SerializeField] Button m_btnAdd_ResposeCode;
 	[SerializeField] Button m_btnClearLog;
 	[SerializeField] Button[] m_btnMacros;
 
 	bool m_isAppQuitting;
 
+	void output_log (string msg)
+	{
+
+		m_TextLog.text += msg + "\n";
+	}
 
 	// sendData
 	private void sendString (string message)
@@ -543,19 +545,29 @@ public class mainObject : MonoBehaviour
 
 			m_OnPacketReceive.Subscribe (_ => {
 
-				JsonData jsonObj = JsonMapper.ToObject (_ ["receivedMsg"].ToString ());
+				try {
+					output_log(_.ToJson ());
 
-				Subject<JsonData> stream;
+					JsonData jsonObj = JsonMapper.ToObject (_ ["receivedMsg"].ToString ());
+					Subject<JsonData> stream;
 
-				if (jsonObj ["type"].Equals ("rs")) {
-					if (m_dicOnRsPacketReceive.TryGetValue ((int)jsonObj ["id"], out stream)) {
-						stream.OnNext (jsonObj);
-						m_dicOnRsPacketReceive.Remove ((int)jsonObj ["id"]);
+					if (jsonObj ["type"].Equals ("rs")) {
+						if (m_dicOnRsPacketReceive.TryGetValue ((int)jsonObj ["id"], out stream)) {
+							stream.OnNext (jsonObj);
+							m_dicOnRsPacketReceive.Remove ((int)jsonObj ["id"]);
+						}
 					}
+				} catch (JsonException e) {
+					Debug.Log (e.ToString ());
+					output_log (e.ToString ());
+
 				}
 
+				
+
 			});
-			m_TextLog.text += "set port  bc :" + m_nBcPort + ", data :" + m_nDataPort + "\n"; 
+			//m_TextLog.text += "set port  bc :" + m_nBcPort + ", data :" + m_nDataPort + "\n"; 
+			output_log ("set port  bc :" + m_nBcPort + ", data :" + m_nDataPort);
 
 		} catch (SocketException ex) {
 			Debug.Log (ex.ToString ());
@@ -566,16 +578,26 @@ public class mainObject : MonoBehaviour
 	void Start ()
 	{
 
-		JsonData config_data;
+		output_log ("start up");
 
+		JsonData config_data = null;
 		if (System.IO.File.Exists (myFileUtils.pathForDocumentsFile (m_configFilePath))) {
 			//if (true) {
 			Debug.Log ("find file");
+			output_log ("load config success");
 			//do stuff
 			string str_config = myFileUtils.readStringFromFile (m_configFilePath);
-			config_data = JsonMapper.ToObject (str_config);
+			try {
+
+				config_data = JsonMapper.ToObject (str_config);
+			} catch (JsonException e) {
+				Debug.Log (e.ToString ());
+				output_log (e.ToString ());
+			}
 
 		} else {
+
+			output_log ("can not found config file");
 			
 			config_data = new JsonData ();
 			config_data ["port"] = new JsonData ();
@@ -583,7 +605,9 @@ public class mainObject : MonoBehaviour
 			config_data ["port"] ["Data"] = 2012;
 			config_data ["remote_ip"] = "192.168.9.9";
 			config_data ["macro"] = new JsonData ();
-			config_data ["macro"] = JsonMapper.ToObject (@"["""",""""]");
+			config_data ["macro"] = JsonMapper.ToObject (
+				@"[ ""udp_safe_sender(cjson.encode(rt),port,local_ip)"" " +
+				@",""""]");
 
 			m_GlobalAlertDlg.GetComponent<com_gunpower_ui.AlertDlgBox> ().show ("info", "file not found", "ok", () => {
 			}, true);
@@ -621,37 +645,38 @@ public class mainObject : MonoBehaviour
 		transform.FindChild ("input_port/InputField_bc").GetComponent<InputField> ().text = m_nBcPort.ToString ();
 		transform.FindChild ("input_port/InputField_data").GetComponent<InputField> ().text = m_nDataPort.ToString ();
 
-		//start udp 
-		resetNewWrok ();
-
-		// = transform.FindChild ("InputField_msg").GetComponent<InputField> ();
-		m_btnRun.GetComponent<Button> ().onClick.AsObservable ()
-				 .Subscribe ((obj) => {
-			//inputfield_msgbox.text = "test";
-			JsonData jsonObj = new JsonData ();
-			jsonObj ["cmd"] = "eval";
-			jsonObj ["code"] = m_inputfieldCode.text;
-
-			sendString (jsonObj.ToJson ());
-
-		});
-
-
 		//macro buttons
 		for (int i = 0; i < m_btnMacros.Length; i++) {
 
 			string strCode = config_data ["macro"] [i].ToString ();
-			m_btnMacros [i].OnClickAsObservable ()
-				.Subscribe (_ => {
+			m_btnMacros [i].OnClickAsObservable ().Subscribe (_ => {
 				m_inputfieldCode.text = strCode;
-					
 			});
-			
 		}
 
+		//start udp 
+		resetNewWrok ();
 
-		m_btnLoad.onClick.AsObservable ()
-				 .Subscribe ((obj) => {
+		// = transform.FindChild ("InputField_msg").GetComponent<InputField> ();
+		m_btnRun.GetComponent<Button> ().onClick.AsObservable ().Subscribe ((obj) => {
+			//inputfield_msgbox.text = "test";
+			JsonData jsonObj = new JsonData ();
+			jsonObj ["cmd"] = "eval";
+			jsonObj ["code"] = m_inputfieldCode.text;
+			sendString (jsonObj.ToJson ());
+
+		});
+
+		m_btnAdd_ResposeCode.GetComponent<Button> ().OnClickAsObservable ().Subscribe (_ => {
+
+			m_inputfieldCode.text += "\n rt ={type=\"rs\",id=0} " + 
+				"udp_safe_sender(cjson.encode(rt),"+ m_nDataPort +",\"" + Network.player.ipAddress +"\") \n";
+		});
+
+
+		
+
+		m_btnLoad.onClick.AsObservable ().Subscribe ((obj) => {
 				
 			DirectoryInfo dir = new DirectoryInfo (myFileUtils.pathForDocumentsFile (m_scriptDirPath));
 			FileInfo[] info = dir.GetFiles ("*.*");
@@ -677,9 +702,7 @@ public class mainObject : MonoBehaviour
 		});
 
 
-		m_btnSave.onClick.AsObservable ()
-				 .Subscribe ((obj) => {
-
+		m_btnSave.onClick.AsObservable ().Subscribe ((obj) => {
 
 			DirectoryInfo dir = new DirectoryInfo (myFileUtils.pathForDocumentsFile (m_scriptDirPath));
 			FileInfo[] info = dir.GetFiles ("*.*");
@@ -840,7 +863,6 @@ public class mainObject : MonoBehaviour
 		m_btnClearLog.OnClickAsObservable ().Subscribe (_ => {
 			m_TextLog.text = "";
 		});
-
 
 		m_btnSelectIp.OnClickAsObservable ()
 				 .Subscribe ((obj) => {
