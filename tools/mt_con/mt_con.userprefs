@@ -1,0 +1,14 @@
+﻿<Properties StartupConfiguration="{1B74C747-EBCB-AA44-BC57-DDB43A27A3F8}|Unity">
+  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="Unity.Instance.Unity Editor" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/script/slideControl.cs">
+    <Files>
+      <File FileName="Assets/script/slideControl.cs" Line="17" Column="3" />
+      <File FileName="Assets/script/mainApp.cs" Line="228" Column="8" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
