@@ -23,12 +23,13 @@ function startServer()
             end
 
             --크로스도메인 허용하기위한 헤더
-            conn:send('HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin:*\r\n\r\n' .. '{"result":"ok"}')
+            conn:send('HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin:*\r\n\r\n' .. '{"result":"ok"}',function() conn:close() end)
+            --conn:send('HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin:*\r\n\r\n' .. '{"result":"ok"}')
             --결과 메씨지 보내기
             --conn:send('{"test":123}')
             --conn:send('{"test":456}')
             --conn:send("<h1> Hello, NodeMCU.</h1>")
-            conn:close()
+            --conn:close()
 
         end)
     end)

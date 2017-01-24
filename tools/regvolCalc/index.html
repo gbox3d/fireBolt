@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+    <!--캐쉬제거-->
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+
+    <title> 저항 전압 분배 계산기 </title>
+
+    <script src="./libs/extra/jquery-2.0.3.min.js"></script>
+    <script src="./libs/extra/async.js"></script>
+
+    <link rel="stylesheet" href="./libs/bootstrap/css/bootstrap.min.css">
+    <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+
+<div class="container">
+
+    R1   : <input class="form-control" id="reg-1" >
+    R2   : <input class="form-control" id="reg-2" >
+    Vin  : <input class="form-control" id="vin" >
+    Vout : <input class="form-control" id="vout" >
+
+    <div class="btn-block btn btn-lg btn-default" id="btn-calc" > calc </div>
+
+</div>
+
+
+<script>
+
+
+
+
+    document.querySelector('#btn-calc').addEventListener('click',function () {
+
+        var r1 = parseInt(document.querySelector('#reg-1').value)
+        var r2 = parseInt( document.querySelector('#reg-2').value )
+        var vin = parseInt( document.querySelector('#vin').value )
+
+        console.log(r1);
+
+        var vout;
+
+        vout = (r2/(r1+r2)) * vin;
+
+        document.querySelector('#vout').value = vout;
+
+
+    });
+
+
+
+</script>
+
+</body>
+</html>

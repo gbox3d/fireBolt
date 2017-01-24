@@ -7,8 +7,11 @@ srv=net.createServer(net.TCP)
 srv:listen(80,function(conn)
     conn:on("receive",function(conn,payload)
         --_, _, method, path, vars = string.find(payload, "([A-Z]+) /([^?]*)%??(.*) HTTP");print(path)
-        conn:send("<h1> Hello, NodeMCU.</h1>",function() conn:close() print(node.heap())  end)
+        conn:send("<h1> Hello, NodeMCU.</h1>")
         --print(node.heap())
         --conn:close()
     end)
+    conn:on("sent",function() conn:close() print(node.heap())  end)
 end)
+
+

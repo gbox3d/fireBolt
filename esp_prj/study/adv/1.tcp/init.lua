@@ -19,7 +19,7 @@ wifi.sta.disconnect()
 
 cfg = {ip = "192.168.9.20",netmask = "255.255.255.0",gateway="192.168.9.1"}
 wifi.sta.setip(cfg)
-wifi.sta.config("RD2GUNPOWER","808671004",1)
+wifi.sta.config("ssid","passwd",1)
 --wifi.sta.config("GUNPOWER03","",1)
 
 wifi.sta.connect()

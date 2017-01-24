@@ -42,24 +42,30 @@ wifi.sta.eventMonReg(wifi.STA_CONNECTING, function() print("STATION_CONNECTING")
 wifi.sta.eventMonReg(wifi.STA_WRONGPWD, function() print("STATION_WRONG_PASSWORD") end)
 wifi.sta.eventMonReg(wifi.STA_APNOTFOUND, function() print("STATION_NO_AP_FOUND") end)
 wifi.sta.eventMonReg(wifi.STA_FAIL, function() print("STATION_CONNECT_FAIL")  end)
-wifi.sta.eventMonReg(wifi.STA_GOTIP, function() print("STATION_GOT_IP") end)
+wifi.sta.eventMonReg(wifi.STA_GOTIP, function() 
+print("STATION_GOT_IP") 
+--  
+    if(app_config.autostart == true) then 
+        print('start app')
+        tmr.alarm(0,3000,tmr.ALARM_SINGLE,function()
+            start_Udp2Uart(app_config.remote.ip,app_config.remote.port,app_config.parser,app_config.safe_delay,app_config.uart_alt)
+        end)
+    end
+end)
 wifi.sta.eventMonStart()
-
-
 
 http_server = BeaconHttpServer({
     callback = function(json_obj)
         --http://192.168.9.14/json?data={"fn":"getip"}
         if(json_obj.fn == 'getip') then local temp = {result='ok',ip=wifi.sta.getip() } local str_res = cjson.encode(temp) return str_res
-        elseif(json_obj.fn=='start') then start_Udp2Uart(app_config.remote.ip,app_config.remote.port)
-        elseif(json_obj.fn=='stop') then uart.setup(0,app_config.baud,8,0,1,1) uart.on("data")
+        elseif(json_obj.fn=='start') then start_Udp2Uart(app_config.remote.ip,app_config.remote.port,app_config.parser,app_config.safe_delay,app_config.uart_alt)
+        elseif(json_obj.fn=='stop') then uart.setup(0,app_config.baud,8,0,1,1)uart.on("data")uart.alt(0)
         end
 
     end
 })
 http_server.startup();
 
-print('start udbee version : 0.0.2')
-if(app_config.autostart == true) then start_Udp2Uart(app_config.remote.ip,app_config.remote.port,app_config.parser,app_config.safe_delay) end
+print('start udbee version : 0.1.1')
 
 

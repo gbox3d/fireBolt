@@ -1,7 +1,7 @@
 wifi.setmode(wifi.STATION)
 cfg = {ip = "192.168.9.20",netmask = "255.255.255.0",gateway="192.168.9.1"}
 wifi.sta.setip(cfg)
-wifi.sta.config("RD2GUNPOWER","808671004",1)
+wifi.sta.config("test","12345678",1)
 
 print("it is http exam 1")
 
@@ -25,3 +25,4 @@ srv:listen(80,function(conn)
         --tmr.alarm(0,10,0,function() conn:send("whats up?") conn:close() end)
     end)
 end)
+
