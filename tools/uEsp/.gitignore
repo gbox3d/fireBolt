@@ -60,3 +60,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+/config
+/out
+/lua_script
