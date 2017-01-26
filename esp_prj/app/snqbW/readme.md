@@ -24,9 +24,6 @@ config.json에 현재설정 정보를 저장합니다. 그리고 이것은 수�
 packet_dic["new packet name"] = function(packet) .. 처리내용 ..  end 
 ```
 
-"stat" app_status 객체를 json형식으로 요청한 측에 넘겨 줍니다.
-app_status 는 마치 상태 레지스터와 같은 역활을 합니다.
-
 
 boot_status는 status.json에 저장됩니다.
 boot_status.process 는 부트 초기에는 "startup" 입니다.
@@ -42,6 +39,15 @@ saveStatus()
 
 ext.lua 는 확장을 위한 루아 파일입니다.
 지속적으로 추가를 원하는 기능은 여기에 코드를 써줍니다
+
+# 유용한 전역변수
+
+last_nt_tick : 마지막 네트웍 응답시간을 얻는다.
+
+rt : 리턴값만들기용 전역 변수
+
+네트웍응답 지연시간을 다음과 같이 얻을수있다.
+tmr.now()-last_nt_tick
 
 
 
