@@ -33,7 +33,7 @@ public class mainObject : MonoBehaviour
 	Subject<JsonData> m_OnPacketReceive;
 	Dictionary<int,Subject<JsonData>> m_dicOnRsPacketReceive = new Dictionary<int,Subject<JsonData>> ();
 
-	static string m_strVersion = "0.0.2";
+	static string m_strVersion = "0.0.3";
 
 	#if UNITY_STANDALONE_OSX
 	static string m_basePath = "../";
@@ -41,7 +41,7 @@ public class mainObject : MonoBehaviour
 	static string m_basePath = "./";
 	#endif
 
-	static string m_configFileName = "config.uesp.json";
+	//static string m_configFileName = "config.uesp.json";
 
 	static string m_configDirPath = m_basePath + "config";
 	static string m_configFilePath = m_configDirPath + "/config.uesp.json";
@@ -546,7 +546,7 @@ public class mainObject : MonoBehaviour
 			m_OnPacketReceive.Subscribe (_ => {
 
 				try {
-					output_log(_.ToJson ());
+					output_log (_.ToJson ());
 
 					JsonData jsonObj = JsonMapper.ToObject (_ ["receivedMsg"].ToString ());
 					Subject<JsonData> stream;
@@ -574,6 +574,18 @@ public class mainObject : MonoBehaviour
 		}
 	}
 
+	void save_configdata (JsonData config_data)
+	{
+		config_data ["remote_ip"] = m_strIp;
+		config_data ["port"] ["BroadCast"] = m_nBcPort;
+		config_data ["port"] ["Data"] = m_nDataPort;
+
+		m_remoteEndPoint = new IPEndPoint (IPAddress.Parse (m_strIp), m_nDataPort);
+
+		string strDat = config_data.ToJson ();
+		myFileUtils.writeStringToFile (strDat, m_configFilePath);
+	}
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -595,7 +607,8 @@ public class mainObject : MonoBehaviour
 				output_log (e.ToString ());
 			}
 
-		} else {
+		} 
+		else {
 
 			output_log ("can not found config file");
 			
@@ -642,8 +655,14 @@ public class mainObject : MonoBehaviour
 		m_TextLog.text += myFileUtils.pathForDocumentsFile ("./") + "\n";
 
 		transform.FindChild ("target_ip/InputField").GetComponent<InputField> ().text = m_strIp;
+		transform.FindChild ("target_ip/InputField").GetComponent<InputField> ().OnValueChangedAsObservable ().Subscribe (_ => {
+			m_strIp = _;
+		});
+
 		transform.FindChild ("input_port/InputField_bc").GetComponent<InputField> ().text = m_nBcPort.ToString ();
 		transform.FindChild ("input_port/InputField_data").GetComponent<InputField> ().text = m_nDataPort.ToString ();
+
+
 
 		//macro buttons
 		for (int i = 0; i < m_btnMacros.Length; i++) {
@@ -669,12 +688,9 @@ public class mainObject : MonoBehaviour
 
 		m_btnAdd_ResposeCode.GetComponent<Button> ().OnClickAsObservable ().Subscribe (_ => {
 
-			m_inputfieldCode.text += "\n rt ={type=\"rs\",id=0} " + 
-				"udp_safe_sender(cjson.encode(rt),"+ m_nDataPort +",\"" + Network.player.ipAddress +"\") \n";
+			m_inputfieldCode.text += "\n rt ={type=\"rs\",id=0} " +
+			"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + ",\"" + Network.player.ipAddress + "\") \n";
 		});
-
-
-		
 
 		m_btnLoad.onClick.AsObservable ().Subscribe ((obj) => {
 				
@@ -864,21 +880,16 @@ public class mainObject : MonoBehaviour
 			m_TextLog.text = "";
 		});
 
+		//ip selected 
 		m_btnSelectIp.OnClickAsObservable ()
 				 .Subscribe ((obj) => {
 				
 			GameObject dlgobj = Instantiate (m_prefeb_dlgScanDevice, transform);			
 			dlgobj.GetComponent<Dlg_scanDevice> ().init (m_nBcPort);
 			dlgobj.GetComponent<Dlg_scanDevice> ().m_OnSelectStream.Subscribe (_ => {
-				Debug.Log (_.m_strIP);
-				config_data ["remote_ip"] = m_strIp = transform.FindChild ("target_ip/InputField").GetComponent<InputField> ().text = _.m_strIP;
-				config_data ["port"] ["BroadCast"] = m_nBcPort;
-				config_data ["port"] ["Data"] = m_nDataPort;
-
-				m_remoteEndPoint = new IPEndPoint (IPAddress.Parse (m_strIp), m_nDataPort);
-
-				string strDat = config_data.ToJson ();
-				myFileUtils.writeStringToFile (strDat, m_configFilePath);
+				//Debug.Log (_.m_strIP);
+				transform.FindChild ("target_ip/InputField").GetComponent<InputField> ().text = _.m_strIP;
+				save_configdata (config_data);
 
 			});
 
@@ -890,6 +901,7 @@ public class mainObject : MonoBehaviour
 				 .Subscribe ((obj) => {
 			m_nDataPort = int.Parse (transform.FindChild ("input_port/InputField_data").GetComponent<InputField> ().text);
 			m_nBcPort = int.Parse (transform.FindChild ("input_port/InputField_bc").GetComponent<InputField> ().text);
+			save_configdata (config_data);
 
 			try {
 				mUdpClient.Close ();				
