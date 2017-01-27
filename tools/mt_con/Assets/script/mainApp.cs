@@ -50,7 +50,8 @@ public class mainApp : MonoBehaviour
 {
 
 
-	private int m_nPort = 1999;
+	private int m_nBCPort = 1999;
+	private int m_nDataPort = 2012;
 	private static UdpClient myClient;
 	private bool isAppQuitting;
 	public IObservable<UdpState> _udpSequence;
@@ -97,7 +98,7 @@ public class mainApp : MonoBehaviour
 			Debug.Log(string.Format("_udpSequence thread : {0}", Thread.CurrentThread.ManagedThreadId));
 			try
 			{
-				myClient = new UdpClient(m_nPort);
+				myClient = new UdpClient(m_nBCPort);
 			}
 			catch (SocketException ex)
 			{
@@ -193,7 +194,7 @@ public class mainApp : MonoBehaviour
 							{
 								Debug.Log("hit " + item.transform.FindChild("Text").GetComponent<Text>().text);
 								item.transform.FindChild("Panel").GetComponent<Image>().color = Color.red;
-								m_remoteEndPoint = new IPEndPoint(IPAddress.Parse(key), m_nPort);
+								m_remoteEndPoint = new IPEndPoint(IPAddress.Parse(key), m_nDataPort);
 								//sendMsg("lf_mt(256)");
 								break;
 							}
