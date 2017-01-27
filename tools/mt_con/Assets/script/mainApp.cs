@@ -226,7 +226,7 @@ public class mainApp : MonoBehaviour
 				//sendMsg("lf_mt("+m_Slider_left.GetComponent<slideControl>().m_fGraderValue+")");
 			}
 			else {
-					Debug.Log(left_val + "," + right_val);
+					//Debug.Log(left_val + "," + right_val);
 			}
 			
 		});
