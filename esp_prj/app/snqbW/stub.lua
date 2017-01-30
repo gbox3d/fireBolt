@@ -74,9 +74,11 @@ function system_start_up()
         setupAP()
         if boot_status.process == "stub_check" then
             boot_status.process = 'APOK'
+            boot_status.mode = 'check'
             save_BootStatus();
         else
             boot_status.process = 'APOK'
+            boot_status.mode = 'normal'
             save_BootStatus();
             ext_main(1000);
         end
@@ -93,15 +95,23 @@ function system_start_up()
                     else
                         print("static ip mode")
                     end
+                    
                     startup()
+                    
                     if boot_status.process == "stub_check" then
                         boot_status.process = 'STOK'
+                        boot_status.mode = 'check'
                         save_BootStatus();
+                        
                     else
                         boot_status.process = 'STOK'
+                        boot_status.mode = 'normal'
                         save_BootStatus();
                         ext_main(1000);
                     end
+
+                    print("mode:"..boot_status.mode)
+                    
 
                 elseif evt ==  wifi.STA_FAIL or
                         evt ==  wifi.STA_APNOTFOUND or
