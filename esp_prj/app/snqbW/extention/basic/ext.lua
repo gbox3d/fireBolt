@@ -9,7 +9,7 @@ local __doit = function()
     tmr.create():alarm(1000,tmr.ALARM_AUTO,function () 
     app_config.latancy = (tmr.now()-last_nt_tick) 
     if app_config.latancy <0 then app_config.latancy=0 last_nt_tick =tmr.now() end
-    print(app_config.latancy )
+    --print(app_config.latancy )
     if app_config.latancy > 500000 then
         gpio.write(0,1)
     else
