@@ -24,24 +24,37 @@ config.json에 현재설정 정보를 저장합니다. 그리고 이것은 수�
 packet_dic["new packet name"] = function(packet) .. 처리내용 ..  end 
 ```
 
-"stat" app_status 객체를 json형식으로 요청한 측에 넘겨 줍니다.
-app_status 는 마치 상태 레지스터와 같은 역활을 합니다.
-
 
 boot_status는 status.json에 저장됩니다.
 boot_status.process 는 부트 초기에는 "startup" 입니다.
 성공적으로 부트가 완료되면 APOK,STOK 둘중 하나가 되고 status.json에 저장합니다.
+boot_status.mode 는 normal 이 됩니다.
 
 현재의 부트상태를 저장하고 싶다면 다음과 같이 합니다.
 boot_status.process = "현재상태"
 saveStatus()
 
-만약 부팅시 이전 종료 직전 상태가 startup 상태이면 부팅을 멈추고 nook로 상태를 바꾸어 저장합니다.
-그래서 잘못된 코드가 반복적으로 호출되지않도록 합니다.
-이전 상태가 startup 이 아니라면 정상 동작을 수행합니다
+잘못된 코드가 반복적으로 호출되지 않도록 하기 위하여 boot_status.process값에 따라서 부팅과정을 조절합니다.
+루아펌로딩후 boot_status.process 가 startup 상태이면 부팅을 멈추고 nook로 상태를 바꾸어 저장합니다.
+check_stub( boot_status.mode 는 check) 이면 ext_main 함수(ext.lua) 콜을 유보합니다.(네트웍 기능은 정상작동)
+
+STOK,APOK 이면 정상 동작을 수행합니다.
+
+현재상태가 정상동작 상태(normal)인지 체크부트(check) 상태인지 알아보기 위해서는 다음과 같은 코드로 확인합니다.
+rt ={type="rs",id=0,run_mode=boot_status.mode} udp_safe_sender(cjson.encode(rt),2012,"192.168.10.107") 
+
 
 ext.lua 는 확장을 위한 루아 파일입니다.
 지속적으로 추가를 원하는 기능은 여기에 코드를 써줍니다
+
+# 유용한 전역변수
+
+last_nt_tick : 마지막 네트웍 응답시간을 얻는다.
+
+rt : 리턴값만들기용 전역 변수
+
+네트웍응답 지연시간을 다음과 같이 얻을수있다.
+tmr.now()-last_nt_tick
 
 
 

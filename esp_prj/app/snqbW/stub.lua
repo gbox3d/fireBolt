@@ -1,5 +1,5 @@
 majorVer, minorVer, devVer, chipid, flashid, flashsize, flashmode, flashspeed = node.info()
-lua_botloader_version = "1.1.0"
+lua_botloader_version = "1.1.1"
 print("\nfind init.lua now startup lua bootloader " .. lua_botloader_version)
 
 
@@ -69,14 +69,20 @@ function system_start_up()
 
     end
 
+-- wifi mode setup
     if app_config.apmode then
         setupAP()
-        --startUdpCast();
-        boot_status.process = 'APOK'
-        save_BootStatus();
-        ext_main(1000);
+        if boot_status.process == "stub_check" then
+            boot_status.process = 'APOK'
+            boot_status.mode = 'check'
+            save_BootStatus();
+        else
+            boot_status.process = 'APOK'
+            boot_status.mode = 'normal'
+            save_BootStatus();
+            ext_main(1000);
+        end
     else
-
         setupSTA(
             function(evt)
                 if evt ==  wifi.STA_GOTIP then
@@ -84,13 +90,28 @@ function system_start_up()
                     print(wifi.sta.getip());
                     local strip = wifi.sta.getip();
                     --print(strip)
-                    if app_config.dhcp then print("dhcp mode")app_config.ip = {string.match(strip,"(%d+).(%d+).(%d+).(%d+)" )} end
+                    if app_config.dhcp then 
+                        print("dhcp mode")app_config.ip = {string.match(strip,"(%d+).(%d+).(%d+).(%d+)" )} 
+                    else
+                        print("static ip mode")
+                    end
+                    
                     startup()
-                    --startUdpCast();
-                    boot_status.process = 'STOK'
-                    save_BootStatus();
-                    --print("master ip:" .. app_config.master_ip)
-                    ext_main(1000);
+                    
+                    if boot_status.process == "stub_check" then
+                        boot_status.process = 'STOK'
+                        boot_status.mode = 'check'
+                        save_BootStatus();
+                        
+                    else
+                        boot_status.process = 'STOK'
+                        boot_status.mode = 'normal'
+                        save_BootStatus();
+                        ext_main(1000);
+                    end
+
+                    print("mode:"..boot_status.mode)
+                    
 
                 elseif evt ==  wifi.STA_FAIL or
                         evt ==  wifi.STA_APNOTFOUND or

@@ -1,5 +1,5 @@
 app_version='0.0.2a'
-app_status = {fsm=0};
+app_status = {fsm=0}; -- manage runtime values & flags
 
 timerid_Udpcaster = tmr.create();
 network_latency = 0;
