@@ -9,7 +9,7 @@ snqbW 는 nodemcu 가지고 만든 network bootloader 입니다.<br>
 config.lua 에는 기본 설정 정보가 들어가며 수정할 수 없습니다.<br>
 대신에, config.json에 현재설정 정보를 저장합니다. 그리고 이것은 수정가능합니다.
 
-기본으로 제공되는 패킷은 "eval", "stat" 입니다.
+기본으로 제공되는 패킷은 "eval" 입니다.
 
 형식은 다음과 같습니다.
 
@@ -28,7 +28,7 @@ packet_dic["new packet name"] = function(packet) .. 처리내용 ..  end
 boot_status는 status.json에 저장됩니다.<br>
 boot_status.process 는 부트 초기에는 "startup" 입니다.<br>
 성공적으로 부트가 완료되면 APOK,STOK 둘중 하나가 되고 status.json에 저장합니다.<br>
-boot_status.mode 는 normal 이 됩니다.
+boot_status.mode 는 "normal" 이 됩니다.
 
 현재의 부트상태를 저장하고 싶다면 다음과 같이 합니다.
 
@@ -38,12 +38,13 @@ saveStatus()
 ```
 
 잘못된 코드가 반복적으로 호출되지 않도록 하기 위하여 boot_status.process값에 따라서 부팅과정을 조절합니다.<br>
-루아펌로딩후 boot_status.process 가 startup 상태이면 부팅을 멈추고 nook로 상태를 바꾸어 저장합니다.<br>
+루아펌로딩후 boot_status.process 가 "startup" 상태이면 부팅을 멈추고 nook로 상태를 바꾸어 저장합니다.<br>
 check_stub( boot_status.mode 는 check) 이면 ext_main 함수(ext.lua) 콜을 유보합니다.(네트웍 기능은 정상작동)<br>
 
 STOK,APOK 이면 정상 동작을 수행합니다.
 
-현재상태가 정상동작 상태(normal)인지 체크부트(check) 상태인지 알아보기 위해서는 다음과 같은 코드로 확인합니다.
+실행모드를 확인하기 위해서는 boot_status.mode 값을  확인합니다.<br>
+정상동작 상태(normal)인지 체크부트(check) 상태인지 알아보기 위해서는 다음과 같은 코드로 확인합니다.
 
 ```
 rt ={type="rs",id=0,run_mode=boot_status.mode} 
