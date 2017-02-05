@@ -85,7 +85,7 @@ public class slideControl : MonoBehaviour
 			});
 		}
 
-				#elif
+				#else
 
 		//mouse
 		{
