@@ -22,8 +22,8 @@ end)
 wifi.sta.eventMonStart()
 
 wifi.setmode(wifi.STATION)
---wifi.sta.config("myssid","mypasswd")
-wifi.sta.config("RD2GUNPOWER","808671004")
+wifi.sta.config("myssid","mypasswd")
+
 wifi.sta.connect()
 
 test_str = "123456789abcd";
