@@ -1,87 +1,78 @@
---dofile("tcp_safe_sender.lua")
---dofile("packet.lua")
-app_version='1.1.0'
-app_status={}
+app_version='0.0.2a'
+app_status = {fsm=0}; -- manage runtime values & flags
 
-timerid_Udpcaster = 0;
-last_recv_Tick = tmr.now();
---timerid_UartChecker = 1;
-
---udp_work_socket = net.createConnection(net.UDP)
-udp_server =net.createServer(net.UDP)
-
-
-packet_dic = {
-    default = function() local rt = {result = 'nocmd'} udp_server:send(cjson.encode(rt))  end
-}
-
-packet_dic["eval"] = function(packet) loadstring(packet.code)() end
-packet_dic["stat"] = function(packet) local rt = {result = "ok",sta=app_status,ip=app_config.ip} udp_server:send(cjson.encode(rt)) end
-
-function udp_safe_sender(data)
-    udp_server:send(data)
-end
+timerid_Udpcaster = tmr.create();
+network_latency = 0;
+last_nt_tick = tmr.now();
 
 function startup()
 
-    print("start application..")
-    
-    function processRecv(s,c)
-        last_recv_Tick = tmr.now();
-        --print(c)
-        local packet = cjson.decode(c)
-        --local rt = {result = 'ok',id = 0,ip=app_config.ip} if packet.id then rt.id = packet.id end
+    print("App version " .. app_version .. " start..")
 
-        if packet_dic[packet.cmd] ~= nil then
-            packet_dic[packet.cmd](packet)
-        else
-            print("unknown packet")
-            print(c)
-            local rt = {result="nocmd"} udp_server:send(cjson.encode(rt))
-            --rt.result='nocmd'
-        end
-
-    --[[
-        --print(packet.cmd)
-        if packet.cmd == 'ping' then  rt.mac=wifi.sta.getmac()
-        --elseif packet.cmd == 'save' then file.open(packet.name, 'w') file.write(packet.content) file.close()
-        --elseif packet.cmd == 'load' then if file.exists(packet.name) then file.open(packet.name, 'r') rt.data = file.read() file.close() end
-        elseif packet.cmd == 'eval' then loadstring(packet.code)()
-        else rt.result='nocmd'
-        end
-    ]]
-        --udp_work_socket:send(cjson.encode(rt))
-    end 
-    udp_server:on("receive",processRecv)
-    udp_server:listen(app_config.bc_port)
-    print("udp listen at " .. app_config.bc_port)
+    master_socket = net.createUDPSocket()
 
     local ip = app_config.ip;
-    local broad_ip = ip[1] .. ".".. ip[2].."." ..ip[3] .. ".255"
-    print("udp broadcast at " .. broad_ip ..":" .. app_config.bc_port)
-    local broadcast_socket = net.createConnection(net.UDP)
-    broadcast_socket:connect(app_config.bc_port, broad_ip)
-    --broadcast_socket:connect(31486, "192.168.9.3")
-    --udp_safe_sender = AsyncTCPSender_Safe({getsocket = function() return broadcast_socket end,delay=25})
+    local broad_ip = ip[1] .. ".".. ip[2].."." ..ip[3] .. ".255" 
+    
+    print("broad cast : " .. broad_ip .. "," .. app_config.bc_port)
 
-    startUdpCast = function()
-        tmr.alarm(timerid_Udpcaster,2000,tmr.ALARM_AUTO,function()
-            local data={sk=1,did=0,cid=chipid,rt,type="bc",aps=app_status,ip=app_config.ip}
-            broadcast_socket:send(cjson.encode(data))
-            --print('send ok..and ' .. node.heap() )
-        end)
+    udp_safe_sender = AsyncSender_Safe_udp({getsocket = function() return master_socket end})
+    --udp_safe_sender = function(port,ip,data) master_socket:send(ip,port,data) end
+
+    packet_dic = {
+        default = function() local rt = {result = 'nocmd'} udp_server:send(cjson.encode(rt))  end
+    }
+
+    packet_dic["eval"] = function(packet) 
+        local _f=loadstring(packet.code) 
+        if(_f) then _f() 
+        else 
+            print("script err " .. packet.code) 
+        end 
+    end    
+
+    function processRecv(s,c,_port,_ip)
+        last_nt_tick = tmr.now()        
+        print(_ip .. "," .. _port)
+        if c:byte(1,1) == 123 then -- check '{}'
+            local packet = cjson.decode(c)
+            --print(c)
+            if packet.cmd ~= nil then
+                if packet_dic[packet.cmd] ~= nil then
+                    packet_dic[packet.cmd](packet)
+                else
+                    print("unknown packet")
+                    --print(c)
+                    --local rt = {result="nocmd"} udp_server:send(cjson.encode(rt))
+                end
+            end
+
+        end 
+
+    end
+    master_socket:on("receive",processRecv)
+    master_socket:listen(app_config.data_port)
+
+    startUdpCast = function()    
+        --tmr.alarm(timerid_Udpcaster,app_config.cast_delay,tmr.ALARM_AUTO,
+        print("cast delay :" .. app_config.cast_delay)
+        timerid_Udpcaster:alarm(app_config.cast_delay,tmr.ALARM_AUTO,
+            function()
+                local delta = tmr.now() - last_nt_tick
+                --print(delta)
+                --if delta < 0 then delta = delta + 2147483647 end -- proposed because of delta rolling over, https://github.com/hackhitchin/esp8266-co-uk/issues/2
+                if delta < 0 then delta = 0 last_nt_tick = tmr.now() end
+                network_latency = delta;
+                if(network_latency > 5000000) then -- delay over 5 sec then wakeup broadcasting
+                    master_socket:send(app_config.bc_port,broad_ip,cjson.encode({sk=1,did=0,cid=chipid,type="bc",aps=app_status}))
+                    --master_socket:send(cjson.encode({sk=1,did=0,cid=chipid,type="bc",aps=app_status}))
+                end
+            end)
     end
 
-    stopUdpCast = function()tmr.stop(timerid_Udpcaster) end
-
-    --startUdpCast();
-    
-
+    stopUdpCast = function() timerid_Udpcaster:stop() end
+    startUdpCast();    
 end
-
-
-print("App version " .. app_version)
-
 
 
 

@@ -1,6 +1,6 @@
 majorVer, minorVer, devVer, chipid, flashid, flashsize, flashmode, flashspeed = node.info()
-lua_botloader_version = "1.1.1"
-print("\nfind init.lua now startup lua bootloader " .. lua_botloader_version)
+--lua_botloader_version = "1.1.1"
+--print("\nfind init.lua now startup lua bootloader " .. lua_botloader_version)
 
 
 

@@ -1,4 +1,5 @@
 --it's' need lua for sdk 2.xx
+--[[
 dofile('udp_safe_sender.lua')
 dofile('stub.lua')
 dofile('app.lua')
@@ -36,3 +37,7 @@ end
 
 
 
+]]--
+
+gpio.mode(0,1)gpio.write(0,0)
+dofile("boot.lua")
