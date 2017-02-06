@@ -1,4 +1,5 @@
-dofile('async_safe_sender.lua')
+dofile('tcp_safe_sender.lua')
+dofile('udp_safe_sender.lua')
 
 
 wifi.setphymode(wifi.PHYMODE_B)
@@ -21,20 +22,22 @@ end)
 wifi.sta.eventMonStart()
 
 wifi.setmode(wifi.STATION)
-wifi.sta.config("myssid","mypasswd")
+--wifi.sta.config("myssid","mypasswd")
+wifi.sta.config("RD2GUNPOWER","808671004")
 wifi.sta.connect()
 
 test_str = "123456789abcd";
 test_ip = "192.168.9.3"
 
 
+--[[
+
+function udpTest()
+
 
 local udp_listener = net.createServer(net.UDP)
 udp_listener:on("receive",function(cu,c) print('recv : ' .. c) end)
 udp_listener:listen(1471)
-
-
-function udpTest()
 
     local udp_conn =net.createConnection(net.UDP)
     -- 첫번째 인자는 원격지의 포트번호이다.
@@ -50,15 +53,27 @@ function udpTest()
 
 
 end
+--]]
 
-function udpTest2()
-    local udp_conn =net.createConnection(net.UDP)
-    -- 첫번째 인자는 원격지의 포트번호이다.
-    udp_conn:connect(1471,test_ip)
-    local safe_sender_2 = AsyncSender_Safe_cs( {getsocket = function() return udp_conn end,delay=50} )
+udp_socket = net.createUDPSocket()
+udp_socket:listen(1471)
+udp_socket:on("receive",function(s,data,port,ip) 
+    print(string.format("data %s from %s,%d",data,ip,port))
+end)
+safe_sender = AsyncSender_Safe_udp( {getsocket = function() return udp_socket end} )
+safe_sender_cs = AsyncSender_Safe_udp_cs( {getsocket = function() return udp_socket end,delay=5} )
+
+function udpTest()    
     test_str:gsub(".", function(code)
         --udp_conn:send(code);
-        safe_sender_2(code)
+        safe_sender(1471,test_ip,code)
+    end)
+end
+
+function udpTest2()    
+    test_str:gsub(".", function(code)
+        --udp_conn:send(code);
+        safe_sender_cs(1471,test_ip,code)
     end)
 end
 
