@@ -34,11 +34,11 @@ public class Dlg_scanDevice : MonoBehaviour
 			//RectTransform[] items = m_listObj.GetComponentsInChildren<RectTransform>();
 
 			string strName = "item_" + jsnDat["ip"].ToJson();
-			if (m_listObj.transform.FindChild(strName) == null)
+			if (m_listObj.transform.Find(strName) == null)
 			{
 				GameObject itemObj = UnityEngine.Object.Instantiate(m_prefeb_ListItem) as GameObject;
 				itemObj.name = strName;
-				itemObj.transform.FindChild("Text").GetComponent<Text>().text = jsnDat["ip"].ToString();
+				itemObj.transform.Find("Text").GetComponent<Text>().text = jsnDat["ip"].ToString();
 				itemObj.transform.SetParent(m_listObj.transform);
 				itemObj.transform.localPosition = new Vector3((568 / 2), 0 - m_listObj.transform.childCount * 36, 0);
 				itemObj.GetComponent<device_item>().m_strIP = jsnDat["ip"].ToString();
@@ -207,7 +207,7 @@ public class Dlg_scanDevice : MonoBehaviour
 	{
 
 		m_prefeb_ListItem = Resources.Load("prefeb/device_item", typeof(GameObject)) as GameObject;
-		m_listObj = transform.FindChild("device_list/Viewport/Content").gameObject;
+		m_listObj = transform.Find("device_list/Viewport/Content").gameObject;
 
 		/*
 		Transform container = transform.FindChild("device_list/Viewport/Content");
@@ -220,7 +220,7 @@ public class Dlg_scanDevice : MonoBehaviour
 		*/
 
 
-		transform.FindChild("Button_cancel").GetComponent<Button>().OnClickAsObservable()
+		transform.Find("Button_cancel").GetComponent<Button>().OnClickAsObservable()
 				 .Subscribe((obj) =>
 				 {
 					 //gameObject.SetActive(false);

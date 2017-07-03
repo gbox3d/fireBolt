@@ -33,7 +33,7 @@ public class mainObject : MonoBehaviour
 	Subject<JsonData> m_OnPacketReceive;
 	Dictionary<int,Subject<JsonData>> m_dicOnRsPacketReceive = new Dictionary<int,Subject<JsonData>> ();
 
-	static string m_strVersion = "0.0.3";
+	static string m_strVersion = "0.0.3a";
 
 	#if UNITY_STANDALONE_OSX
 	static string m_basePath = "../";
@@ -169,7 +169,7 @@ public class mainObject : MonoBehaviour
 		int div_size = 16;
 
 		string strTemp = upload_data;
-		m_strIp = transform.FindChild ("target_ip/InputField").GetComponent<InputField> ().text;
+		m_strIp = transform.Find ("target_ip/InputField").GetComponent<InputField> ().text;
 
 		IDisposable update_stream = null;
 		update_stream = this.UpdateAsObservable ().Subscribe ((__) => {
@@ -619,7 +619,7 @@ public class mainObject : MonoBehaviour
 			config_data ["remote_ip"] = "192.168.9.9";
 			config_data ["macro"] = new JsonData ();
 			config_data ["macro"] = JsonMapper.ToObject (
-				@"[ ""udp_safe_sender(cjson.encode(rt),port,local_ip)"" " +
+				@"[ ""node.restart()"" " +
 				@",""""]");
 
 			m_GlobalAlertDlg.GetComponent<com_gunpower_ui.AlertDlgBox> ().show ("info", "file not found", "ok", () => {
@@ -654,17 +654,18 @@ public class mainObject : MonoBehaviour
 		m_TextLog.text += "local ip : " + Network.player.ipAddress + "\n";
 		m_TextLog.text += myFileUtils.pathForDocumentsFile ("./") + "\n";
 
-		transform.FindChild ("target_ip/InputField").GetComponent<InputField> ().text = m_strIp;
-		transform.FindChild ("target_ip/InputField").GetComponent<InputField> ().OnValueChangedAsObservable ().Subscribe (_ => {
+		transform.Find ("target_ip/InputField").GetComponent<InputField> ().text = m_strIp;
+		transform.Find ("target_ip/InputField").GetComponent<InputField> ().OnValueChangedAsObservable ().Subscribe (_ => {
 			m_strIp = _;
 		});
 
-		transform.FindChild ("input_port/InputField_bc").GetComponent<InputField> ().text = m_nBcPort.ToString ();
-		transform.FindChild ("input_port/InputField_data").GetComponent<InputField> ().text = m_nDataPort.ToString ();
+		transform.Find ("input_port/InputField_bc").GetComponent<InputField> ().text = m_nBcPort.ToString ();
+		transform.Find ("input_port/InputField_data").GetComponent<InputField> ().text = m_nDataPort.ToString ();
 
 
 
 		//macro buttons
+		//Button_1 Button_2 에 대한 처리 
 		for (int i = 0; i < m_btnMacros.Length; i++) {
 
 			string strCode = config_data ["macro"] [i].ToString ();
@@ -888,7 +889,7 @@ public class mainObject : MonoBehaviour
 			dlgobj.GetComponent<Dlg_scanDevice> ().init (m_nBcPort);
 			dlgobj.GetComponent<Dlg_scanDevice> ().m_OnSelectStream.Subscribe (_ => {
 				//Debug.Log (_.m_strIP);
-				transform.FindChild ("target_ip/InputField").GetComponent<InputField> ().text = _.m_strIP;
+				transform.Find ("target_ip/InputField").GetComponent<InputField> ().text = _.m_strIP;
 				save_configdata (config_data);
 
 			});
@@ -899,8 +900,8 @@ public class mainObject : MonoBehaviour
 		//transform.FindChild ("input_port/Button").GetComponent<Button> ().OnClickAsObservable ()
 		m_btnPortSetup.OnClickAsObservable ()
 				 .Subscribe ((obj) => {
-			m_nDataPort = int.Parse (transform.FindChild ("input_port/InputField_data").GetComponent<InputField> ().text);
-			m_nBcPort = int.Parse (transform.FindChild ("input_port/InputField_bc").GetComponent<InputField> ().text);
+			m_nDataPort = int.Parse (transform.Find ("input_port/InputField_data").GetComponent<InputField> ().text);
+			m_nBcPort = int.Parse (transform.Find ("input_port/InputField_bc").GetComponent<InputField> ().text);
 			save_configdata (config_data);
 
 			try {
