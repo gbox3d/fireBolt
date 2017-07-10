@@ -38,7 +38,7 @@ namespace com_gunpower_ui
 		public void show (string title, string strVal, dg_CallBack callback,bool isReUse=false)
 		{
 			transform.localPosition = new Vector3 (0, 0, 0);
-			m_header.transform.FindChild ("Text").GetComponent<Text> ().text = title;
+			m_header.transform.Find ("Text").GetComponent<Text> ().text = title;
 			m_Input.GetComponent<InputField> ().text = strVal;
 			m_CallbackBtn = callback;
 			m_reUse = isReUse;
@@ -63,7 +63,7 @@ namespace com_gunpower_ui
 
 			m_btnOk.OnClickAsObservable ().Subscribe ((obj) => {
 
-				string strTemp = m_Input.transform.FindChild ("Text").GetComponent<Text> ().text;
+				string strTemp = m_Input.transform.Find ("Text").GetComponent<Text> ().text;
 
 				if (strTemp.Length > 0) {
 					JsonData json_obj = new JsonData();

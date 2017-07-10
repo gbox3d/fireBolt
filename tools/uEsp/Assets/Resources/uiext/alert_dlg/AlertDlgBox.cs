@@ -37,9 +37,9 @@ namespace com_gunpower_ui
 		{
 			m_reUse = reuse;
 			transform.localPosition = new Vector3 (0, 0, 0);
-			transform.FindChild ("header/Text").GetComponent<Text> ().text = title;
-			transform.FindChild ("body/Text").GetComponent<Text> ().text = msg;
-			transform.FindChild ("body/Button/Text").GetComponent<Text> ().text = btn_text;
+			transform.Find ("header/Text").GetComponent<Text> ().text = title;
+			transform.Find ("body/Text").GetComponent<Text> ().text = msg;
+			transform.Find ("body/Button/Text").GetComponent<Text> ().text = btn_text;
 
 			m_CallbackBtn = callback;
 

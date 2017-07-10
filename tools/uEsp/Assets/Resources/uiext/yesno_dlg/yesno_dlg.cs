@@ -25,8 +25,8 @@ public class yesno_dlg : MonoBehaviour {
 	public void show(string title, string msg, dg_CallBack callback)
 	{
 		transform.localPosition = new Vector3(0, 0, 0);
-		transform.FindChild("header/Text").GetComponent<Text>().text = title;
-		transform.FindChild("body/Text").GetComponent<Text>().text = msg;
+		transform.Find("header/Text").GetComponent<Text>().text = title;
+		transform.Find("body/Text").GetComponent<Text>().text = msg;
 		//transform.FindChild("body/Button/Text").GetComponent<Text>().text = btn_text;
 
 		m_CallbackBtn = callback;
@@ -46,13 +46,13 @@ public class yesno_dlg : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-		transform.FindChild("body/Button_yes").GetComponent<Button>().OnClickAsObservable().Subscribe((obj) => 
+		transform.Find("body/Button_yes").GetComponent<Button>().OnClickAsObservable().Subscribe((obj) => 
 		{
 			m_CallbackBtn(true);
 			close();
 		});
 
-		transform.FindChild("body/Button_no").GetComponent<Button>().OnClickAsObservable().Subscribe((obj) =>
+		transform.Find("body/Button_no").GetComponent<Button>().OnClickAsObservable().Subscribe((obj) =>
 		{
 			m_CallbackBtn(false);
 			close();
