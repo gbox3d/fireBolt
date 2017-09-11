@@ -1,35 +1,79 @@
-# Copyright Benoit Blanchon 2014-2016
+# Copyright Benoit Blanchon 2014-2017
 # MIT License
-# 
+#
 # Arduino JSON library
-# https://github.com/bblanchon/ArduinoJson
+# https://bblanchon.github.io/ArduinoJson/
 # If you like this project, please add a star!
 
-set(GTEST_DIR ../third-party/gtest-1.7.0)
+if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
+	add_compile_options(
+		-pedantic
+		-Wall
+		-Wcast-align
+		-Wcast-qual
+		-Wconversion
+		-Wctor-dtor-privacy
+		-Wdisabled-optimization
+		-Werror
+		-Wextra
+		-Wformat=2
+		-Winit-self
+		-Wmissing-include-dirs
+		-Wnon-virtual-dtor
+		-Wold-style-cast
+		-Woverloaded-virtual
+		-Wparentheses
+		-Wredundant-decls
+		-Wshadow
+		-Wsign-promo
+		-Wstrict-aliasing
+		-Wstrict-overflow=5
+		-Wundef
+	)
 
-file(GLOB TESTS_FILES *.hpp *.cpp)
-
-include_directories(
-    ${GTEST_DIR}
-    ${GTEST_DIR}/include)
-
-add_definitions(-DGTEST_HAS_PTHREAD=0)
-
-# Workaround for Visual Studio 2012
-if (MSVC AND MSVC_VERSION EQUAL 1700)
-    add_definitions(-D_VARIADIC_MAX=10)
+	if(NOT MINGW)
+		add_compile_options(
+			-std=c++98
+		)
+	endif()
 endif()
 
-if (MSVC)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+	add_compile_options(
+		-Wstrict-null-sentinel
+	)
+
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.5)
+		add_compile_options(-Wlogical-op) # the flag exists in 4.4 but is buggy
+	endif()
+
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.6)
+		add_compile_options(-Wnoexcept)
+	endif()
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	add_compile_options(
+		-Wc++11-compat
+		-Wdeprecated-register
+	)
+endif()
+
+if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	add_compile_options(
+		/W4 # Set warning level
+		/WX # Treats all compiler warnings as errors.
+	)
 endif()
 
-add_executable(ArduinoJsonTests 
-    ${TESTS_FILES}
-    ${GTEST_DIR}/src/gtest-all.cc
-    ${GTEST_DIR}/src/gtest_main.cc)
-
-
-target_link_libraries(ArduinoJsonTests ArduinoJson)
-
-add_test(ArduinoJsonTests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ArduinoJsonTests)
+add_subdirectory(DynamicJsonBuffer)
+add_subdirectory(IntegrationTests)
+add_subdirectory(JsonArray)
+add_subdirectory(JsonBuffer)
+add_subdirectory(JsonObject)
+add_subdirectory(JsonVariant)
+add_subdirectory(JsonWriter)
+add_subdirectory(Misc)
+add_subdirectory(Polyfills)
+add_subdirectory(StaticJsonBuffer)

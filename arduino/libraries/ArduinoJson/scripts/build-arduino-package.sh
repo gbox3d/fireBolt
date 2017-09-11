@@ -12,10 +12,9 @@ rm -f $OUTPUT
 7z a $OUTPUT \
 	ArduinoJson/CHANGELOG.md \
 	ArduinoJson/examples \
-	ArduinoJson/include \
+	ArduinoJson/src \
 	ArduinoJson/keywords.txt \
 	ArduinoJson/library.properties \
 	ArduinoJson/LICENSE.md \
 	ArduinoJson/README.md \
-	ArduinoJson/src	\
-	-x!ArduinoJson/src/CMakeLists.txt
+	ArduinoJson/ArduinoJson.h
