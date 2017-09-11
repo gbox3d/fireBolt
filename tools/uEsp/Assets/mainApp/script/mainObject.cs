@@ -33,7 +33,7 @@ public class mainObject : MonoBehaviour
 	Subject<JsonData> m_OnPacketReceive;
 	Dictionary<int,Subject<JsonData>> m_dicOnRsPacketReceive = new Dictionary<int,Subject<JsonData>> ();
 
-	static string m_strVersion = "0.0.3a";
+	static string m_strVersion = "0.0.3b";
 
 	#if UNITY_STANDALONE_OSX
 	static string m_basePath = "../";
@@ -146,9 +146,8 @@ public class mainObject : MonoBehaviour
 		_udpSequence
 			.ObserveOnMainThread ()
 			.Subscribe (xs => {
-			Debug.Log (xs.ToJson ());
-
-			stream.OnNext (xs);
+				Debug.Log (xs.ToJson ());
+				stream.OnNext (xs);
 			//Text_logbox.text = xs.ToJson () + "\n" + Text_logbox.text;
 			/*
 				Debug.Log(x["receivedMsg"].ToString());
@@ -184,7 +183,7 @@ public class mainObject : MonoBehaviour
 					string strCode =
 						@"do local rt={type=""rs"",result=""ok"",id=" + packet_id + "}" +
 						@"file.open(""" + filename + @""",""w"")" +
-						@"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress +
+						@"udp_safe_sender(sjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress +
 						@""")" +
 						@"end";
 
@@ -258,8 +257,7 @@ public class mainObject : MonoBehaviour
 
 						strCode += @" do print(current_index) file.write(" + strOut + @") " +
 						@" local rt={type=""rs"",result=""ok"",id=" + packet_id + "} " +
-							//@"udp_safe_sender(cjson.encode(rt) ) " + 
-						@"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress + @""") " +
+						@"udp_safe_sender(sjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress + @""") " +
 						@" prev_index=current_index  end ";
 						Debug.Log (strCode);
 
@@ -309,7 +307,7 @@ public class mainObject : MonoBehaviour
 					string strCode = 
 						@"do local rt={type=""rs"",result=""ok"",id=" + packet_id + "} " +
 						@"file.close() " +
-						@"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress + @""") " +
+						@"udp_safe_sender(sjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress + @""") " +
 						@"end ";
 
 					JsonData jsonObj = new JsonData ();
@@ -384,7 +382,7 @@ public class mainObject : MonoBehaviour
 					string strCode =
 						@"do local rt={type=""rs"",result=""ok"",id=" + packet_id + "}" +
 						@"file.open(""" + filename + @""",""r"")" +
-						@"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress +
+						@"udp_safe_sender(sjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress +
 						@""")" +
 						@"end";
 
@@ -422,12 +420,12 @@ public class mainObject : MonoBehaviour
 				{
 					nFsm = 100;
 
-					int packet_id = "uploading script".GetHashCode ();
+					int packet_id = "downloading script".GetHashCode ();
 					//string strCode = @"current_index=" + nStartIndex;
 
 					string strCode = @" do local buf = file.read(" + div_size + ") " +
-					                 @"local rt={type=""rs"",result=""ok"",id=" + packet_id + @",d=buf} if(buf == nil) then rt.result=""eof"" end " +
-					                 @"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress + @""") " +
+						@"local rt={type=""rs"",result=""ok"",id=" + packet_id + @"}  if(buf == nil) then rt.result=""eof"" else rt.d=encoder.toBase64(buf) end " +
+						@"udp_safe_sender(sjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress + @""") " +
 					                 @"end";
 
 					Debug.Log (strCode);
@@ -462,11 +460,10 @@ public class mainObject : MonoBehaviour
 							jsonDat ["pos"] = nCurrentPos;
 
 							_Observer.OnNext (jsonDat);
-							//m_GlobalAlertDlg.GetComponent<com_gunpower_ui.AlertDlgBox>().m_textMsg.text = "uploading .." + nCurrentPos;
 
 							nCurrentPos += div_size;
 
-//							time_out.Dispose ();
+
 							nFsm = 1;
 						} else if (jsonDat ["result"].Equals ("eof")) {
 //							time_out.Dispose ();
@@ -483,7 +480,7 @@ public class mainObject : MonoBehaviour
 					string strCode = 
 						@"do local rt={type=""rs"",result=""ok"",id=" + packet_id + "} " +
 						@"file.close() " +
-						@"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress + @""") " +
+						@"udp_safe_sender(sjson.encode(rt)," + m_nDataPort + @",""" + Network.player.ipAddress + @""") " +
 						@"end ";
 
 					JsonData jsonObj = new JsonData ();
@@ -547,6 +544,7 @@ public class mainObject : MonoBehaviour
 
 				try {
 					output_log (_.ToJson ());
+					Debug.Log(_ ["receivedMsg"].ToString ());
 
 					JsonData jsonObj = JsonMapper.ToObject (_ ["receivedMsg"].ToString ());
 					Subject<JsonData> stream;
@@ -559,7 +557,7 @@ public class mainObject : MonoBehaviour
 					}
 				} catch (JsonException e) {
 					Debug.Log (e.ToString ());
-					output_log (e.ToString ());
+					//output_log (e.ToString ());
 
 				}
 
@@ -589,6 +587,24 @@ public class mainObject : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
+		/*{
+			
+			string strTemp = "{\"d\":\"gpio.mode(0,1)gpio.write(0,0)\\ndofile(\\\"boot.lua\\\")\"}";
+
+			try {
+			
+				JsonData jsonObj = JsonMapper.ToObject (strTemp);
+
+				Debug.Log (jsonObj ["d"].ToJson ());
+
+
+			} catch (JsonException e) {
+				Debug.Log (e.ToString ());
+				//output_log (e.ToString ());
+
+			}
+		}*/
+		//string strTemp = "{\"port\":2012,\"address\":\"192.168.9.1\",\"receivedMsg\":\"{\\\"id\\\":1232904074,\\\"type\\\":\\\"rs\\\",\\\"result\\\":\\\"ok\\\",\\\"d\\\":\\\"gpio.mode(0,1)gpio.write(0,0)\\\\ndofile(\\\"boot.lua\\\")\\\"}\"}";
 
 		output_log ("start up");
 
@@ -690,7 +706,7 @@ public class mainObject : MonoBehaviour
 		m_btnAdd_ResposeCode.GetComponent<Button> ().OnClickAsObservable ().Subscribe (_ => {
 
 			m_inputfieldCode.text += "\n rt ={type=\"rs\",id=0} " +
-			"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + ",\"" + Network.player.ipAddress + "\") \n";
+			"udp_safe_sender(sjson.encode(rt)," + m_nDataPort + ",\"" + Network.player.ipAddress + "\") \n";
 		});
 
 		m_btnLoad.onClick.AsObservable ().Subscribe ((obj) => {
@@ -802,7 +818,7 @@ public class mainObject : MonoBehaviour
 				"local rt={type=\"rs\",result=\"ok\",d=data,id=" + packet_id + "}" +
 				"local l=file.list() " +
 				"rt.l=l " +
-				"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + ",\"" + Network.player.ipAddress + "\") " +
+				"udp_safe_sender(sjson.encode(rt)," + m_nDataPort + ",\"" + Network.player.ipAddress + "\") " +
 				"end ";
 
 			JsonData jsonObj = new JsonData ();
@@ -841,7 +857,17 @@ public class mainObject : MonoBehaviour
 						___ => {
 							if (___ ["status"].Equals ("complete")) {
 								m_GlobalAlertDlg.GetComponent<com_gunpower_ui.AlertDlgBox> ().m_textMsg.text = "download complete";
-								m_inputfieldCode.text = ___ ["d"].ToString ();
+
+								string _strResult = ___ ["d"].ToString ();
+								Debug.Log(_strResult);
+
+								//base64 decoding
+								byte[] decodedBytes = Convert.FromBase64String (_strResult);
+								string decodedText = Encoding.UTF8.GetString (decodedBytes);
+
+								m_inputfieldCode.text = decodedText;
+
+
 								OnReceiveFile.Dispose ();
 							} else if (___ ["status"].Equals ("start")) {
 								m_GlobalAlertDlg.GetComponent<com_gunpower_ui.AlertDlgBox> ().show ("info", "start download", "close", null, true);
@@ -867,7 +893,7 @@ public class mainObject : MonoBehaviour
 				"local rt={type=\"rs\",result=\"ok\",d=data,id=" + packet_id + "}" +
 				"local l=file.list() " +
 				"rt.l=l " +
-				"udp_safe_sender(cjson.encode(rt)," + m_nDataPort + ",\"" + Network.player.ipAddress + "\") " +
+				"udp_safe_sender(sjson.encode(rt,{depth=20})," + m_nDataPort + ",\"" + Network.player.ipAddress + "\") " +
 				"end ";
 
 			JsonData jsonObj = new JsonData ();
