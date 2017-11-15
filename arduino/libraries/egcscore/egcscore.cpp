@@ -172,7 +172,8 @@ void CEGCSCore::cmdConfig(String p1, int p2, int p3)
     {
         //g_nMaxFireCount = root["p2"];
         
-        addMaxFireCount(1);
+        //addMaxFireCount(1);
+        m_nMaxFireCount = p2;
         Serial.println( String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}") );
         //dumpConfig();
     }
