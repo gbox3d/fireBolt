@@ -50,7 +50,7 @@ class CEGCSCore
 
         m_nRecoilPluse = 0;
 
-        m_nPwmFirePowerControl = 255;
+        m_nPwmFirePowerControl = 127;
 
         m_coinCount = 0;
         m_nCoinPerPlayCount = 0;

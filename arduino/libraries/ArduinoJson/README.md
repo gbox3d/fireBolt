@@ -25,6 +25,7 @@ Features
 * Small footprint
 * Header-only library
 * MIT License
+* [Comprehensive documentation](https://arduinojson.org)
 
 Works on
 --------
@@ -58,9 +59,9 @@ double latitude    = root["data"][0];
 double longitude   = root["data"][1];
 ```
 
-[See JsonParserExample.ino](examples/JsonParserExample/JsonParserExample.ino)
+[See JsonParserExample.ino](https://arduinojson.org/example/parser/)
 
-Use [ArduinoJson Assistant](https://bblanchon.github.io/ArduinoJson/assistant/) to compute the buffer size.
+Use [ArduinoJson Assistant](https://arduinojson.org/assistant/) to compute the buffer size.
 
 #### Encoding / Generating
 
@@ -80,17 +81,17 @@ root.printTo(Serial);
 // {"sensor":"gps","time":1351824120,"data":[48.756080,2.302038]}
 ```
 
-[See JsonGeneratorExample.ino](examples/JsonGeneratorExample/JsonGeneratorExample.ino)
+[See JsonGeneratorExample.ino](https://arduinojson.org/example/generator/)
 
-Use [ArduinoJson Assistant](https://bblanchon.github.io/ArduinoJson/assistant/) to compute the buffer size.
+Use [ArduinoJson Assistant](https://arduinojson.org/assistant/) to compute the buffer size.
 
 
 Documentation
 -------------
 
-The documentation is available online in the [ArduinoJson Website](https://bblanchon.github.io/ArduinoJson/).
+The documentation is available online in the [ArduinoJson Website](https://arduinojson.org/).
 
-The [ArduinoJson Assistant](https://bblanchon.github.io/ArduinoJson/assistant/) helps you get started with the library.
+The [ArduinoJson Assistant](https://arduinojson.org/assistant/) helps you get started with the library.
 
 
 Donators
@@ -123,6 +124,7 @@ Special thanks to the following persons and companies who made generous donation
 * Charles Walker <img alt='USA' src='https://cdnjs.cloudflare.com/ajax/libs/emojione/2.1.4/assets/svg/1f1fa-1f1f8.svg' width='18' height='18'>
 * Günther Jehle <img alt='Liechtenstein' src='https://cdnjs.cloudflare.com/ajax/libs/emojione/2.1.4/assets/svg/1f1f1-1f1ee.svg' width='18' height='18'>
 * Patrick Elliott
+* Alexander Wilms <img alt='Germany' src='https://cdnjs.cloudflare.com/ajax/libs/emojione/2.1.4/assets/svg/1f1e9-1f1ea.svg' width='18' height='18'>
 
 
 ---
