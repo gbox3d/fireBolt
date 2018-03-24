@@ -1,6 +1,8 @@
 #ifndef GUNPOWER_TARGET_SLAVE
 #define GUNPOWER_TARGET_SLAVE
 
+#include <Arduino.h>
+
 class CGunpowerTargetSlave {
   private:
   
