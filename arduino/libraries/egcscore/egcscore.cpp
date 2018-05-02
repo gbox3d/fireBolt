@@ -82,6 +82,7 @@ void CEGCSCore::systemBootUp()
         m_FlagValue = root["flag"];
 
         //자동시작 여부
+        
         if (m_FlagValue & 0x01)
         {
             m_bAutoStart = true;
@@ -90,6 +91,14 @@ void CEGCSCore::systemBootUp()
         {
             m_bAutoStart = false;
         }
+
+        if(m_FlagValue & 0x02) {
+            m_bSwapStartBtn = true;
+        }
+        else {
+            m_bSwapStartBtn = false;
+        }
+        
         if (m_FlagValue & 0x04)
         {
             m_bMokpoSystem = true;
@@ -98,6 +107,16 @@ void CEGCSCore::systemBootUp()
         {
             m_bMokpoSystem = false;
         }
+
+        if (m_FlagValue & 0x08)
+        {
+            m_bSuDalSystem = true;
+        }
+        else
+        {
+            m_bSuDalSystem = false;
+        }
+        
     }
     else
     {

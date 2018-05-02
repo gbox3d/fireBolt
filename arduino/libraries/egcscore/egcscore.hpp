@@ -28,6 +28,8 @@ class CEGCSCore
   public:
     bool m_bAutoStart = false;
     bool m_bMokpoSystem = false;
+    bool m_bSwapStartBtn= false;
+    bool m_bSuDalSystem=false;
 
     int m_nToTalCounter;
     
