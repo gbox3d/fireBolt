@@ -12,10 +12,12 @@ class CGpioMng
     unsigned long m_accTick;
     int m_nFSM;
     int m_nStep;
-    int m_nOnDelay;
-    int m_nOffDelay;
+    unsigned long m_nOnDelay;
+    unsigned long m_nOffDelay;
     int m_nRepeat; //반복횟수 -1 이면 무한반복 
     int m_nRepeatCounter;
+
+    unsigned long m_nPluseTerm;
 
 public :
     CGpioMng(int port) 
@@ -24,17 +26,37 @@ public :
         pinMode(port,OUTPUT);
         m_nPort = port;
         m_accTick = 0;
-
-        
     }
 
-    inline void startBlink(int nRepeat,int nOnDelay,int nOffDelay) 
+    inline void startBlink(int nRepeat,unsigned long nOnDelay,unsigned long nOffDelay) 
     {
         m_nRepeat = nRepeat;
         m_nOnDelay = nOnDelay;
         m_nOffDelay = nOffDelay;
         m_nFSM = 10;
     }
+
+//low -> high
+    inline void makePluseUp(unsigned long nTerm) 
+    {
+        //m_nRepeat = nRepeat;
+        //m_nOnDelay = nOnDelay;
+        //m_nOffDelay = nOffDelay;
+        m_nPluseTerm = nTerm;
+        m_nFSM = 20;
+    }
+
+//high -> low
+    inline void makePluseDown(unsigned long nTerm) 
+    {
+        //m_nRepeat = nRepeat;
+        //m_nOnDelay = nOnDelay;
+        //m_nOffDelay = nOffDelay;
+        m_nPluseTerm = nTerm;
+        m_nFSM = 30;
+    }
+
+    
 
     inline void stopBlink(int nPinStatus) 
     {
@@ -61,6 +83,10 @@ public :
             break;
             case 10:
             {
+
+                // Serial.println(m_nStep);
+                // Serial.println(m_accTick);
+                // Serial.println(m_nOnDelay);
                 
                 switch(m_nStep) {
                     case 0:
@@ -97,6 +123,63 @@ public :
                         }
                     }
                     break;
+                }
+
+            }
+            break;
+            //low -> high
+            case 20:
+            {
+                switch(m_nStep) {
+                    case 0:
+                    {
+                        digitalWrite(m_nPort,LOW);
+                        m_nStep++;
+                        m_accTick = 0;
+                        m_nRepeatCounter=0;
+                    }
+                    break;
+                    case 1:
+                    {
+                        if(m_accTick > m_nPluseTerm) {
+                            
+                            m_accTick = 0;
+                            digitalWrite(m_nPort,HIGH);
+                            m_nFSM = 0;
+                            m_nStep = 0;
+                        }
+                    }
+                    break;
+                    
+                }
+
+            }
+            break;
+
+            //high -> low
+            case 30:
+            {
+                switch(m_nStep) {
+                    case 0:
+                    {
+                        digitalWrite(m_nPort,HIGH);
+                        m_nStep++;
+                        m_accTick = 0;
+                        m_nRepeatCounter=0;
+                    }
+                    break;
+                    case 1:
+                    {
+                        if(m_accTick > m_nPluseTerm) {
+                            
+                            m_accTick = 0;
+                            digitalWrite(m_nPort,LOW);
+                            m_nFSM = 0;
+                            m_nStep = 0;
+                        }
+                    }
+                    break;
+                    
                 }
 
             }
