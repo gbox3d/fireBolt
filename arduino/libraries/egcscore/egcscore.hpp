@@ -21,9 +21,17 @@ class CEGCSCore
     int m_nSemiAutoCounter; //반자동 연사횟수 계산변수
     int m_nMaxSemiAuto;     //반자동 연사횟수
 
-    unsigned long m_nCutOffThresHold;
-
     byte m_FlagValue;
+
+    unsigned long m_pulseUpMill;    
+    unsigned long m_pulseDownMill;
+    unsigned long m_nCutOffThresHold;        
+    unsigned long m_nRecoilPluse;
+
+    unsigned long m_pulseUpMicro;    
+    unsigned long m_pulseDownMicro;
+    unsigned long m_nCutOffThresHoldMicro;        
+    unsigned long m_nRecoilPluseMicro;
     
   public:
     bool m_bAutoStart = false;
@@ -33,10 +41,7 @@ class CEGCSCore
 
     int m_nToTalCounter;
     
-    int m_pulseUpMill;    
-    int m_pulseDownMill;
-        
-    int m_nRecoilPluse;
+    
 
     CEGCSCore()
     {
@@ -45,13 +50,11 @@ class CEGCSCore
         m_nToTalCounter = 0;
 
         m_pulseUpMill = 120;
-        //m_pulseUpMicro = 0;
-
+        
         m_pulseDownMill = 50;
-        // m_pulseDownMicro = 0;
-
+        
         m_nRecoilPluse = 0;
-
+        
         m_nPwmFirePowerControl = 127;
 
         m_coinCount = 0;
@@ -62,6 +65,8 @@ class CEGCSCore
         m_nMaxSemiAuto = 1;     //반자동 연사횟수
 
         m_nCutOffThresHold = 15;
+
+        updateMicroValue();
 
         m_FlagValue = 0;
         m_bAutoStart = false;
@@ -76,6 +81,15 @@ class CEGCSCore
     //utils
     void SerialOutputResponse(String szOperation, int p1, int p2);
     void dumpConfig();
+
+    inline void updateMicroValue()
+    {
+        m_pulseUpMicro = m_pulseUpMill * 1000;
+        m_pulseDownMicro = m_pulseDownMill * 1000;
+        m_nRecoilPluseMicro = m_nRecoilPluse * 1000;
+        m_nCutOffThresHoldMicro = m_nCutOffThresHold * 1000;
+    }
+
 
     //-------- parser
     //String parseCmd(const char *_szBuf);
@@ -176,19 +190,28 @@ class CEGCSCore
     {
         analogWrite(nPin,m_nPwmFirePowerControl); //다시 켜기 
     }
-/*
-    inline int getPluseUpValue()
+
+    inline unsigned long getMicroPluseUpValue()
     {
-        return m_pulseUpMill;
+        //return m_pulseUpMill * 1000;
+        return m_pulseUpMicro;
     }
-    inline int getPluseDownValue()
+    inline unsigned long  getMicroPluseDownValue()
     {
-        return m_pulseDownMill;
+        //return m_pulseDownMill * 1000;
+        return m_pulseDownMicro;
     }
-    */
-    inline int getCutOffThresHold()
+    
+    inline unsigned long getMicroCutOffThresHoldValue()
     {
-        return m_nCutOffThresHold;
+        //return m_nCutOffThresHold * 1000;
+        return m_nCutOffThresHoldMicro;
+    }
+
+    inline unsigned long getMicroRecoilPluseValue()
+    {
+        //return m_nRecoilPluse * 1000;
+        return m_nRecoilPluseMicro;
     }
 
 };

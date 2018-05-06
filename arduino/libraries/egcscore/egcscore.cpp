@@ -64,15 +64,18 @@ void CEGCSCore::systemBootUp()
     {
         //Serial.println("parse success");
         m_pulseUpMill = root["pu"];
+        m_pulseUpMicro = m_pulseUpMill * 1000;
         // m_pulseUpMicro = root["pumc"];
         m_pulseDownMill = root["pd"];
+        m_pulseDownMicro = m_pulseDownMill * 1000;
         // m_pulseDownMicro = root["pdmc"];
         m_nRecoilPluse = root["rc"];
+        
+        m_nCutOffThresHold = root["cth"];
 
         m_nMaxFireCount = root["mxct"];
 
         m_nCoinPerPlayCount = root["cppc"];
-        m_nCutOffThresHold = root["cth"];
         m_nPwmFirePowerControl = root["fpw"];
         m_nMaxSemiAuto = root["msa"];
 
@@ -80,6 +83,9 @@ void CEGCSCore::systemBootUp()
 
         //플래그 값 읽기
         m_FlagValue = root["flag"];
+
+        //마이크로 초 값 재설정
+        updateMicroValue();
 
         //자동시작 여부
         
@@ -267,6 +273,9 @@ void CEGCSCore::cmdConfig(String p1, int p2, int p3)
         Serial.print(p1);
         Serial.println("\"}");
     }
+
+    updateMicroValue();
+    
     dumpConfig();
 }
 
