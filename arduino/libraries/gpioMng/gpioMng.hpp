@@ -17,12 +17,25 @@ class CGpioMng
     int m_nRepeat; //반복횟수 -1 이면 무한반복 
     int m_nRepeatCounter;
 
-    unsigned long m_nPluseTerm;
+    unsigned long m_nPluseTerm;    
+    byte m_pBuf[8];
+    byte m_nBufSize;
 
 public :
+    CGpioMng() 
+    {
+        m_accTick = 0;
+    }
     CGpioMng(int port) 
     {
+        /*pinMode(port,OUTPUT);
+        m_nPort = port;
+        m_accTick = 0;*/
+        setup(port);
+    }
 
+    inline void setup(int port)
+    {
         pinMode(port,OUTPUT);
         m_nPort = port;
         m_accTick = 0;
@@ -54,6 +67,15 @@ public :
         //m_nOffDelay = nOffDelay;
         m_nPluseTerm = nTerm;
         m_nFSM = 30;
+    }
+
+    inline void makePluse(byte *pBuf,int count,unsigned long nTerm)
+    {
+        m_nFSM = 40;
+        m_nStep = 0;
+        memcpy(m_pBuf,pBuf,count);
+        m_nPluseTerm = nTerm;
+        m_nBufSize = count;
     }
 
     
@@ -184,6 +206,41 @@ public :
 
             }
             break;
+
+            case 40:
+            {
+                static byte nIndex = 0;
+                switch(m_nStep) {
+                    case 0:
+                    {
+                        nIndex = 0;
+                        m_nStep = 10;
+                        m_accTick = 0;
+                        digitalWrite(m_nPort,m_pBuf[nIndex]);                    
+                    }
+                    break;
+                    case 10:
+                    {
+                        //Serial.println(m_accTick);
+                        if(m_accTick > m_nPluseTerm) {
+                            m_accTick = 0;
+                            nIndex++;
+                            if(nIndex < m_nBufSize) {
+                                digitalWrite(m_nPort,m_pBuf[nIndex]);
+                            }
+                            else {
+                                m_nFSM = 0;
+                                m_nStep = 0;
+                            }
+                        }
+
+                    }
+                    break;
+                }
+            }
+            break;
+
+
         }
 
     }

@@ -98,6 +98,7 @@ void CEGCSCore::systemBootUp()
             m_bAutoStart = false;
         }
 
+//스타트버튼 선택
         if(m_FlagValue & 0x02) {
             m_bSwapStartBtn = true;
         }
