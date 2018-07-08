@@ -14,7 +14,7 @@ void CEGCSCore::saveConfigData()
     JsonObject &_config = jsonBuffer.createObject();
     _config["pu"] = m_pulseUpMill; //펄스업
     // _config["pumc"] = m_pulseUpMicro;
-    _config["pd"] = m_pulseDownMill; //펄스다운    
+    _config["pd"] = m_pulseDownMill; //펄스다운
     // _config["pdmc"] = m_pulseDownMicro;
     _config["rc"] = m_nRecoilPluse;
 
@@ -70,7 +70,7 @@ void CEGCSCore::systemBootUp()
         m_pulseDownMicro = m_pulseDownMill * 1000;
         // m_pulseDownMicro = root["pdmc"];
         m_nRecoilPluse = root["rc"];
-        
+
         m_nCutOffThresHold = root["cth"];
 
         m_nMaxFireCount = root["mxct"];
@@ -88,7 +88,7 @@ void CEGCSCore::systemBootUp()
         updateMicroValue();
 
         //자동시작 여부
-        
+
         if (m_FlagValue & 0x01)
         {
             m_bAutoStart = true;
@@ -98,14 +98,16 @@ void CEGCSCore::systemBootUp()
             m_bAutoStart = false;
         }
 
-//스타트버튼 선택
-        if(m_FlagValue & 0x02) {
+        //스타트버튼 선택
+        if (m_FlagValue & 0x02)
+        {
             m_bSwapStartBtn = true;
         }
-        else {
+        else
+        {
             m_bSwapStartBtn = false;
         }
-        
+
         if (m_FlagValue & 0x04)
         {
             m_bMokpoSystem = true;
@@ -123,7 +125,6 @@ void CEGCSCore::systemBootUp()
         {
             m_bSuDalSystem = false;
         }
-        
     }
     else
     {
@@ -181,26 +182,26 @@ void CEGCSCore::cmdConfig(String p1, int p2, int p3)
     if (p1 == "mxup")
     {
         //g_nMaxFireCount++;
-        
+
         addMaxFireCount(1);
-        Serial.println( String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}") );
+        Serial.println(String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}"));
         //dumpConfig();
     }
     else if (p1 == "mxdn")
     {
         //g_nMaxFireCount--;
-        
+
         addMaxFireCount(-1);
-        Serial.println( String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}") );
+        Serial.println(String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}"));
         //g_egcsCore.dumpConfig();
     }
     else if (p1 == "stmx")
     {
         //g_nMaxFireCount = root["p2"];
-        
+
         //addMaxFireCount(1);
         m_nMaxFireCount = p2;
-        Serial.println( String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}") );
+        Serial.println(String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}"));
         //dumpConfig();
     }
     else if (p1 == "pu")
@@ -264,7 +265,8 @@ void CEGCSCore::cmdConfig(String p1, int p2, int p3)
     {
         m_FlagValue = p2;
     }
-    else if(p1 == "rc") {
+    else if (p1 == "rc")
+    {
         m_nRecoilPluse = p2;
     }
     else
@@ -276,7 +278,7 @@ void CEGCSCore::cmdConfig(String p1, int p2, int p3)
     }
 
     updateMicroValue();
-    
+
     dumpConfig();
 }
 

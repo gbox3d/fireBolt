@@ -119,6 +119,11 @@ class CEGCSCore
         //Serial.println( String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}") );
     }
 
+    inline int getFpw()
+    {
+        return m_nPwmFirePowerControl;
+    }
+
     
     inline int getCoinPerPlayCount()
     {
