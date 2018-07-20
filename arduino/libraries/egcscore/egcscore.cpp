@@ -195,7 +195,7 @@ void CEGCSCore::cmdConfig(String p1, int p2, int p3)
         Serial.println(String("{\"r\":\"dp\",\"p1\":") + m_nMaxFireCount + String("}"));
         //g_egcsCore.dumpConfig();
     }
-    else if (p1 == "stmx")
+    else if (p1 == "stmx" || p1 == "mxct" )
     {
         //g_nMaxFireCount = root["p2"];
 
@@ -272,7 +272,7 @@ void CEGCSCore::cmdConfig(String p1, int p2, int p3)
     else
     {
         Serial.print("{\"r\":\"uk\",");
-        Serial.print("{\"p1\":\"");
+        Serial.print("\"p1\":\"");
         Serial.print(p1);
         Serial.println("\"}");
     }
