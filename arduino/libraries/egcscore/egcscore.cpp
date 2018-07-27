@@ -135,9 +135,9 @@ void CEGCSCore::systemBootUp()
 
 void CEGCSCore::SerialOutputResponse(String szOperation, int p1, int p2)
 {
-    Serial.print("{\"r\":");
+    Serial.print("{\"r\":\"");
     Serial.print(szOperation);
-    Serial.print(",\"p1\":");
+    Serial.print("\",\"p1\":");
     Serial.print(p1);
     Serial.print(",\"p2\":");
     Serial.print(p2);
