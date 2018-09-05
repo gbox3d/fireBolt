@@ -1,9 +1,9 @@
 // ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2017
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
 //
 // This example shows how to parse a JSON document in an HTTP response.
-// It uses the Ethernet library, but can be easily adapter for Wifi.
+// It uses the Ethernet library, but can be easily adapted for Wifi.
 //
 // It performs a GET resquest on arduinojson.org/example.json
 // Here is the expected response:
@@ -70,19 +70,21 @@ void setup() {
     return;
   }
 
-  // Allocate JsonBuffer
+  // Allocate the JSON document
   // Use arduinojson.org/assistant to compute the capacity.
   const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
-  DynamicJsonBuffer jsonBuffer(capacity);
+  DynamicJsonDocument doc(capacity);
 
   // Parse JSON object
-  JsonObject& root = jsonBuffer.parseObject(client);
-  if (!root.success()) {
-    Serial.println(F("Parsing failed!"));
+  DeserializationError error = deserializeJson(doc, client);
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.c_str());
     return;
   }
 
   // Extract values
+  JsonObject root = doc.as<JsonObject>();
   Serial.println(F("Response:"));
   Serial.println(root["sensor"].as<char*>());
   Serial.println(root["time"].as<char*>());
@@ -97,16 +99,4 @@ void loop() {
   // not used in this example
 }
 
-// See also
-// --------
-//
-// The website arduinojson.org contains the documentation for all the functions
-// used above. It also includes an FAQ that will help you solve any
-// serialization  problem.
-// Please check it out at: https://arduinojson.org/
-//
-// The book "Mastering ArduinoJson" contains a tutorial on deserialization
-// showing how to parse the response from Yahoo Weather. In the last chapter,
-// it shows how to parse the huge documents from OpenWeatherMap
-// and Weather Underground.
-// Please check it out at: https://leanpub.com/arduinojson/
+// Visit https://arduinojson.org/v6/example/http-client/ for more.

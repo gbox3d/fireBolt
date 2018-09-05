@@ -1,16 +1,13 @@
 # ArduinoJson - arduinojson.org
-# Copyright Benoit Blanchon 2014-2017
+# Copyright Benoit Blanchon 2014-2018
 # MIT License
 
-add_executable(MiscTests 
-	deprecated.cpp
+add_executable(MiscTests
 	FloatParts.cpp
-	std_stream.cpp
-	std_string.cpp
-	StringBuilder.cpp
+	StringWriter.cpp
 	TypeTraits.cpp
 	unsigned_char.cpp
-	vla.cpp
+	version.cpp
 )
 
 target_link_libraries(MiscTests catch)

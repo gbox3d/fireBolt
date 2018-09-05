@@ -1,12 +1,12 @@
 // ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2017
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
 
 #pragma once
 
 #ifdef _MSC_VER  // Visual Studio
 
-#define FORCE_INLINE __forceinline
+#define FORCE_INLINE  // __forceinline causes C4714 when returning std::string
 #define NO_INLINE __declspec(noinline)
 #define DEPRECATED(msg) __declspec(deprecated(msg))
 
@@ -26,4 +26,10 @@
 #define NO_INLINE
 #define DEPRECATED(msg)
 
+#endif
+
+#if __cplusplus >= 201103L
+#define NOEXCEPT noexcept
+#else
+#define NOEXCEPT throw()
 #endif

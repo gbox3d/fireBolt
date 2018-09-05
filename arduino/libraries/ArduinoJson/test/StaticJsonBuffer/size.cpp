@@ -1,9 +1,11 @@
 // ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2017
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
 
-#include <ArduinoJson.h>
+#include <ArduinoJson/Memory/StaticJsonBuffer.hpp>
 #include <catch.hpp>
+
+using namespace ArduinoJson::Internals;
 
 TEST_CASE("StaticJsonBuffer::size()") {
   StaticJsonBuffer<64> buffer;

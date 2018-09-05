@@ -1,8 +1,8 @@
 // ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2017
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
 
-#include <ArduinoJson/Serialization/FloatParts.hpp>
+#include <ArduinoJson/Numbers/FloatParts.hpp>
 #include <catch.hpp>
 
 using namespace ArduinoJson::Internals;

@@ -1,63 +1,84 @@
 // ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2017
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
 
-void checkIsArray(JsonVariant var) {
+void checkIsArray(JsonArray value) {
+  DynamicJsonDocument doc;
+  JsonVariant var = doc.to<JsonVariant>();
+  var.set(value);
+
   REQUIRE(var.is<JsonArray>());
-  REQUIRE(var.is<JsonArray&>());
+  REQUIRE(var.is<JsonArray>());
   REQUIRE(var.is<const JsonArray>());
-  REQUIRE(var.is<const JsonArray&>());
+  REQUIRE(var.is<const JsonArray>());
 
   REQUIRE_FALSE(var.is<bool>());
   REQUIRE_FALSE(var.is<double>());
   REQUIRE_FALSE(var.is<float>());
   REQUIRE_FALSE(var.is<int>());
   REQUIRE_FALSE(var.is<long>());
-  REQUIRE_FALSE(var.is<const char*>());
+  REQUIRE_FALSE(var.is<const char *>());
   REQUIRE_FALSE(var.is<JsonObject>());
 }
 
-void checkIsBool(JsonVariant var) {
+void checkIsBool(bool value) {
+  DynamicJsonDocument doc;
+  JsonVariant var = doc.to<JsonVariant>();
+  var.set(value);
+
   REQUIRE(var.is<bool>());
 
   REQUIRE_FALSE(var.is<double>());
   REQUIRE_FALSE(var.is<float>());
   REQUIRE_FALSE(var.is<int>());
   REQUIRE_FALSE(var.is<long>());
-  REQUIRE_FALSE(var.is<const char*>());
+  REQUIRE_FALSE(var.is<const char *>());
   REQUIRE_FALSE(var.is<JsonArray>());
   REQUIRE_FALSE(var.is<JsonObject>());
 }
 
-void checkIsFloat(JsonVariant var) {
+void checkIsFloat(double value) {
+  DynamicJsonDocument doc;
+  JsonVariant var = doc.to<JsonVariant>();
+  var.set(value);
+
   REQUIRE(var.is<double>());
   REQUIRE(var.is<float>());
 
   REQUIRE_FALSE(var.is<bool>());
   REQUIRE_FALSE(var.is<int>());
   REQUIRE_FALSE(var.is<long>());
-  REQUIRE_FALSE(var.is<const char*>());
+  REQUIRE_FALSE(var.is<const char *>());
   REQUIRE_FALSE(var.is<JsonArray>());
   REQUIRE_FALSE(var.is<JsonObject>());
 }
 
-void checkIsInteger(JsonVariant var) {
+template <typename T>
+void checkIsInteger(T value) {
+  DynamicJsonDocument doc;
+  JsonVariant var = doc.to<JsonVariant>();
+  var.set(value);
+
   REQUIRE(var.is<long>());
   REQUIRE(var.is<int>());
   REQUIRE(var.is<float>());
   REQUIRE(var.is<double>());
 
   REQUIRE_FALSE(var.is<bool>());
-  REQUIRE_FALSE(var.is<const char*>());
+  REQUIRE_FALSE(var.is<const char *>());
   REQUIRE_FALSE(var.is<JsonArray>());
   REQUIRE_FALSE(var.is<JsonObject>());
 }
 
-void checkIsString(JsonVariant var) {
-  REQUIRE(var.is<const char*>());
+void checkIsString(const char *value) {
+  DynamicJsonDocument doc;
+  JsonVariant var = doc.to<JsonVariant>();
+  var.set(value);
+
+  REQUIRE(var.is<const char *>());
 
   REQUIRE_FALSE(var.is<bool>());
   REQUIRE_FALSE(var.is<int>());
@@ -69,10 +90,10 @@ void checkIsString(JsonVariant var) {
 }
 
 TEST_CASE("JsonVariant::is()") {
-  DynamicJsonBuffer jsonBuffer;
-
   SECTION("JsonArray") {
-    checkIsArray(jsonBuffer.createArray());
+    DynamicJsonDocument doc;
+    JsonArray array = doc.to<JsonArray>();
+    checkIsArray(array);
   }
 
   SECTION("bool") {
@@ -94,22 +115,5 @@ TEST_CASE("JsonVariant::is()") {
 
   SECTION("string") {
     checkIsString("42");
-  }
-
-  SECTION("unparsed bool") {
-    checkIsBool(RawJson("true"));
-    checkIsBool(RawJson("false"));
-  }
-
-  SECTION("unparsed int") {
-    checkIsInteger(RawJson("42"));
-  }
-
-  SECTION("unparsed float") {
-    checkIsFloat(RawJson("4.2e-10"));
-  }
-
-  SECTION("unparsed null") {
-    checkIsString(RawJson("null"));
   }
 }

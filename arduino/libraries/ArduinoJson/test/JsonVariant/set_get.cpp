@@ -1,5 +1,5 @@
 // ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2017
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
 
 #include <ArduinoJson.h>
@@ -9,7 +9,10 @@
 
 template <typename T>
 void checkValue(T expected) {
-  JsonVariant variant = expected;
+  DynamicJsonDocument doc;
+  JsonVariant variant = doc.to<JsonVariant>();
+
+  variant.set(expected);
   REQUIRE(expected == variant.as<T>());
 }
 
@@ -21,11 +24,15 @@ void checkReference(T &expected) {
 
 template <typename T>
 void checkNumericType() {
+  DynamicJsonDocument docMin, docMax;
+  JsonVariant variantMin = docMin.to<JsonVariant>();
+  JsonVariant variantMax = docMax.to<JsonVariant>();
+
   T min = std::numeric_limits<T>::min();
   T max = std::numeric_limits<T>::max();
 
-  JsonVariant variantMin(min);
-  JsonVariant variantMax(max);
+  variantMin.set(min);
+  variantMax.set(max);
 
   REQUIRE(min == variantMin.as<T>());
   REQUIRE(max == variantMax.as<T>());
@@ -41,8 +48,11 @@ TEST_CASE("JsonVariant set()/get()") {
   SECTION("Null") {
     checkValue<const char *>(NULL);
   }
-  SECTION("String") {
+  SECTION("const char*") {
     checkValue<const char *>("hello");
+  }
+  SECTION("std::string") {
+    checkValue<std::string>("hello");
   }
 
   SECTION("False") {
@@ -122,9 +132,80 @@ TEST_CASE("JsonVariant set()/get()") {
 #endif
 
   SECTION("CanStoreObject") {
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &object = jsonBuffer.createObject();
+    DynamicJsonDocument doc;
+    JsonObject object = doc.to<JsonObject>();
 
-    checkReference(object);
+    checkValue<JsonObject>(object);
   }
+}
+
+TEST_CASE("JsonVariant and strings") {
+  DynamicJsonDocument doc;
+  JsonVariant variant = doc.to<JsonVariant>();
+
+  SECTION("stores const char* by reference") {
+    char str[16];
+
+    strcpy(str, "hello");
+    variant.set(static_cast<const char *>(str));
+    strcpy(str, "world");
+
+    REQUIRE(variant == "world");
+  }
+
+  SECTION("stores char* by copy") {
+    char str[16];
+
+    strcpy(str, "hello");
+    variant.set(str);
+    strcpy(str, "world");
+
+    REQUIRE(variant == "hello");
+  }
+
+  SECTION("stores unsigned char* by copy") {
+    char str[16];
+
+    strcpy(str, "hello");
+    variant.set(reinterpret_cast<unsigned char *>(str));
+    strcpy(str, "world");
+
+    REQUIRE(variant == "hello");
+  }
+
+  SECTION("stores signed char* by copy") {
+    char str[16];
+
+    strcpy(str, "hello");
+    variant.set(reinterpret_cast<signed char *>(str));
+    strcpy(str, "world");
+
+    REQUIRE(variant == "hello");
+  }
+
+#ifdef HAS_VARIABLE_LENGTH_ARRAY
+  SECTION("stores VLA by copy") {
+    int n = 16;
+    char str[n];
+
+    strcpy(str, "hello");
+    variant.set(str);
+    strcpy(str, "world");
+
+    REQUIRE(variant == "hello");
+  }
+#endif
+
+  SECTION("stores std::string by copy") {
+    std::string str;
+
+    str = "hello";
+    variant.set(str);
+    str.replace(0, 5, "world");
+
+    REQUIRE(variant == "hello");
+  }
+
+  // TODO: string
+  // TODO: serialized()
 }

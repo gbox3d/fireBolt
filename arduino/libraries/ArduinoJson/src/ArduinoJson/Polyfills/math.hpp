@@ -1,19 +1,27 @@
 // ArduinoJson - arduinojson.org
-// Copyright Benoit Blanchon 2014-2017
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
 
 #pragma once
 
 namespace ArduinoJson {
-namespace Polyfills {
+namespace Internals {
+
+// Some libraries #define isnan() and isinf() so we need to check before
+// using this name
+
+#ifndef isnan
 template <typename T>
-bool isNaN(T x) {
+bool isnan(T x) {
   return x != x;
 }
+#endif
 
+#ifndef isinf
 template <typename T>
-bool isInfinity(T x) {
+bool isinf(T x) {
   return x != 0.0 && x * 2 == x;
 }
-}
-}
+#endif
+}  // namespace Internals
+}  // namespace ArduinoJson
