@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 int _7segFont[] = {
   0b00000011, //0
   0b10011111, //1

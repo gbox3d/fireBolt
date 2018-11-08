@@ -12,7 +12,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   
-  int nValue = analogRead(A0);
+  int nValue = analogRead(A1);
   
   if(nValue > 10) {
     Serial.println(nValue);
