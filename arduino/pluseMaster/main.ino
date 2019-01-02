@@ -8,6 +8,7 @@ const int g_LHPulsePin = 6;
 void setup()
 {
     pinMode(g_DisplayPin,OUTPUT);
+    pinMode(g_DisplayPin,OUTPUT);
     pinMode(g_HLPulsePin,OUTPUT);
     pinMode(g_LHPulsePin,OUTPUT);
 
@@ -23,7 +24,9 @@ void setup()
 int g_counter = 0;
 void loop()
 {
-    if( digitalRead(g_InputPin) == 0 ) {
+    if( digitalRead(g_InputPin) == 0 ||
+    analogRead(A0) > 100
+    ) {
         Serial.println(String("trigger ") + g_counter++);
         
         digitalWrite(g_HLPulsePin,HIGH);
@@ -35,4 +38,6 @@ void loop()
         delay(200);
 
     }
+    //Serial.println(analogRead(A0));
+    delay(25);
 }
