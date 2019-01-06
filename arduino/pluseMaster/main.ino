@@ -24,10 +24,12 @@ void setup()
 int g_counter = 0;
 void loop()
 {
+    int v_a0 = analogRead(A0);
     if( digitalRead(g_InputPin) == 0 ||
-    analogRead(A0) > 100
+    v_a0 > 100
     ) {
         Serial.println(String("trigger ") + g_counter++);
+        Serial.println(v_a0);
         
         digitalWrite(g_HLPulsePin,HIGH);
         digitalWrite(g_LHPulsePin,LOW);
