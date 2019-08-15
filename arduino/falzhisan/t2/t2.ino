@@ -2,12 +2,7 @@
  arduino repl framework by json 
  */
 
-#include <ArduinoJson.h>
 #include <Wire.h>
-#include <EEPROM.h>
-
-#include <gpioMng.hpp>
-
 
 
 //#define __DEBUG__
