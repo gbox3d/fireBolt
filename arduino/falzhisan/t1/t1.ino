@@ -3,7 +3,7 @@
 const int g_nVersion = 100;
 const int g_DeviceID = 0x1b;
 
-byte RegPort_Mode[2] = {0x3c, 0xcc};
+byte RegPort_Mode[2] = {0x33, 0xcc};
 byte RegPort_Status[2] = {0x00, 0x00};
 
 
@@ -86,7 +86,7 @@ void pinModeReg(int bank)
       pinMode(i + (bank*8),OUTPUT);
     }
     else {
-      pinMode(i+(bank*8),INPUT);
+      pinMode(i+(bank*8),INPUT_PULLUP);
     }
     reg  <<= 1;
   }
@@ -95,7 +95,7 @@ void pinModeReg(int bank)
 
 void setup()
 {
-  Wire.begin(g_DeviceID);       // 자신의 주소를 4번으로 설정하고 i2c 버스에 참여
+  Wire.begin(g_DeviceID);       // 자신의 주소를  설정하고 i2c 버스에 참여
   Wire.onReceive(receiveEvent); // 수신 이벤트 함수 등록
   Wire.onRequest(requestEvent);
 
@@ -122,19 +122,40 @@ void loop()
   byte _mode_reg = RegPort_Mode[0];
   byte _status_reg = RegPort_Status[0];
 
+
+//  Serial.println(_mode_reg);
   for (int i = 0; i < 8; i++)
   {
     if( (_mode_reg & 0x80)   )
     {
+//      Serial.print(i);
       if((_status_reg & 0x80))
+      {
         digitalWrite(i,HIGH);
-      else 
+        //Serial.print(i);
+        //Serial.print(" ");
+      }
+      else {
         digitalWrite(i,LOW);
+      }
+        
     }
-    
+    else {
+      if(digitalRead(i)) {
+        RegPort_Status[0] |= (0x0080 >> i);
+      }
+      else {
+        RegPort_Status[0] &= (0xff7f >> i);
+      }
+
+     // Serial.print(" in");
+    }
     _mode_reg  <<= 1;
     _status_reg  <<= 1;
   }
+//  Serial.println();
+  
+  //delay(1000);
 
   _mode_reg = RegPort_Mode[1];
   _status_reg = RegPort_Status[1];
