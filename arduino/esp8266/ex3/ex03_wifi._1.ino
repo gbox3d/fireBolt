@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
 
 const int status_led_pin = 2; //d4

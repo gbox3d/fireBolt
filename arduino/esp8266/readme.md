@@ -26,3 +26,28 @@ d15 : x
 
 ```
 
+### interrupt
+
+인터럽트 함수앞에 반드시 ICACHE_RAM_ATTR  붙여주어야 한다. esp8266만의 특징이므로 주의 해야한다.  
+그렇지 않을 경우 무한리셋에 빠진다.
+
+```c++
+
+volatile boolean enableTriger = true;
+ICACHE_RAM_ATTR void detect_sensor()
+{
+    if (enableTriger)
+    {
+        enableTriger = false;
+        Serial.print("detect : ");
+        Serial.println(millis());
+    }
+}
+```
+
+https://randomnerdtutorials.com/interrupts-timers-esp8266-arduino-ide-nodemcu/
+
+
+### file io
+https://circuits4you.com/2018/01/31/example-of-esp8266-flash-file-system-spiffs/
+
