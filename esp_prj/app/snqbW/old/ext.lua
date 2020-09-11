@@ -1,3 +1,0 @@
-print('load extention')
---dofile("")
-
