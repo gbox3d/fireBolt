@@ -1,6 +1,0 @@
-{
-    "baudrate": "9600",
-    "port": "/dev/tty.usbserial",
-    "optimize": false,
-    "compile": false
-}
