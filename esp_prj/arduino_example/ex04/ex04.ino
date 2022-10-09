@@ -3,7 +3,7 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
-
+#include <FS.h>
 
 const char *ssid = "redstar0427";
 const char *password = "123456789a";
@@ -19,9 +19,19 @@ void getHelloWord()
 // Define routing
 void restServerRouting()
 {
-    server.on("/", HTTP_GET, []()
-              { server.send(200, F("text/html"),
-                            F("Welcome to the REST Web Server")); });
+    // Route for root / web page
+    // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    //     request->send(SPIFFS, "/index.html", String(), false, processor);
+    // });
+
+    // server.on("/", HTTP_GET, []()
+    //           { server.send(200, F("text/html"),
+    //                         F("Welcome to the REST Web Server")); });
+
+    server.serveStatic("/img", SPIFFS, "/img");
+    server.serveStatic("/js", SPIFFS, "/js");
+    server.serveStatic("/css", SPIFFS, "/css");
+    server.serveStatic("/", SPIFFS, "/index.html");
     server.on(F("/helloWorld"), HTTP_GET, getHelloWord);
 }
 
@@ -62,12 +72,22 @@ void setup(void)
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
 
+    if (!SPIFFS.begin())
+    {
+        // Serious problem
+        Serial.println("SPIFFS Mount failed");
+    }
+    else
+    {
+        Serial.println("SPIFFS Mount succesfull");
+    }
+
     // Activate mDNS this is used to be able to connect to the server
     // with local DNS hostmane esp8266.local
-    if (MDNS.begin("esp8266"))
-    {
-        Serial.println("MDNS responder started");
-    }
+    // if (MDNS.begin("esp8266"))
+    // {
+    //     Serial.println("MDNS responder started");
+    // }
 
     // Set server routing
     restServerRouting();
@@ -81,4 +101,5 @@ void setup(void)
 void loop(void)
 {
     server.handleClient();
+    delay(100);
 }
