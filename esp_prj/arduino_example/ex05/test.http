@@ -1,0 +1,14 @@
+### get test
+GET http://192.168.4.24/get?message=hi
+
+### post test
+POST http://192.168.4.24/post
+Content-Type: application/x-www-form-urlencoded
+
+message=hi
+
+### led on
+GET http://192.168.4.24/get?message=on
+
+### led off
+GET http://192.168.4.24/get?message=off

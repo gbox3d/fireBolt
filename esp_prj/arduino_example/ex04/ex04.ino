@@ -5,8 +5,8 @@
 #include <ESP8266mDNS.h>
 #include <FS.h>
 
-const char *ssid = "redstar0427";
-const char *password = "123456789a";
+const char *ssid = "";
+const char *password = "";
 
 ESP8266WebServer server(80);
 
