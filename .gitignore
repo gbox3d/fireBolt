@@ -53,11 +53,8 @@ Temporary Items
 .idea/
 json/
 
-<<<<<<< HEAD
-#arduino/libraries
-arduino/libraries/ArduinoJson/scripts/
-tools/uEsp/lua_script/
-=======
 arduino/libraries
 .vscode
->>>>>>> 5cd19b33b14c24384fc00349a5c5f3229ab7828c
+
+package-lock.json
+node_modules/

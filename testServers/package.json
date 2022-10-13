@@ -1,0 +1,28 @@
+{
+  "name": "testservers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "udp_server": "babel-node udp_server.js",
+    "udp" : "babel-node udp.js",
+    "tcp" : "babel-node tcp.js"
+  },
+  "author": "gbox3d",
+  "license": "ISC",
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "nodemon": "^2.0.20"
+  },
+  "dependencies": {
+    "@babel/cli": "^7.19.3",
+    "@babel/core": "^7.19.3",
+    "@babel/node": "^7.19.1",
+    "@babel/preset-env": "^7.19.4",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "fs-extra": "^10.1.0",
+    "socket.io": "^4.5.2"
+  }
+}
