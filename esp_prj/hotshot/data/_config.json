@@ -1,0 +1,15 @@
+{
+    "version": 2,
+    "ssid": "",
+    "passwd": "",
+    "remoteIp": "",
+    "remotePort": 17395,
+    "localIp": "",
+    "localPort": 8284,
+    "index": 100,
+    "loopDelay_res": 100,
+    "loopDelay_req": 3000,
+    "trigger_delay": 60,
+    "relay_pluse": 50,
+    "max_fire_count": 16
+}
