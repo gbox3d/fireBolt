@@ -1,9 +1,9 @@
 {
     "version": 2,
-    "ssid": "redstar0427",
-    "passwd": "123456789a",
-    "remoteIp": "192.168.4.20",
-    "remotePort": 50070,
+    "ssid": "",
+    "passwd": "",
+    "remoteIp": "",
+    "remotePort": 17395,
     "localIp": "",
     "localPort": 8284,
     "index": 100,

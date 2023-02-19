@@ -13,7 +13,7 @@ nodemcu같은 이상한거 하지마라. 그냥 esp8266을 arduino로 쓰자.
 * ex05 : async web server
 * ex06 : json example
 * ex07 : udp example
-
+* ex08 : EEPROM config & command interpreter with serial port example
 # reference
 
 [공식문서](https://arduino-esp8266.readthedocs.io/en/latest/index.html)<br>
