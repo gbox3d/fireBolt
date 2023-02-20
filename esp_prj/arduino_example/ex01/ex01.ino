@@ -1,48 +1,108 @@
-/*
-  Blink
-
-  Turns an LED on for one second, then off for one second, repeatedly.
-
-  Most Arduinos have an on-board LED you can control. On the UNO, MEGA and ZERO
-  it is attached to digital pin 13, on MKR1000 on pin 6. LED_BUILTIN is set to
-  the correct LED pin independent of which board is used.
-  If you want to know what pin the on-board LED is connected to on your Arduino
-  model, check the Technical Specs of your board at:
-  https://www.arduino.cc/en/Main/Products
-
-  modified 8 May 2014
-  by Scott Fitzgerald
-  modified 2 Sep 2016
-  by Arturo Guadalupi
-  modified 8 Sep 2016
-  by Colby Newman
-
-  This example code is in the public domain.
-
-  https://www.arduino.cc/en/Tutorial/BuiltInExamples/Blink
-*/
-
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-#include <FS.h>
-#include <WiFiUdp.h>
+#include <TaskScheduler.h>
+#include <ArduinoJson.h>
+#include <EEPROM.h>
+#include "tonkey.hpp"
+
+Scheduler g_ts;
+tonkey g_MainParser;
+
+void  ledOffCallback();
+void  ledOnCallback();
+Task tLedBlinker (500, TASK_FOREVER, &ledOnCallback, &g_ts, false);
+
+void  ledOnCallback() 
+{
+    digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
+    tLedBlinker.setCallback(&ledOffCallback);
+}
+
+void  ledOffCallback()
+{ 
+    digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
+    tLedBlinker.setCallback(&ledOnCallback);
+}
+
+Task task_Cmd(100, TASK_FOREVER, []() {
+    if (Serial.available() > 0)
+    {
+        String _strLine = Serial.readStringUntil('\n');
+        _strLine.trim();
+        Serial.println(_strLine);
+        g_MainParser.parse(_strLine);
+
+        if(g_MainParser.getTokenCount() > 0) {
+          String cmd = g_MainParser.getToken(0);
+            DynamicJsonDocument _res_doc(1024);
+
+            if (cmd == "about")
+            {
+                /* code */
+                _res_doc["result"] = "ok";
+                _res_doc["title"] = "example 01 - led";
+                _res_doc["version"] = "1.0.0";
+                _res_doc["author"] = "gbox3d";
+            }
+            else if (cmd == "on")
+            {
+              /* code */
+              digitalWrite(LED_BUILTIN, LOW); // turn the LED on (HIGH is the voltage level)
+              _res_doc["result"] = "ok";
+              _res_doc["ms"] = "led on";
+            }
+            else if (cmd == "off")
+            {
+              /* code */
+              digitalWrite(LED_BUILTIN, HIGH);  // turn the LED off by making the voltage LOW
+              _res_doc["result"] = "ok";
+              _res_doc["ms"] = "led off";
+            }
+            else if (cmd == "blink")  
+            {
+              /* code */
+              tLedBlinker.enable();
+              _res_doc["result"] = "ok";
+              _res_doc["ms"] = "led blink";
+            }
+            else if (cmd == "stopblk")
+            {
+              /* code */
+              tLedBlinker.disable();
+              _res_doc["result"] = "ok";
+              _res_doc["ms"] = "led stop blink";
+            }
+            else {
+              _res_doc["result"] = "fail";
+              _res_doc["ms"] = "unknown command";
+            }
+
+            serializeJson(_res_doc, Serial);
+        }
+    }
+}, &g_ts, true);
+
 
 // the setup function runs once when you press reset or power the board
 void setup()
 {
     // initialize digital pin LED_BUILTIN as an output.
     pinMode(LED_BUILTIN, OUTPUT);
+    
     Serial.begin(115200);
-    Serial.println("Hello World");
+    EEPROM.begin(512);
+
+    while (!Serial); // wait for serial attach
+    delay(500);
+
+    Serial.println(":-]");
+    Serial.println("Serial connected");
+    
+    g_ts.startNow();
 }
 
 // the loop function runs over and over again forever
 void loop()
 {
-    digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
-    delay(1000);         
-    Serial.println("on"); 
-    digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
-    delay(1000);      
-    Serial.println("off");
+    g_ts.execute();
 }
