@@ -1,7 +1,7 @@
 #ifndef TONKEY_HPP
 #define TONKEY_HPP
 
-#define MAXTOKENS 10
+#define MAXTOKENS 64
 
 
 class tonkey
@@ -52,10 +52,6 @@ void tonkey::parse(String _strLine)
     }
 
     mTokenCount = StringCount;
-    // for(int i = 0; i < StringCount; i++)
-    // {
-    //     Serial.println(mTokens[i]);
-    // }
 }
 
 #endif // TONKEY_HPP
