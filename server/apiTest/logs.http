@@ -1,0 +1,40 @@
+### help
+GET http://localhost:22035/api/logs
+
+### insert
+POST http://localhost:22035/api/logs/insert
+Content-Type: application/json
+
+{
+  "message": "test",
+  "level": "info",
+  "tags": [
+    "test"
+  ]
+}
+
+### list
+POST http://localhost:22035/api/logs/list
+Content-Type: application/json
+
+{
+ "page" : 1,
+  "limit" : 10
+}
+
+### detail
+POST http://localhost:22035/api/logs/detail
+Content-Type: application/json
+
+{
+  "id": "6450d1abe63ecfc4d2a79a46"
+}
+
+
+### delete
+POST http://localhost:22035/api/logs/delete
+Content-Type: application/json
+
+{
+  "_id": "6450d61f9a2470789cc44403"
+}
