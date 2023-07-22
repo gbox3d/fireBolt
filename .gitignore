@@ -58,3 +58,5 @@ arduino/libraries
 
 package-lock.json
 node_modules/
+
+outputs/
