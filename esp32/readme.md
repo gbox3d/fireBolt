@@ -2,8 +2,10 @@
 
 ## example list
 
+ex00 : 내장된 led를 깜박이면서 , 디지털핀들을 테스트 하는 예제입니다.
 ex01 : esp32에서 tonkey 라이브러리를 사용하여 tonkey를 제어하는 예제입니다.  
-ex02 : esp32에서 bluetooth serial 를 사용하는 예제입니다.  
+ex02 : esp32에서 bluetooth serial 를 사용하는 예제입니다. 
+ 
 
 ## 참고자료
 
