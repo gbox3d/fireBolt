@@ -97,8 +97,6 @@ void loop()
                 // 배터리 잔량 계산
                 float percentage = (voltage - 3.3) / (4.2 - 3.3) * 100.0;
 
-                // SerialBT.print("sensor raw value: ");
-                // SerialBT.println(sensorValue);
                 SerialBT.printf("sensor raw value: %d\n", sensorValue);
                 SerialBT.printf("sensor voltage: %.2f\n", voltage);
                 SerialBT.printf("battery percent: %.2f\n", percentage);
