@@ -5,10 +5,22 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-#include <etc.hpp>
 
-int pins[] = {18,19,21,22,23,13};
-int num_pins = sizeof(pins) / sizeof(pins[0]);
+String getChipID()
+{
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    String macStr = "";
+    for (int i = 0; i < 6; i++)
+    {
+        if (mac[i] < 0x10)
+            macStr += "0"; // 한 자리 숫자 앞에 0 추가
+        macStr += String(mac[i], HEX);
+    }
+    macStr.toUpperCase();
+    return macStr;
+}
+
 
 
 BLEServer *pServer = NULL;
@@ -32,81 +44,29 @@ struct S_Ble_Header_Res_Packet_V1 {
     uint8_t parm[3];
 };
 
+class MyCharateristicCallbacks: public BLECharacteristicCallbacks {
+    
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      std::string value = pCharacteristic->getValue();
+
+      if (value.length() > 0) {
+        Serial.println("Received value from client:");
+        for (int i = 0; i < value.length(); i++)
+          Serial.print(value[i]);
+
+        Serial.println();
+
+        // Echo the value back by setting the same value
+        // The client will read this value when it performs a read operation
+        pCharacteristic->setValue(value);
+        Serial.println("Set echo value for the client to read");
+      }
+    }
+};
 
 class MyServerCallbacks : public BLEServerCallbacks
 { 
-    void onWrite(BLECharacteristic *pCharacteristic) {
-        std::string value = pCharacteristic->getValue();
-
-        if (value.length() >= sizeof(S_Ble_Header_Req_Packet_V1)) {
-            S_Ble_Header_Req_Packet_V1 *pkt = (S_Ble_Header_Req_Packet_V1 *)value.c_str();
-
-            Serial.printf("check code : %d\n", pkt->checkCode);
-            
-
-            if (pkt->checkCode == 20230815) {
-                
-                // 체크 코드가 일치하면 명령 처리
-                switch (pkt->cmd) {
-                    case 0x01: //echo
-                    {
-                        S_Ble_Header_Res_Packet_V1 res;
-                        res.checkCode = 20230815;
-                        res.cmd = 0x11;
-                        res.parm[0] = pkt->parm[0];
-                        res.parm[1] = pkt->parm[1];
-                        res.parm[2] = pkt->parm[2];
-
-                        pCharacteristic->setValue((uint8_t *)&res, sizeof(res));
-                        pCharacteristic->notify();
-                        
-                    }
-                    break; 
-                    case 0x02: //on
-                    {
-                        int pinIndex = pkt->parm[0];
-
-                        // Serial.printf("pin index %d is on\n", pinIndex);
-
-                        digitalWrite(pins[0], HIGH);
-
-                        // Serial.printf("pin %d is on\n", pins[pinIndex]);
-                        
-                        S_Ble_Header_Res_Packet_V1 res;
-                        res.checkCode = 20230815;
-                        res.cmd = 0x02;
-                        res.parm[0] = 0;
-                        res.parm[1] = 0;
-                        res.parm[2] = 0;
-
-                        pCharacteristic->setValue((uint8_t *)&res, sizeof(res));
-                        pCharacteristic->notify();                        
-                    }
-                    break;
-                    case 0x03: //off
-                    {
-                        // int pinIndex = pkt->parm[0];
-
-                        // Serial.printf("pin index %d is on\n", pinIndex);
-
-                        digitalWrite(pins[0], LOW);
-
-                        // Serial.printf("pin %d is off\n", pins[pinIndex]);
-                        
-                        S_Ble_Header_Res_Packet_V1 res;
-                        res.checkCode = 20230815;
-                        res.cmd = 0x03;
-
-                        pCharacteristic->setValue((uint8_t *)&res, sizeof(res));
-                        pCharacteristic->notify();                        
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-   
+    
     void onConnect(BLEServer *pServer)
     {
         deviceConnected = true;
@@ -117,7 +77,7 @@ class MyServerCallbacks : public BLEServerCallbacks
 
         // 환영 메시지 설정 및 알림 보내기
         pCharacteristic->setValue("Welcome to ESP32!");
-        pCharacteristic->notify();    
+        // pCharacteristic->notify();    
         
     };
 
@@ -138,14 +98,10 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT); // 내장 LED를 출력 모드로 설정
     digitalWrite(LED_BUILTIN, LOW);
 
-    for(int i=0; i<num_pins; i++){
-        pinMode(pins[i], OUTPUT);
-        digitalWrite(pins[i], LOW);
-    }
-
     // Create the BLE Device
     BLEDevice::init("ESP32_BLE" + std::string(getChipID().c_str()));
-
+    // BLEDevice::init("MyESP32");
+    
     // Create the BLE Server
     pServer = BLEDevice::createServer();
     pServer->setCallbacks(new MyServerCallbacks());
@@ -160,16 +116,16 @@ void setup()
             BLECharacteristic::PROPERTY_WRITE |
             BLECharacteristic::PROPERTY_NOTIFY |
             BLECharacteristic::PROPERTY_INDICATE);
-
-    // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
-    pCharacteristic->addDescriptor(new BLE2902());
+    
+    // pCharacteristic->addDescriptor(new BLE2902()); // 알람 표시 기능활성화
+    pCharacteristic->setCallbacks(new MyCharateristicCallbacks());
 
     // Start the service
     pService->start();
 
     // Start advertising
     pServer->getAdvertising()->start();
-    Serial.printf("r02 Waiting a client connection to notify...%s \n", getChipID().c_str());
+    Serial.printf("Waiting a client connection to notify...%s \n", getChipID().c_str());
 }
 
 void loop()
