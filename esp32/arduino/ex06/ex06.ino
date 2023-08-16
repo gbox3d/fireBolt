@@ -70,6 +70,12 @@ struct S_Config_Data_Req_Packet
     S_Config_Data data;
 };
 
+struct S_Config_Data_Res_Packet
+{
+    S_Ble_Header_Res_Packet_V1 header;
+    S_Config_Data data;
+};
+
 #define CHECK_CODE 230815
 
 int ledPins[] = {18, 19, 21, 22, 23, 13}; // 사용할 LED 핀 번호
@@ -209,7 +215,15 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
                     if (readConfig(config))
                     {
                         dumpConfig(config);
-
+                        //send config data
+                        S_Ble_Header_Res_Packet_V1 resPacket;
+                        resPacket.checkCode = CHECK_CODE;
+                        resPacket.cmd = 0x06;
+                        S_Config_Data_Res_Packet resConfigPacket;
+                        resConfigPacket.header = resPacket;
+                        resConfigPacket.data = config;
+                        pCharacteristic->setValue((uint8_t *)&resConfigPacket, sizeof(resConfigPacket));
+                        // pCharacteristic->notify();
                     }
                 }
                 break;
