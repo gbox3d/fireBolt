@@ -1,9 +1,11 @@
 #include <WiFi.h>
-
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+
+#include "SPIFFS.h"
+
 
 String getChipID()
 {
@@ -43,9 +45,92 @@ struct S_Ble_Header_Res_Packet_V1
     uint8_t parm[3];
 };
 
+struct S_Config_Data
+{
+
+    char ssid[16];
+    char password[16];
+
+    uint32_t nDeviceNumber;
+    uint8_t nDevType;
+    uint8_t reserved[27]; // pack 32 bytes
+};
+
+S_Config_Data g_config;
+
+void writeConfig(const S_Config_Data &config);
+bool readConfig(S_Config_Data &config);
+void createDefaultConfig();
+void dumpConfig(const S_Config_Data &config);
+
+
+struct S_Config_Data_Req_Packet
+{
+    S_Ble_Header_Req_Packet_V1 header;
+    S_Config_Data data;
+};
+
 #define CHECK_CODE 230815
 
 int ledPins[] = {18, 19, 21, 22, 23, 13}; // 사용할 LED 핀 번호
+
+void dumpConfig(const S_Config_Data &config)
+{
+    Serial.println("Config:");
+    Serial.println(config.ssid);
+    Serial.println(config.password);
+    Serial.println(config.nDeviceNumber);
+    Serial.println(config.nDevType);
+    // Serial.println(config.reserved[0]);
+}
+
+void writeConfig(const S_Config_Data &config)
+{
+    File file = SPIFFS.open("/config.dat", FILE_WRITE);
+    if (!file)
+    {
+        Serial.println("Failed to open config file for writing");
+        return;
+    }
+    file.write((uint8_t *)&config, sizeof(S_Config_Data));
+    file.close();
+    Serial.println("Config written");
+}
+
+bool readConfig(S_Config_Data &config)
+{
+    File file = SPIFFS.open("/config.dat", FILE_READ);
+    if (!file)
+    {
+        Serial.println("Failed to open config file for reading");
+        return false;
+    }
+    file.read((uint8_t *)&config, sizeof(S_Config_Data));
+    file.close();
+    Serial.println("Config read");
+    return true;
+}
+
+void createDefaultConfig()
+{
+    if (SPIFFS.exists("/config.dat"))
+    {
+        Serial.println("Config file already exists");
+        return;
+    }
+
+    S_Config_Data config;
+    // 여기에 초기 설정 값을 채워 넣으세요.
+    // 예를 들어:
+    strncpy(config.ssid, "", sizeof(config.ssid));
+    strncpy(config.password, "", sizeof(config.password));
+    config.nDeviceNumber = 0;
+    config.nDevType = 0;
+    memset(config.reserved, 0, sizeof(config.reserved));
+
+    writeConfig(config);
+    Serial.println("Default config file created");
+}
 
 class MyCharateristicCallbacks : public BLECharacteristicCallbacks
 {
@@ -111,8 +196,23 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
                     // delay(500);
                     pCharacteristic->notify();
                     break;
-
                 }
+                case 0x05: // 예를 들어, 0x05 명령어를 설정 데이터 저장으로 사용
+                {
+                    S_Config_Data_Req_Packet *configPacket = (S_Config_Data_Req_Packet *)value.data();
+                    writeConfig(configPacket->data);
+                }
+                break;
+                case 0x06: // 예를 들어, 0x06 명령어를 설정 데이터 읽기로 사용
+                {
+                    S_Config_Data config;
+                    if (readConfig(config))
+                    {
+                        dumpConfig(config);
+
+                    }
+                }
+                break;
                 default:
                     Serial.println("Unknown command");
                 }
@@ -139,17 +239,14 @@ class MyServerCallbacks : public BLEServerCallbacks
         // digitalWrite(pins[0], HIGH);
         Serial.println("Client connected");
         pServer->getAdvertising()->stop(); // 클라이언트가 연결되면 광고 중지
-
         // 환영 메시지 설정 및 알림 보내기
-        // {
-        //     S_Ble_Header_Res_Packet_V1 resPacket;
-        //     resPacket.checkCode = CHECK_CODE;
-        //     resPacket.cmd = 0x99;
-        //     pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
-        //     pCharacteristic->notify();
-        // }
-        // pCharacteristic->setValue("Welcome to ESP32!");
-        // pCharacteristic->notify();
+        {
+            S_Ble_Header_Res_Packet_V1 resPacket;
+            resPacket.checkCode = CHECK_CODE;
+            resPacket.cmd = 0x99;
+            pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
+            pCharacteristic->notify();
+        }
     };
 
     void onDisconnect(BLEServer *pServer)
@@ -162,11 +259,29 @@ class MyServerCallbacks : public BLEServerCallbacks
     }
 };
 
+
+
 void setup()
 {
     Serial.begin(115200);
 
     pinMode(LED_BUILTIN, OUTPUT); // 내장 LED를 출력 모드로 설정
+    digitalWrite(LED_BUILTIN, HIGH);
+
+    delay(300);
+
+    if (!SPIFFS.begin(true))
+    { // true는 SPIFFS 포맷이 필요한 경우 자동으로 수행하도록 함
+        Serial.println("SPIFFS Mount Failed");
+        return;
+    }
+    Serial.println("SPIFFS Mount Successful");
+
+    createDefaultConfig();
+
+    readConfig(g_config);
+    dumpConfig(g_config);
+
     digitalWrite(LED_BUILTIN, LOW);
 
     for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++)
@@ -177,7 +292,6 @@ void setup()
 
     // Create the BLE Device
     BLEDevice::init("ESP32_BLE" + std::string(getChipID().c_str()));
-    // BLEDevice::init("MyESP32");
 
     // Create the BLE Server
     pServer = BLEDevice::createServer();
@@ -207,10 +321,4 @@ void setup()
 
 void loop()
 {
-    // if (deviceConnected)
-    // {
-    //     pCharacteristic->setValue("Hello from ESP32!");
-    //     pCharacteristic->notify();
-    //     delay(1000); // Send every second
-    // }
 }
