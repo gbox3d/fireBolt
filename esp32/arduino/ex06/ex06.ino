@@ -6,6 +6,9 @@
 
 #include "SPIFFS.h"
 
+#include "config.hpp"
+#include "ble_packet_v1.hpp"
+
 
 String getChipID()
 {
@@ -31,112 +34,11 @@ bool deviceConnected = false;
 #define CHARACTERISTIC_UUID "fef6efb5-fbf8-4d0a-a69f-57049733a87a"
 #define LED_BUILTIN 5 // GPIO 핀 번호에 따라 변경할 수 있습니다.
 
-struct S_Ble_Header_Req_Packet_V1
-{
-    uint32_t checkCode;
-    uint8_t cmd;
-    uint8_t parm[3];
-};
-
-struct S_Ble_Header_Res_Packet_V1
-{
-    uint32_t checkCode;
-    uint8_t cmd;
-    uint8_t parm[3];
-};
-
-struct S_Config_Data
-{
-
-    char ssid[16];
-    char password[16];
-
-    uint32_t nDeviceNumber;
-    uint8_t nDevType;
-    uint8_t reserved[27]; // pack 32 bytes
-};
-
-S_Config_Data g_config;
-
-void writeConfig(const S_Config_Data &config);
-bool readConfig(S_Config_Data &config);
-void createDefaultConfig();
-void dumpConfig(const S_Config_Data &config);
-
-
-struct S_Config_Data_Req_Packet
-{
-    S_Ble_Header_Req_Packet_V1 header;
-    S_Config_Data data;
-};
-
-struct S_Config_Data_Res_Packet
-{
-    S_Ble_Header_Res_Packet_V1 header;
-    S_Config_Data data;
-};
-
 #define CHECK_CODE 230815
 
 int ledPins[] = {18, 19, 21, 22, 23, 13}; // 사용할 LED 핀 번호
 
-void dumpConfig(const S_Config_Data &config)
-{
-    Serial.println("Config:");
-    Serial.println(config.ssid);
-    Serial.println(config.password);
-    Serial.println(config.nDeviceNumber);
-    Serial.println(config.nDevType);
-    // Serial.println(config.reserved[0]);
-}
-
-void writeConfig(const S_Config_Data &config)
-{
-    File file = SPIFFS.open("/config.dat", FILE_WRITE);
-    if (!file)
-    {
-        Serial.println("Failed to open config file for writing");
-        return;
-    }
-    file.write((uint8_t *)&config, sizeof(S_Config_Data));
-    file.close();
-    Serial.println("Config written");
-}
-
-bool readConfig(S_Config_Data &config)
-{
-    File file = SPIFFS.open("/config.dat", FILE_READ);
-    if (!file)
-    {
-        Serial.println("Failed to open config file for reading");
-        return false;
-    }
-    file.read((uint8_t *)&config, sizeof(S_Config_Data));
-    file.close();
-    Serial.println("Config read");
-    return true;
-}
-
-void createDefaultConfig()
-{
-    if (SPIFFS.exists("/config.dat"))
-    {
-        Serial.println("Config file already exists");
-        return;
-    }
-
-    S_Config_Data config;
-    // 여기에 초기 설정 값을 채워 넣으세요.
-    // 예를 들어:
-    strncpy(config.ssid, "", sizeof(config.ssid));
-    strncpy(config.password, "", sizeof(config.password));
-    config.nDeviceNumber = 0;
-    config.nDevType = 0;
-    memset(config.reserved, 0, sizeof(config.reserved));
-
-    writeConfig(config);
-    Serial.println("Default config file created");
-}
+S_Config_Data g_config;
 
 class MyCharateristicCallbacks : public BLECharacteristicCallbacks
 {
@@ -274,7 +176,6 @@ class MyServerCallbacks : public BLEServerCallbacks
 };
 
 
-
 void setup()
 {
     Serial.begin(115200);
@@ -291,6 +192,7 @@ void setup()
     }
     Serial.println("SPIFFS Mount Successful");
 
+    //config 정보를 읽어온다.
     createDefaultConfig();
 
     readConfig(g_config);
