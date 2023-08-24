@@ -354,8 +354,7 @@ class MainActivity : AppCompatActivity() {
                                 descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                                 gatt?.writeDescriptor(descriptor)
 
-                                // 72바이트로 MTU 크기 변경 요청
-                                gatt?.requestMtu(72)
+
                             }
 
                             val characteristicToRead = gatt?.getService(UUID.fromString(SERVICE_UUID))?.getCharacteristic(UUID.fromString(CHARACTERISTIC_UUID))
@@ -363,14 +362,14 @@ class MainActivity : AppCompatActivity() {
                                 gatt.readCharacteristic(it)
                             }
 
-//                            gatt?.services?.forEach { service ->
-//                                Log.d("MainActivity", "Found service: ${service.uuid}")
-//
-//                                // 해당 서비스의 특성도 출력
-//                                service.characteristics.forEach { characteristic ->
-//                                    Log.d("MainActivity", "  - Characteristic: ${characteristic.uuid}")
-//                                }
-//                            }
+                            gatt?.services?.forEach { service ->
+                                Log.d("MainActivity", "Found service: ${service.uuid}")
+
+                                // 해당 서비스의 특성도 출력
+                                service.characteristics.forEach { characteristic ->
+                                    Log.d("MainActivity", "  - Characteristic: ${characteristic.uuid}")
+                                }
+                            }
                         } else {
                             Log.w("MainActivity", "onServicesDiscovered received: $status")
                         }
@@ -398,7 +397,6 @@ class MainActivity : AppCompatActivity() {
                         when (newState) {
                             BluetoothGatt.STATE_CONNECTED -> {
                                 Log.d("MainActivity", "Connected to GATT server.")
-
                                 var _permision:String = ""
                                 var _requestCode:Int = REQUEST_BLUETOOTH_CONNECT
 
@@ -435,6 +433,9 @@ class MainActivity : AppCompatActivity() {
 
 
                                 Log.d("MainActivity", "start discover service")
+
+                                // 최대 96바이트로 MTU 크기 변경 요청
+                                gatt?.requestMtu(96)
 
                                 gatt?.discoverServices() // 서비스 발견 시작
                             }
