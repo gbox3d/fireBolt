@@ -53,6 +53,7 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
 
             if (packet->checkCode == CHECK_CODE)
             {
+                Serial.printf("Received command: %d\n", packet->cmd);
                 switch (packet->cmd)
                 {
                 case 0x01:
@@ -125,7 +126,7 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
                         resConfigPacket.header = resPacket;
                         resConfigPacket.data = config;
                         pCharacteristic->setValue((uint8_t *)&resConfigPacket, sizeof(resConfigPacket));
-                        // pCharacteristic->notify();
+                        pCharacteristic->notify();
                     }
                 }
                 break;
@@ -203,8 +204,15 @@ void setup()
     for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++)
     {
         pinMode(ledPins[i], OUTPUT); // LED 핀을 출력 모드로 설정
+        digitalWrite(ledPins[i], HIGH);
+    }
+
+    delay(300);
+    for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++)
+    {
         digitalWrite(ledPins[i], LOW);
     }
+
 
     // Create the BLE Device
     BLEDevice::init("ESP32_BLE" + std::string(getChipID().c_str()));
@@ -225,6 +233,7 @@ void setup()
             BLECharacteristic::PROPERTY_INDICATE);
 
     pCharacteristic->addDescriptor(new BLE2902()); // 알람 표시 기능활성화
+
     pCharacteristic->setCallbacks(new MyCharateristicCallbacks());
 
     // Start the service
