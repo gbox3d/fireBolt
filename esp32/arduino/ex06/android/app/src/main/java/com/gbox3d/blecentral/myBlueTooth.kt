@@ -37,7 +37,7 @@ class BluetoothDeviceAdapter(
 }
 
 data class ResponsePacketHeader(
-    val checkCode: Int,
+    val checkCode: UInt,
     val cmd: Byte,
     val parm1: Byte,
     val parm2: Byte,
@@ -48,11 +48,11 @@ fun parseResponseHeader(responseData: ByteArray): ResponsePacketHeader? {
     val buffer = ByteBuffer.wrap(responseData)
     buffer.order(ByteOrder.LITTLE_ENDIAN)
 
-    val checkCode = buffer.int
-    val cmd = buffer.get()
-    val parm1 = buffer.get()
-    val parm2 = buffer.get()
-    val parm3 = buffer.get()
+    val checkCode:UInt = buffer.int.toUInt()
+    val cmd:Byte = buffer.get()
+    val parm1:Byte = buffer.get()
+    val parm2:Byte = buffer.get()
+    val parm3:Byte = buffer.get()
 
     if (checkCode != myBlueTooth.CHECK_CODE) {
         Log.e("MainActivity", "Invalid check code in response!")
@@ -71,8 +71,10 @@ class myBlueTooth {
         const val SERVICE_UUID = "02cb14bf-42e0-41bd-9d6d-68db02057e42"
         const val CHARACTERISTIC_UUID = "fef6efb5-fbf8-4d0a-a69f-57049733a87a"
         const val CLIENT_CHARACTERISTIC_CONFIG_UUID = "00002902-0000-1000-8000-00805f9b34fb"
-        const val CHECK_CODE = 230815
+        const val CHECK_CODE:UInt = 230815u
     }
+
+    
 
 
 }

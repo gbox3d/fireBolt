@@ -6,87 +6,92 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
     <Button
         android:id="@+id/button_scan"
-        android:layout_width="80dp"
-        android:layout_height="48dp"
+        android:layout_width="84dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
         android:fontFamily="monospace"
         android:text="Scan"
         android:textAllCaps="false"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.048"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.01" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/button_conect"
         android:layout_width="103dp"
         android:layout_height="48dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
         android:fontFamily="monospace"
         android:text="Conect"
         android:textAllCaps="false"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/button_scan"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.011" />
+        app:layout_constraintTop_toTopOf="@+id/button_scan" />
 
     <Button
         android:id="@+id/button_read"
         android:layout_width="88dp"
         android:layout_height="48dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginStart="12dp"
         android:fontFamily="monospace"
         android:text="Read"
         android:textAllCaps="false"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/button_conect"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.01" />
+        app:layout_constraintTop_toTopOf="@+id/button_conect" />
 
     <Button
         android:id="@+id/button_write"
         android:layout_width="88dp"
         android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginStart="12dp"
         android:fontFamily="monospace"
         android:text="Write"
         android:textAllCaps="false"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/button_read"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.011" />
+        app:layout_constraintTop_toTopOf="@+id/button_read" />
 
     <Button
         android:id="@+id/button_read_charistic"
         android:layout_width="88dp"
         android:layout_height="48dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:fontFamily="monospace"
         android:text="check"
         android:textAllCaps="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.025"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_scan" />
+
+    <Button
+        android:id="@+id/button_on"
+        android:layout_width="88dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:fontFamily="monospace"
+        android:text="on"
+        android:textAllCaps="false"
+        app:layout_constraintStart_toEndOf="@+id/button_read_charistic"
+        app:layout_constraintTop_toTopOf="@+id/button_read_charistic" />
+
+    <Button
+        android:id="@+id/button_off"
+        android:layout_width="88dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:fontFamily="monospace"
+        android:text="off"
+        android:textAllCaps="false"
+        app:layout_constraintStart_toEndOf="@+id/button_on"
+        app:layout_constraintTop_toTopOf="@+id/button_read_charistic" />
 
     <TextView
         android:id="@+id/tv_info_msg"
         android:layout_width="0dp"
         android:layout_height="68dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="92dp"
+        android:layout_marginTop="132dp"
         android:layout_marginEnd="8dp"
         android:text=""
         app:layout_constraintEnd_toEndOf="parent"
@@ -95,19 +100,16 @@
         app:layout_constraintTop_toBottomOf="@+id/button_scan" />
 
     <ListView
-        android:id="@+id/list_devices"
-        android:layout_width="387dp"
-        android:layout_height="408dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_info_msg" />
-
-
-
+            android:id="@+id/list_devices"
+            android:layout_width="387dp"
+            android:layout_height="408dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_info_msg" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
