@@ -67,6 +67,7 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
                     Serial.println(packet->parm[0], HEX);
 
                     pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
+                    pCharacteristic->notify();
                 }
 
                 break;
@@ -75,21 +76,42 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
                     int nPinIndex = packet->parm[0];
 
                     digitalWrite(ledPins[nPinIndex], HIGH);
-                }
+                
 
                     // for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++)
                     // {
                     //     digitalWrite(ledPins[i], HIGH);
                     // }
                     Serial.printf("LEDs ON: %d\n", packet->parm[0]);
+
+                    S_Ble_Header_Res_Packet_V1 resPacket;
+                    resPacket.checkCode = CHECK_CODE;
+                    resPacket.cmd = 0x02;
+                    resPacket.parm[0] = 0x00; //ok
+                    resPacket.parm[1] = nPinIndex;
+                    
+                    pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
+                    pCharacteristic->notify();
+                }
+
                     break;
                 case 0x03:
                 {
                     int nPinIndex = packet->parm[0];
 
                     digitalWrite(ledPins[nPinIndex], LOW);
-                }
+                
                     Serial.printf("LEDs OFF: %d\n", packet->parm[0]);
+
+                    S_Ble_Header_Res_Packet_V1 resPacket;
+                    resPacket.checkCode = CHECK_CODE;
+                    resPacket.cmd = 0x03;
+                    resPacket.parm[0] = 0x00; //ok
+                    resPacket.parm[1] = nPinIndex;
+                    
+                    pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
+                    pCharacteristic->notify();
+                }
 
                     break;
                 case 0x04:
@@ -110,6 +132,15 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
                 {
                     S_Config_Data_Req_Packet *configPacket = (S_Config_Data_Req_Packet *)value.data();
                     writeConfig(configPacket->data);
+
+                    S_Ble_Header_Res_Packet_V1 resPacket;
+                    resPacket.checkCode = CHECK_CODE;
+                    resPacket.checkCode = CHECK_CODE;
+                    resPacket.cmd = 0x05;
+                    resPacket.parm[0] = 0x00; //ok
+
+                    pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
+                    pCharacteristic->notify();
                 }
                 break;
                 case 0x06: // 예를 들어, 0x06 명령어를 설정 데이터 읽기로 사용
@@ -122,6 +153,8 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
                         S_Ble_Header_Res_Packet_V1 resPacket;
                         resPacket.checkCode = CHECK_CODE;
                         resPacket.cmd = 0x06;
+                        resPacket.parm[0] = 0x00; //ok
+                        
                         S_Config_Data_Res_Packet resConfigPacket;
                         resConfigPacket.header = resPacket;
                         resConfigPacket.data = config;
@@ -151,6 +184,8 @@ class MyServerCallbacks : public BLEServerCallbacks
 
     void onConnect(BLEServer *pServer)
     {
+        BLEDevice::setMTU(96);
+
         deviceConnected = true;
         digitalWrite(LED_BUILTIN, HIGH);
         // digitalWrite(pins[0], HIGH);
@@ -220,6 +255,7 @@ void setup()
     // Create the BLE Server
     pServer = BLEDevice::createServer();
     pServer->setCallbacks(new MyServerCallbacks());
+    // pServer->setMTU(96); // 원하는 MTU 크기로 설정
 
     // Create the BLE Service
     BLEService *pService = pServer->createService(SERVICE_UUID);
