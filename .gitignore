@@ -60,3 +60,4 @@ package-lock.json
 node_modules/
 temp/
 config.yaml
+config.json
