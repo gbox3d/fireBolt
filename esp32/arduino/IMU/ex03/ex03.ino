@@ -386,6 +386,34 @@ void setup()
     PullBracketsIn();
 
     Serial.println("-------------- done --------------");
+
+    // 현재 설정된 오프셋 값들을 가져와서 출력
+    int16_t xAccelOffset, yAccelOffset, zAccelOffset;
+    int16_t xGyroOffset, yGyroOffset, zGyroOffset;
+
+    xAccelOffset = accelgyro.getXAccelOffset();
+    yAccelOffset = accelgyro.getYAccelOffset();
+    zAccelOffset = accelgyro.getZAccelOffset();
+
+    xGyroOffset = accelgyro.getXGyroOffset();
+    yGyroOffset = accelgyro.getYGyroOffset();
+    zGyroOffset = accelgyro.getZGyroOffset();
+
+    Serial.print("XAccel Offset: ");
+    Serial.println(xAccelOffset);
+    Serial.print("YAccel Offset: ");
+    Serial.println(yAccelOffset);
+    Serial.print("ZAccel Offset: ");
+    Serial.println(zAccelOffset);
+
+    Serial.print("XGyro Offset: ");
+    Serial.println(xGyroOffset);
+    Serial.print("YGyro Offset: ");
+    Serial.println(yGyroOffset);
+    Serial.print("ZGyro Offset: ");
+    Serial.println(zGyroOffset);
+
+
 } // setup
 
 void loop()

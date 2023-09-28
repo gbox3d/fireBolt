@@ -1,3 +1,11 @@
+# imu 센서 예제 모음
+
+## pinout
+
+sda : 21  
+scl : 22  
+intrupt : 32( 상황에 따라 변경)  
+
 
 ## ex01 
 MPU6050_tockn + MadgwickAHRS 조합 예제   
@@ -13,5 +21,8 @@ led 핀은 13번 핀으로 설정
 ## ex03
 예제 2번을위한 mp6050 센서 칼리브레이션 예제소스 
 ElectronicCats 의 imu_zero 예제를 참고했다.  
+
+## ex23
+디바이스 스캐닝 예제
 
 
