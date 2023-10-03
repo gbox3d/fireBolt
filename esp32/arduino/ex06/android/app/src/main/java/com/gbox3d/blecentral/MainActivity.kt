@@ -484,10 +484,7 @@ class MainActivity : AppCompatActivity() {
                                     Log.d("MainActivity", "req permission ACCESS_FINE_LOCATION")
                                 }
 
-//                                //get characteristic
-//                                val characteristic = gatt?.getService(UUID.fromString(SERVICE_UUID))
-//                                    ?.getCharacteristic(UUID.fromString(CHARACTERISTIC_UUID))
-//
+
 
                                 if (ActivityCompat.checkSelfPermission(
                                         this@MainActivity,
@@ -507,7 +504,7 @@ class MainActivity : AppCompatActivity() {
                                 Log.d("MainActivity", "start discover service")
 
                                 // 최대 96바이트로 MTU 크기 변경 요청 , esp32 에서는 제데로 동작하지않는듯하다 23.8.24
-//                                gatt?.requestMtu(96)
+                                // gatt?.requestMtu(96)
 
                                 gatt?.discoverServices() // 서비스 발견 시작
                             }
