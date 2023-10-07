@@ -6,9 +6,11 @@
 //0,2,4,12,15 는 사용금지
 //21,22 i2c
 
-int pins[] = {16,17,18,19,13};
+int pins[] = {13,16, 17, 18, 19, 23, 25, 26, 27, 32, 33};
 int num_pins = sizeof(pins) / sizeof(pins[0]);
 int delay_time = 500; // 1초
+
+const int interruptPin = 14;
 
 Scheduler g_ts_blinker;
 Scheduler g_ts_ledtest;
@@ -34,12 +36,23 @@ Task task_Blink(1000, TASK_FOREVER, []() {
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }, &g_ts_blinker, true);
 
+volatile bool interruptFlag = false;
+
+void IRAM_ATTR isr() {
+    interruptFlag = true;
+}
+
 void setup()
 {
     Serial.begin(115200);         // 시리얼 통신 초기화
+
     pinMode(LED_BUILTIN, OUTPUT); // 내장 LED를 출력 모드로 설정
 
-    for(int i=0; i<10; i++){
+    //add interrupt 14 pin
+    pinMode(interruptPin, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(interruptPin), isr, FALLING);
+
+    for(int i=0; i<num_pins; i++) {
         pinMode(pins[i], OUTPUT);
         digitalWrite(pins[i], LOW);
     }
@@ -60,5 +73,12 @@ void setup()
 void loop() {
     g_ts_blinker.execute();
     g_ts_ledtest.execute();
+
+     if (interruptFlag) {
+        Serial.println("interrupt");
+        //tooggle 23 pin
+        digitalWrite(pins[5], !digitalRead(pins[5]));
+        interruptFlag = false;
+    }
   
 }
