@@ -6,7 +6,7 @@
 //0,2,4,12,15 는 사용금지
 //21,22 i2c
 
-int pins[] = {13,16, 17, 18, 19, 23, 25, 26, 27, 32, 33};
+int pins[] = {13,14,18, 19, 23, 25, 26, 27, 32, 33};
 int num_pins = sizeof(pins) / sizeof(pins[0]);
 int delay_time = 500; // 1초
 
