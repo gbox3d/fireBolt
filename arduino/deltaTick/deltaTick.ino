@@ -1,6 +1,7 @@
 //miils 함수사 오버 플로우 발생시 delta tick 계산을 위한 함수
 
 #include <Arduino.h>
+#include <limits.h>
 
 unsigned long deltaTick(unsigned long now, unsigned long last)
 {
@@ -10,7 +11,7 @@ unsigned long deltaTick(unsigned long now, unsigned long last)
   }
   else
   {
-    return (WINT_MAX - last) + now;
+    return (UINT_MAX - last) + now;
   }
 }
 
