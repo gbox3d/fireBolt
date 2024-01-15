@@ -100,14 +100,14 @@ MPU6050 mpu;
 // from the FIFO. Note this also requires gravity vector calculations.
 // Also note that yaw/pitch/roll angles suffer from gimbal lock (for
 // more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
-// #define OUTPUT_READABLE_YAWPITCHROLL
+#define OUTPUT_READABLE_YAWPITCHROLL
 
 // uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
 // components with gravity removed. This acceleration reference frame is
 // not compensated for orientation, so +X is always +X according to the
 // sensor, just without the effects of gravity. If you want acceleration
 // compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-#define OUTPUT_READABLE_REALACCEL
+//#define OUTPUT_READABLE_REALACCEL
 
 // uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
 // components with gravity removed and adjusted for the world frame of
@@ -121,8 +121,8 @@ MPU6050 mpu;
 
 
 
-#define INTERRUPT_PIN 5  // use pin 2 on Arduino Uno & most boards
-#define LED_PIN 2 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
+#define INTERRUPT_PIN 10   // use pin 2 on Arduino Uno & most boards
+// #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 bool blinkState = false;
 
 // MPU control/status vars
@@ -157,7 +157,90 @@ void dmpDataReady() {
 }
 
 
+void initDmp(int16_t *pOffset) {
+    
+    // NOTE: 8MHz or slower host processors, like the Teensy @ 3.3V or Arduino
+    // Pro Mini running at 3.3V, cannot handle this baud rate reliably due to
+    // the baud timing being too misaligned with processor ticks. You must use
+    // 38400 or slower in these cases, or use some kind of external separate
+    // crystal solution for the UART timer.
 
+    // initialize device
+    Serial.println(F("Initializing I2C devices..."));
+    mpu.initialize();
+    pinMode(INTERRUPT_PIN, INPUT);
+
+    // verify connection
+    Serial.println(F("Testing device connections..."));
+    Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+
+    // wait for ready
+    // Serial.println(F("\nSend any character to begin DMP programming and demo: "));
+    // while (Serial.available() && Serial.read()); // empty buffer
+    // while (!Serial.available());                 // wait for data
+    // while (Serial.available() && Serial.read()); // empty buffer again
+
+    // load and configure the DMP
+    Serial.println(F("Initializing DMP..."));
+    devStatus = mpu.dmpInitialize();
+
+    // supply your own gyro offsets here, scaled for min sensitivity
+    mpu.setXGyroOffset(pOffset[0]);
+    mpu.setYGyroOffset(pOffset[1]);
+    mpu.setZGyroOffset(pOffset[2]);
+    mpu.setXAccelOffset(pOffset[3]); 
+    mpu.setYAccelOffset(pOffset[4]); 
+    mpu.setZAccelOffset(pOffset[5]); 
+
+    // make sure it worked (returns 0 if so)
+    if (devStatus == 0) {
+        // Calibration Time: generate offsets and calibrate our MPU6050
+        mpu.CalibrateAccel(6);
+        mpu.CalibrateGyro(6);
+        mpu.PrintActiveOffsets();
+        // turn on the DMP, now that it's ready
+        Serial.println(F("Enabling DMP..."));
+        mpu.setDMPEnabled(true);
+
+        // enable Arduino interrupt detection
+        Serial.print(F("Enabling interrupt detection (Arduino external interrupt "));
+        Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
+        Serial.println(F(")..."));
+        attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
+        mpuIntStatus = mpu.getIntStatus();
+
+        // set our DMP Ready flag so the main loop() function knows it's okay to use it
+        Serial.println(F("DMP ready! Waiting for first interrupt..."));
+
+        while (!mpuInterrupt)
+        {
+            Serial.println("wait for interrupt");
+            delay(200);
+        }
+
+        dmpReady = true;
+
+        // get expected DMP packet size for later comparison
+        packetSize = mpu.dmpGetFIFOPacketSize();
+
+        Serial.print("dmp ready packet size : ");
+        Serial.println(packetSize);
+
+    } else {
+        // ERROR!
+        // 1 = initial memory load failed
+        // 2 = DMP configuration updates failed
+        // (if it's going to break, usually the code will be 1)
+        Serial.print(F("DMP Initialization failed (code "));
+        Serial.print(devStatus);
+        Serial.println(F(")"));
+    }
+
+}
+
+
+
+/*
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
@@ -339,7 +422,9 @@ void loop() {
         #endif
 
         // blink LED to indicate activity
-        // blinkState = !blinkState;
-        // digitalWrite(LED_PIN, blinkState);
+        blinkState = !blinkState;
+        digitalWrite(LED_PIN, blinkState);
     }
 }
+
+*/

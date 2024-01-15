@@ -1,49 +1,40 @@
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#if defined(LOLIN_D32)
+  #define LED_BUILTIN 5
+  const int ledPins[] = {4,5};
+#elif defined(SEED_XIAO_ESP32C3)
+  const int ledPins[] = {D0, D1, D2, D3};
+#elif defined(LOLIN_D32_LITE)
+  const int ledPins[] = {22};
+  
+#endif
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
 
-  pinMode(D0, OUTPUT);
-  pinMode(D1, OUTPUT);
-  pinMode(D2, OUTPUT);
-  pinMode(D3, OUTPUT);
-
-
+  for(int i=0; i<sizeof(ledPins)/sizeof(ledPins[0]); i++) {
+    pinMode(ledPins[i], OUTPUT);
+    digitalWrite(ledPins[i], LOW);
+  }
   Serial.begin(115200);
-  Serial.println("Hello World!");
-  Serial.println(result);
+
+  // Serial.println("Hello World!");
+  // Serial.println(result);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  Serial.println("Hello World!");
-  digitalWrite(D0, HIGH);
-  delay(500);
-  digitalWrite(D0, LOW);
-  delay(500);
-
-  digitalWrite(D1, HIGH);
-  delay(500);
-  digitalWrite(D1, LOW);
-  delay(500);
-
-  digitalWrite(D2, HIGH);
-  delay(500);
-  digitalWrite(D2, LOW);
-  delay(500);
-
-  digitalWrite(D3, HIGH);
-  delay(500);
-  digitalWrite(D3, LOW);
-  delay(500);
+  static int pinIndex = 0;
+  static int delayTime = 500;
+  static bool ledState[] = {false, false, false, false};
   
-}
+  digitalWrite(ledPins[pinIndex], ledState[pinIndex]);
+  ledState[pinIndex] = !ledState[pinIndex];
+  pinIndex = (pinIndex + 1) % (sizeof(ledPins)/sizeof(ledPins[0]));
+  Serial.print("pinIndex: ");
+  Serial.println(pinIndex);
+  Serial.print("status of pin: ");
+  Serial.println(ledState[pinIndex]);
+  delay(delayTime);
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  
 }
