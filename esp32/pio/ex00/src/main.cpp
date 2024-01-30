@@ -69,11 +69,4 @@ void setup()
 void loop()
 {
   runner.execute();
-
-  //  if (interruptFlag) {
-  //     Serial.println("interrupt");
-  //     //tooggle 23 pin
-  //     digitalWrite(pins[5], !digitalRead(pins[5]));
-  //     interruptFlag = false;
-  // }
 }

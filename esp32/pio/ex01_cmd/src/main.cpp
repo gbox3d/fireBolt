@@ -149,9 +149,9 @@ void setup()
 
   Serial.begin(115200); // 시리얼 통신 초기화
 
-  while (!Serial)
-    ; // wait for serial attach
-  delay(500);
+  // while (!Serial)
+  //   ; // wait for serial attach
+  // delay(500);
 
   Serial.println(":-]");
   Serial.println("Serial connected");
