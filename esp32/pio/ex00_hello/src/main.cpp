@@ -6,18 +6,27 @@
 #include "config.hpp"
 
 #if defined(LOLIN_D32)
-  #define LED_BUILTIN 5
+  // const int builtInLed = LED_BUILTIN;
+  // #define LED_BUILTIN 5
   const int ledPins[] = {4,5};
 #elif defined(SEED_XIAO_ESP32C3)
+  // #define LED_BUILTIN -1
+  
+  // const int builtInLed = D5; //실재론 없다
+
   const int ledPins[] = {D10,D9};
   const int analogPins[] = {D0,D1};
   const int buttonPins[] = {D8,D2,D3};
 #elif defined(LOLIN_D32_LITE)
-  const int ledPins[] = {22};
-  
+  // const int builtInLed = 22;
+  const int ledPins[] = {
+    27,26,25,23,19,18,13,14
+    };
+  const int analogPins[] = {34,35,36,39};
+  const int buttonPins[] = {32,33};
 #endif
 
-String strTitleMsg = "it is MOAI(motion + ai) framework sample revision 1";
+String strTitleMsg = "FireBolt ESP32 Exam Hello\n";
 
 String strHelpMsg = "command list\n\
 help : show this message\n\
@@ -36,6 +45,14 @@ print : print config\n\
 CCongifData g_Config;
 tonkey g_MainParser;
 Scheduler runner;
+
+Task task_Blink(
+    500, TASK_FOREVER, []()
+    {
+      static bool _state = false;
+      _state = !_state;
+      digitalWrite(LED_BUILTIN, _state);
+    });
 
 Task task_Cmd(
     100, TASK_FOREVER, []()
@@ -85,6 +102,7 @@ Task task_Cmd(
               _result = "FAIL";
             }
           }
+          
           else if(cmd=="button") {
             if(g_MainParser.getTokenCount() > 1) {
               
@@ -145,6 +163,12 @@ Task task_Cmd(
 
 void setup() {
 
+  Serial.begin(115200);
+  delay(500);
+
+  Serial.println("Hello World");
+
+  
   //io setup
   for(int i=0; i<sizeof(ledPins)/sizeof(ledPins[0]); i++) {
     pinMode(ledPins[i], OUTPUT);
@@ -159,14 +183,15 @@ void setup() {
     pinMode(analogPins[i], INPUT);
   }
 
-  Serial.begin(115200);
-
-  while(!Serial) 
-    ;
+  // while(!Serial) 
+  //   ;
 
   runner.init();
   runner.addTask(task_Cmd);
+  runner.addTask(task_Blink);
+
   task_Cmd.enable();
+  task_Blink.enable();
 
   delay(1000);
   Serial.println(strTitleMsg);
