@@ -131,6 +131,9 @@ Task task_Cmd(
               _res_doc["result"] = "ok";
               _res_doc["value"] = a + b;
             }
+            else if( cmd == "reboot") {
+              ESP.restart();
+            }
             else {
               _res_doc["result"] = "fail";
               _res_doc["ms"] = "unknown command";
