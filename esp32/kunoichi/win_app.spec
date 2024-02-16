@@ -5,7 +5,9 @@ a = Analysis(
     ['app.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[        
+        ('c:\\Users\\user\\Desktop\\work\\visionApp\\.venv\\lib\\site-packages\\esptool\\targets\\stub_flasher\\*', 'esptool/targets/stub_flasher')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

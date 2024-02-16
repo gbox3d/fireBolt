@@ -8,6 +8,22 @@ import os
 
 import esptool
 
+import sys
+
+class FauxStream(object):
+    """콘솔이 없는 환경에서 stdout/stderr의 메소드를 대체하기 위한 가짜 스트림 클래스."""
+    def write(self, data):
+        pass  # 실제로는 데이터를 어디에도 쓰지 않음
+
+    def flush(self):
+        pass  # flush 호출을 무시함
+
+# 콘솔 창이 없는 경우에 대비하여 sys.stdout와 sys.stderr를 대체
+if not sys.stdout:
+    sys.stdout = FauxStream()
+if not sys.stderr:
+    sys.stderr = FauxStream()
+
 
 # 사용 가능한 칩셋 목록
 chipsets = [
@@ -21,6 +37,8 @@ class ESPUploaderUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("UFW Tool v1.0 , Copyright 2024, (c)BlueSquare")
+        self.iconbitmap("./res/icon.ico")
+    
         self.geometry("640x480")
 
         # 시리얼 포트 선택
