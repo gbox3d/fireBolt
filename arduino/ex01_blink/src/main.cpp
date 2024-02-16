@@ -59,12 +59,6 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
-
-
-
-  // digitalWrite(LED_BUILTIN, LOW);
-  // delay(100);
-  // digitalWrite(LED_BUILTIN, HIGH);
-  // delay(100);
+  g_ts.execute();
 }
 
