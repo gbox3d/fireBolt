@@ -114,7 +114,7 @@ String processCommand(String _strLine)
       }
       Serial.println("");
     }
-    else if ((cmd == "setup_ap"))
+    else if ((cmd == "connect"))
     {
       configData.mStrAp = g_MainParser.getToken(1);
       configData.mStrPassword = g_MainParser.getToken(2);
