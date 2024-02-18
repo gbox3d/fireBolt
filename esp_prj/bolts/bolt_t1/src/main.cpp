@@ -321,7 +321,7 @@ void setup()
   String chipId = String((uint32_t)ESP.getEfuseMac(), HEX);
   chipId.toUpperCase(); // 대문자로 변환
 
-  strBroadCastMsg = "#BC__BOLT-" + chipId;
+  strBroadCastMsg = "#BC_BOLT-" + chipId;
 
   // AP 모드의 이름을 "BSQ-"와 칩셋 ID의 조합으로 설정
   // String ssid = "BSQ-" + chipId;

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <div class="box-unit" id="uploader-ui">
+        <p>업로드 테스트</p>
+        <form name="upload-file">
+            <div style="height: 80px;">
+                <input type="file" name="file" multiple>
+            </div>
+        </form>
+    </div>
+
+    <div id="info-text" class="box-unit"></div>
+
+    <script>
+
+        var api_address = location.host;
+        var infoText = document.getElementById('info-text');
+
+        document.querySelector('form[name=upload-file]').addEventListener('change', async (evt) => {
+            for (let i = 0; i < evt.target.files.length; i++) {
+                let _fileObj = evt.target.files[i]
+
+                console.log(`try upload ${_fileObj.name}`)
+
+                const reader = new FileReader();
+
+                await new Promise((resolve, reject) => {
+
+                    reader.addEventListener('load', async (_) => {
+
+                        console.log(_.target.result)
+                        console.log(_fileObj)
+
+                        let upload_name = _fileObj.name
+
+                        infoText.innerText = `now uploading... ${upload_name}`
+
+                        try {
+                            
+                            // let _url = `http://${api_address}/rest/post/upload`;
+                            let _url = `http://${api_address}/api/v1/upload`;
+
+                            console.log(_url);
+
+                            let _ = await (await (fetch(_url, {
+                                method: 'POST',
+                                body: reader.result,
+                                // 이 부분은 따로 설정하고싶은 header가 있다면 넣으세요, 헤더이름은 대소 문자를 구분하지않음 무조건 소문자 취급
+                                headers: new Headers({
+                                    'Content-Type': _fileObj.type,
+                                    'upload-name': upload_name,
+                                    'file-size': _fileObj.size
+                                }) 
+                            }))).json();
+
+                            if (_.r == 'ok') {
+                                this.infoText.innerText = `upload ok ${upload_name}`
+                            }
+                            else {
+                                this.infoText.innerText = `${_.result}`
+                            }
+                            console.log(`upload ${upload_name}...ok`)
+                            console.log(_)
+                            resolve(_)
+
+                        } catch (error) {
+                            console.log(error)
+                            this.infoText.innerText = error
+                            reject(error)
+                        }
+                    })
+                    reader.readAsArrayBuffer(_fileObj);
+                })
+
+
+            }
+
+            document.querySelector('form[name=upload-file] input[name="file"]').value = ''
+
+        });
+
+    </script>
+
+</body>
+
+</html>
