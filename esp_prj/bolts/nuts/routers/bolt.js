@@ -68,7 +68,7 @@ export default () => {
 
             const _key = rinfo.address + ":" + rinfo.port
 
-            if(postbox[_key]){
+            if (postbox[_key]) {
                 postbox[_key](message)
                 delete postbox[_key]
             }
@@ -103,34 +103,53 @@ export default () => {
 
             let _msg = Buffer.from(_cmd)
 
-            postbox[devices[_deviceid].address + ":" + devices[_deviceid].port ] = (message)=> {
-                res.json({ r: 'ok', msg: message.toString() })
+            try {
+                let hTimer = setTimeout(() => {
+
+                    try {
+                        if (postbox[_key]) {
+                            res.json({ r: 'err', msg: 'timeout' })
+                            delete postbox[_key]
+                        }
+
+                    }
+                    catch (e) {
+                        console.log(e)
+                    }
+
+                }, 10000)
+
+                postbox[devices[_deviceid].address + ":" + devices[_deviceid].port] = (message) => {
+                    clearTimeout(hTimer)
+                    res.json({ r: 'ok', msg: message.toString() })
+                }
+
+                const _key = devices[_deviceid].address + ":" + devices[_deviceid].port
+
+                nuts_udp_server.send(_msg,
+                    devices[_deviceid].port,
+                    devices[_deviceid].address, (err) => {
+
+                        if (err) {
+                            console.log(err)
+                            if (postbox[_key]) {
+                                res.json({ r: 'err', msg: err.toString() })
+                                delete postbox[_key]
+                            }
+                        }
+                        else {
+                            console.log('send success ok')
+                        }
+                    });
+
+            }
+            catch (e) {
+                // res.json({ r: 'err', msg: e.toString() })
+                return
             }
 
-            const _key = devices[_deviceid].address + ":" + devices[_deviceid].port
 
-            setTimeout(()=>{
-                if(postbox[_key]){
-                    res.json({ r: 'err', msg: 'timeout' })
-                    delete postbox[_key]
-                }
-            }, 3000)
 
-            nuts_udp_server.send(_msg, 
-                devices[_deviceid].port, 
-                devices[_deviceid].address, (err) => {
-                
-                if (err) {
-                    console.log(err)
-                    if(postbox[_key]){
-                        res.json({ r: 'err', msg: err.toString() })
-                        delete postbox[_key]
-                    }
-                }
-                else {
-                    console.log('send success ok')
-                }
-            });
         }
         else {
             res.json({ r: 'err', msg: 'device not found' })
