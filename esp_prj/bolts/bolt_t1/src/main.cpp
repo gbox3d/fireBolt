@@ -26,6 +26,7 @@ const int ledPins[] = {13, 14};
 const int buttonPins[] = {36, 39};
 const int analogPins[] = {34, 35};
 const int pinDHT11 = 18;
+const int builtingLed = BUILTIN_LED;
 
 #endif
 
@@ -44,9 +45,11 @@ void WiFiEvent(WiFiEvent_t event)
   {
   case SYSTEM_EVENT_STA_CONNECTED:
     Serial.println("Connected to WiFi");
+    digitalWrite(builtingLed, LOW);
     break;
   case SYSTEM_EVENT_STA_DISCONNECTED:
     Serial.println("Disconnected from WiFi");
+    digitalWrite(builtingLed, HIGH);
     break;
   case SYSTEM_EVENT_STA_GOT_IP:
     Serial.print("Got IP: ");
@@ -205,14 +208,36 @@ String processCommand(String _strLine)
     {
       byte temperature = 0;
       byte humidity = 0;
+
       int err = SimpleDHTErrSuccess;
 
-      if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess)
+      int count = 0;
+      static const int maxCount = 10;
+
+      // digitalWrite(pinDHT11, LOW);
+
+      while ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess)
       {
         // Serial.print("Read DHT11 failed, err="); Serial.print(SimpleDHTErrCode(err));
         // Serial.print(","); Serial.println(SimpleDHTErrDuration(err)); delay(1000);
         // return;
-        _strResult = "err:" + String(SimpleDHTErrCode(err)) + ", " + String(SimpleDHTErrDuration(err)) + "\n";
+        // _strResult = "err:" + String(SimpleDHTErrCode(err)) + ", " + String(SimpleDHTErrDuration(err)) + "\n";
+
+        delay(500);
+
+        count++;
+        
+        if (count > maxCount)
+        {
+          break;
+        }
+        // break;
+      }
+
+      Serial.println(count);
+      if(count > maxCount)
+      {
+        _strResult = "dht11:err\n";
       }
       else
       {
@@ -299,6 +324,10 @@ Task task_Cmd(
 
 void setup()
 {
+
+  pinMode(builtingLed, OUTPUT);
+  digitalWrite(builtingLed, HIGH);
+
   // led pin setting
   for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++)
   {
