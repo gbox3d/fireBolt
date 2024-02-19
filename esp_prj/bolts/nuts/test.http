@@ -54,5 +54,19 @@ POST http://localhost:8080/api/v1/bolt/cmd
 Content-Type: application/x-www-form-urlencoded
 auth-token: 5874
 
-deviceid=BOLT-F81CB2B0&cmd=digital 0
+deviceid=BOLT-F81CB2B0&cmd=led 0 1
+
+### send bolt command read digital 0
+POST http://localhost:8080/api/v1/bolt/cmd
+Content-Type: application/x-www-form-urlencoded
+auth-token: 5874
+
+deviceid=BOLT-F81CB2B0&cmd=button 0
+
+### send bolt command dht11
+POST http://localhost:8080/api/v1/bolt/cmd
+Content-Type: application/x-www-form-urlencoded
+auth-token: 5874
+
+deviceid=BOLT-F81CB2B0&cmd=dht11
 
