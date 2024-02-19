@@ -8,12 +8,16 @@
 #if defined(LOLIN_D32)
   // const int builtInLed = LED_BUILTIN;
   // #define LED_BUILTIN 5
-  const int ledPins[] = {4,5};
+  const int ledPins[] = {25,26};
+  const int analogPins[] = {34,35};
+  const int buttonPins[] = {14,27};
+
+  // const int touchPin = 4;
+  // const int builtInLed = 5;
+
 #elif defined(SEED_XIAO_ESP32C3)
   // #define LED_BUILTIN -1
-  
   // const int builtInLed = D5; //실재론 없다
-
   const int ledPins[] = {D10,D9};
   const int analogPins[] = {D0,D1};
   const int buttonPins[] = {D8,D2,D3};
@@ -183,6 +187,10 @@ void setup() {
     pinMode(analogPins[i], INPUT);
   }
 
+  // pinMode(touchPin, INPUT);
+  // pinMode(builtInLed, OUTPUT);
+  // digitalWrite(builtInLed, LOW);
+
   // while(!Serial) 
   //   ;
 
@@ -198,5 +206,16 @@ void setup() {
 }
 
 void loop() {
+
+  // if(digitalRead(touchPin) == LOW) {
+  //   Serial.println("Touch");
+  //   digitalWrite(builtInLed, HIGH);
+  // }
+  // else {
+  //   Serial.println("No Touch");
+  //   digitalWrite(builtInLed, LOW);
+  // }
+
+
   runner.execute();
 }
