@@ -26,6 +26,7 @@ const int ledPins[] = {13, 14};
 const int buttonPins[] = {36, 39};
 const int analogPins[] = {34, 35};
 const int pinDHT11 = 18;
+const int batteryPin = 33;
 const int builtingLed = BUILTIN_LED;
 
 #endif
@@ -133,7 +134,7 @@ String processCommand(String _strLine)
     }
     else if ((cmd == "connect"))
     {
-      if(g_MainParser.getTokenCount() < 3)
+      if (g_MainParser.getTokenCount() < 3)
       {
         _strResult = "err:invalid parameter\n";
       }
@@ -150,7 +151,7 @@ String processCommand(String _strLine)
     }
     else if (cmd == "target")
     {
-      if(g_MainParser.getTokenCount() < 3)
+      if (g_MainParser.getTokenCount() < 3)
       {
         _strResult = "err:invalid parameter\n";
       }
@@ -160,11 +161,10 @@ String processCommand(String _strLine)
         configData.mTargetPort = g_MainParser.getToken(2).toInt();
         _strResult = "target:" + configData.mTargetIp + ":" + String(configData.mTargetPort) + "\n";
       }
-
     }
     else if (cmd == "led")
     {
-      if(g_MainParser.getTokenCount() < 3)
+      if (g_MainParser.getTokenCount() < 3)
       {
         _strResult = "err:invalid parameter\n";
       }
@@ -175,7 +175,6 @@ String processCommand(String _strLine)
         digitalWrite(ledPins[n], s);
         _strResult = "led:" + String(n) + ":" + String(s) + "\n";
       }
-      
     }
     else if (cmd == "analog")
     {
@@ -193,7 +192,7 @@ String processCommand(String _strLine)
     }
     else if (cmd == "button")
     {
-      if(g_MainParser.getTokenCount() < 2)
+      if (g_MainParser.getTokenCount() < 2)
       {
         _strResult = "err:invalid parameter\n";
       }
@@ -203,6 +202,18 @@ String processCommand(String _strLine)
         int s = digitalRead(buttonPins[n]);
         _strResult = "button:" + String(s) + "\n";
       }
+    }
+    else if (cmd == "battery")
+    {
+      uint32_t Vbatt = 0;
+      for (int i = 0; i < 16; i++)
+      {
+        Vbatt = Vbatt + analogReadMilliVolts(batteryPin); // ADC with correction
+      }
+      float Vbattf = 2 * Vbatt / 16 / 1000.0; // attenuation ratio 1/2, mV --> V
+      // Serial.println(Vbattf, 3);
+      // delay(1000);
+      _strResult = "battery:" + String(Vbattf, 3) + "\n";
     }
     else if (cmd == "dht11")
     {
@@ -226,7 +237,7 @@ String processCommand(String _strLine)
         delay(500);
 
         count++;
-        
+
         if (count > maxCount)
         {
           break;
@@ -235,7 +246,7 @@ String processCommand(String _strLine)
       }
 
       Serial.println(count);
-      if(count > maxCount)
+      if (count > maxCount)
       {
         _strResult = "dht11:err\n";
       }
@@ -302,9 +313,16 @@ String processCommand(String _strLine)
 
       _strResult = "send ok\n";
     }
+    else if (cmd == "help")
+    {
+
+      _strResult = "about\nreboot\nsave\nload\nclear\nprint\nscan\nconnect\ndisconnect\ntarget\nled\nanalog\nbutton\nbattery\ndht11\nstatus\nip\nmac\nrssi\ngateway\ndns\nstart_broadcast\nstop_broadcast\nsend\n";
+      _strResult += "version " + String(VersionString) + "\n";
+    }
     else
     {
       _strResult = "unknown command\n";
+      _strResult += "version " + String(VersionString) + "\n";
     }
   }
   return "#RES_" + _strResult + "\nOK\n";
@@ -346,6 +364,9 @@ void setup()
   {
     pinMode(analogPins[i], INPUT);
   }
+
+  // battery pin setting
+  pinMode(batteryPin, INPUT);
 
   String chipId = String((uint32_t)ESP.getEfuseMac(), HEX);
   chipId.toUpperCase(); // 대문자로 변환
@@ -402,8 +423,7 @@ void setup()
                    String _strRes = processCommand((const char *)packet.data());
 
                    // response to the client
-                   packet.printf(_strRes.c_str());
-                 });
+                   packet.printf(_strRes.c_str()); });
   }
 
   Serial.println(":-]");
