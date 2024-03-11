@@ -1,105 +1,125 @@
-#include <MPU9250_asukiaaa.h>
+#include <Arduino.h> // Arduino 헤더 파일 포함
+#include <TaskScheduler.h>
+#include <tonkey.hpp>
 
-#ifdef _ESP32_HAL_I2C_H_
-#define SDA_PIN 21
-#define SCL_PIN 22
-#endif
+void update_asukiaaa();
+void init_asukiaaa();
+void scan_mpu();
 
-MPU9250_asukiaaa mySensor;
-float aX, aY, aZ, aSqrt, gX, gY, gZ, mDirection, mX, mY, mZ;
-
-void setup() {
-  Serial.begin(115200);
-  while(!Serial);
-  Serial.println("started");
-
-#ifdef _ESP32_HAL_I2C_H_ // For ESP32
-  Wire.begin(SDA_PIN, SCL_PIN);
-  mySensor.setWire(&Wire);
-#endif
-
-  mySensor.beginAccel();
-  mySensor.beginGyro();
-  mySensor.beginMag();
-
-  // You can set your own offset for mag values
-  // mySensor.magXOffset = -50;
-  // mySensor.magYOffset = -55;
-  // mySensor.magZOffset = -10;
+namespace hideaki
+{
+    void init();
+    void update();
+    void print();
+    
+    
 }
 
-void loop() {
-  uint8_t sensorId;
-  int result;
+namespace asukiaaa
+{
+    void init();
+    void update();
+    void print();
+    Task task_print(
+        100, TASK_FOREVER, []()
+        {
+            print();
+        });
+}
 
-  result = mySensor.readId(&sensorId);
-  // if (result == 0) {
-  //   Serial.println("sensorId: " + String(sensorId));
-  // } else {
-  //   Serial.println("Cannot read sensorId " + String(result));
-  // }
+Scheduler runner;
+tonkey g_MainParser;
 
-  result = mySensor.accelUpdate();
-  if (result == 0) {
-    aX = mySensor.accelX();
-    aY = mySensor.accelY();
-    aZ = mySensor.accelZ();
-    
-    aSqrt = mySensor.accelSqrt();
-    // Serial.println("accelX: " + String(aX));
-    // Serial.println("accelY: " + String(aY));
-    // Serial.println("accelZ: " + String(aZ));
-    // Serial.println("accelSqrt: " + String(aSqrt));
-  } else {
-    aX = 0;
-    aY = 0;
-    aZ = 0;
-    aSqrt = 0;
-    // Serial.println("Cannod read accel values " + String(result));
+// CCongifData configData;
+
+// update 함수 포인터
+void (*updateFunc)() = nullptr;
+//print 함수 포인터
+void (*printFunc)() = nullptr;
+
+
+Task task_Cmd(
+    100, TASK_FOREVER, []()
+    {
+    if (Serial.available() > 0)
+    {
+        String _strLine = Serial.readStringUntil('\n');
+        _strLine.trim();
+        Serial.println(_strLine);
+        g_MainParser.parse(_strLine);
+
+        if(g_MainParser.getTokenCount() > 0) {
+          String cmd = g_MainParser.getToken(0);
+            // DynamicJsonDocument _res_doc(1024);
+
+          String _result = "ok";
+
+          if (cmd == "about")
+          {
+            _result = "mp9250 test";
+                
+          }
+          else if(cmd == "reboot") {
+            ESP.restart();
+          }
+          else if(cmd == "asuki") {
+
+            asukiaaa::init();
+            updateFunc = asukiaaa::update;
+            printFunc = asukiaaa::print;
+            
+            // runner.addTask(asukiaaa::task_print);
+            // asukiaaa::task_print.enable();
+          }
+          // else if(cmd == "stop sensor") {
+          //   task_Sensor.disable();
+          // }
+          else if(cmd == "scan") {
+            scan_mpu();
+          } 
+          else if (cmd == "hideaki") {
+            hideaki::init();
+            updateFunc = hideaki::update;
+            printFunc = hideaki::print;
+            
+          }
+          else
+          {
+            _result = "unknown command";
+          }
+          Serial.println(_result);
+        }
+    } });
+
+
+Task task_print(
+  100, TASK_FOREVER, []()
+  {
+    if(printFunc != nullptr) {
+      printFunc();
+    } 
+  });
+
+
+void setup()
+{
+  Serial.begin(115200);
+  // while(!Serial);
+  Serial.println("started");
+  runner.init();
+  runner.addTask(task_Cmd);
+  runner.addTask(task_print);
+  // runner.addTask(task_Sensor);
+  // runner.addTask(task_Hideaki);
+  task_Cmd.enable();
+  task_print.enable();
+}
+
+void loop()
+{
+  if(updateFunc != nullptr) {
+    updateFunc();
   }
 
-  result = mySensor.gyroUpdate();
-  if (result == 0) {
-    gX = mySensor.gyroX();
-    gY = mySensor.gyroY();
-    gZ = mySensor.gyroZ();
-    // Serial.println("gyroX: " + String(gX));
-    // Serial.println("gyroY: " + String(gY));
-    // Serial.println("gyroZ: " + String(gZ));
-  } else {
-    // Serial.println("Cannot read gyro values " + String(result));
-    gX = 0;
-    gY = 0;
-    gZ = 0;
-  }
-
-  result = mySensor.magUpdate();
-  if (result != 0) {
-    Serial.println("cannot read mag so call begin again");
-    mySensor.beginMag();
-    result = mySensor.magUpdate();
-  }
-  if (result == 0) {
-    mX = mySensor.magX();
-    mY = mySensor.magY();
-    mZ = mySensor.magZ();
-    mDirection = mySensor.magHorizDirection();
-    // Serial.println("magX: " + String(mX));
-    // Serial.println("maxY: " + String(mY));
-    // Serial.println("magZ: " + String(mZ));
-    // Serial.println("horizontal direction: " + String(mDirection));
-  } else {
-    // Serial.println("Cannot read mag values " + String(result));
-    mX = 0;
-    mY = 0;
-    mZ = 0;
-    mDirection = 0;
-  }
-
-  Serial.printf("id %d,aX: %7.2f,aY: %7.2f,aZ: %7.2f,gX: %7.2f,gY: %7.2f,gZ: %7.2f,mX: %7.2f,mY: %7.2f,mZ: %7.2f,mDirection: %7.2f\n",
-                sensorId, aX, aY, aZ, gX, gY, gZ, mX, mY, mZ, mDirection);
-
-  // Serial.println("at " + String(millis()) + "ms");
-  // Serial.println(""); // Add an empty line
-  delay(20);
+  runner.execute();
 }
