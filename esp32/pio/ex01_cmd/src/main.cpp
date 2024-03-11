@@ -12,7 +12,7 @@
 #endif
 
 
-Scheduler g_ts;
+Scheduler g_runner;
 tonkey g_MainParser;
 CCongifData configData;
 
@@ -142,8 +142,7 @@ Task task_Cmd(
             serializeJson(_res_doc, Serial);
             Serial.println();
         }
-    } },
-    &g_ts, true);
+    } });
 
 void setup()
 {
@@ -151,18 +150,16 @@ void setup()
   digitalWrite(LED_PIN, HIGH);
 
   Serial.begin(115200); // 시리얼 통신 초기화
-
-  // while (!Serial)
-  //   ; // wait for serial attach
-  // delay(500);
-
+  
   Serial.println(":-]");
   Serial.println("Serial connected");
 
-  g_ts.startNow();
+  // g_ts.startNow();
+  g_runner.addTask(task_Cmd);
+  task_Cmd.enable();
 }
 
 void loop()
 {
-  g_ts.execute();
+  g_runner.execute();
 }
