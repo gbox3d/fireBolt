@@ -1,28 +1,25 @@
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#ifdef SEED_XIAO_ESP32C3
+const int pin = D10;
+#elif defined(ESP32CAM)
+const int pin = 4;
+#else
+const int pin = BUILTIN_LED;
+#endif
 
 void setup() {
   // put your setup code here, to run once:
-  int result = myFunction(2, 3);
-  pinMode(D10, OUTPUT);
-  pinMode(D9, OUTPUT);
-  digitalWrite(D10, LOW);
-  digitalWrite(D9, LOW);
+  pinMode(pin, OUTPUT);
+  digitalWrite(pin, HIGH);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  digitalWrite(D10, LOW);
-  digitalWrite(D9, LOW);
+  digitalWrite(pin, LOW);
   delay(1000);
-  digitalWrite(D10, HIGH);
-  digitalWrite(D9, HIGH);
+  digitalWrite(pin, HIGH);
   delay(1000);
+  
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
-}
