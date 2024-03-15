@@ -4,6 +4,8 @@
 const int pin = D10;
 #elif defined(ESP32CAM)
 const int pin = 4;
+#elif defined(WROVER_KIT)
+const int pin = 5;
 #else
 const int pin = BUILTIN_LED;
 #endif

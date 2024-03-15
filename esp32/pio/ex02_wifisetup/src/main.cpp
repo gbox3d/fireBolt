@@ -17,6 +17,10 @@ const int ledPins[] = {D10, D9};
 const int analogPins[] = {D0, D1};
 const int buttonPins[] = {D8, D2};
 
+#elif defined(WROVER_KIT)
+const int ledPins[] = {4, 5};
+const int analogPins[] = {34,35,36};
+const int buttonPins[] = {18, 23};
 #endif
 
 String strBroadCastMsg;

@@ -9,6 +9,9 @@
 #define LED_PIN D0
 #elif defined(LOLIN_D32)
 #define LED_PIN 4
+#elif defined(WROVER_KIT)
+#define LED_PIN 5
+#define ANALOG_PIN 34
 #endif
 
 
@@ -125,6 +128,10 @@ Task task_Cmd(
                 _res_doc["ms"] = "unknown value";
               }
             }
+            else if(cmd == "analog") {
+              _res_doc["result"] = "ok";
+              _res_doc["value"] = analogRead(ANALOG_PIN);
+            }
             else if (cmd == "add") {
               int a = g_MainParser.getToken(1).toInt();
               int b = g_MainParser.getToken(2).toInt();
@@ -148,6 +155,8 @@ void setup()
 {
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
+
+  pinMode(ANALOG_PIN, INPUT);
 
   Serial.begin(115200); // 시리얼 통신 초기화
   
