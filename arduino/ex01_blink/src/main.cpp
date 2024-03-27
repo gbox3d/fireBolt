@@ -23,7 +23,10 @@ Task task_Cmd(
             
             if (cmd == "about")
             {
-              _strResult = "it is blank sample \nok\n";
+              _strResult = "it is blank sample\nok";
+            }
+            else {
+              _strResult = "unknown command\nok";            
             }
         }
         Serial.println(_strResult);        
@@ -34,8 +37,8 @@ Task task_Cmd(
 Task task_blink(
     200, TASK_FOREVER, []()
     {
-        // digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-        Serial.println("blink");
+        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+        // Serial.println("blink");/
     }
 );
 
