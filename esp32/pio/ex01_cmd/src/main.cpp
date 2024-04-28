@@ -1,14 +1,24 @@
 #include <Arduino.h> // Arduino 헤더 파일 포함
+#include <WiFi.h>
+#include <AsyncUDP.h>
+
 #include <TaskScheduler.h>
 #include <ArduinoJson.h>
 #include <tonkey.hpp>
+
+
 
 #include "config.hpp"
 
 #ifdef SEED_XIAO_ESP32C3
 #define LED_PIN D0
+#define ANALOG_PIN A0
 #elif defined(LOLIN_D32)
 #define LED_PIN 4
+#elif defined(BEETLE_ESP32C3)
+#define LED_PIN 10
+#define ANALOG_PIN A0
+#define BTN_PIN 7
 #elif defined(WROVER_KIT)
 #define LED_PIN 5
 #define ANALOG_PIN 34
@@ -128,6 +138,13 @@ Task task_Cmd(
                 _res_doc["ms"] = "unknown value";
               }
             }
+            else if(cmd == "digital") {
+              String value = g_MainParser.getToken(1);
+              _res_doc["result"] = "ok";
+              _res_doc["value"] = digitalRead(BTN_PIN);
+
+              
+            }
             else if(cmd == "analog") {
               _res_doc["result"] = "ok";
               _res_doc["value"] = analogRead(ANALOG_PIN);
@@ -140,6 +157,51 @@ Task task_Cmd(
             }
             else if( cmd == "reboot") {
               ESP.restart();
+            }
+            else if(cmd == "wifi") {
+              String value = g_MainParser.getToken(1);
+              if(value == "connect") {
+
+                digitalWrite(LED_PIN, LOW);
+                
+                WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+                  Serial.printf("[WiFi-event] event: %d\n", event);
+
+                  switch(event) {
+                    case SYSTEM_EVENT_STA_GOT_IP:
+                      Serial.println("WiFi connected");
+                      digitalWrite(LED_PIN, HIGH);
+                      break;
+                    case SYSTEM_EVENT_STA_DISCONNECTED:
+                      Serial.println("WiFi lost connection");
+                      digitalWrite(LED_PIN, LOW);
+                      break;
+                    default: break;
+                  }
+                  // if(event == SYSTEM_EVENT_STA_GOT_IP) {
+                  //   Serial.println("WiFi connected");
+                  //   digitalWrite(LED_PIN, HIGH);
+
+                  // }
+                  // else if(event == SYSTEM_EVENT_STA_DISCONNECTED) {
+                  //   Serial.println("WiFi disconnected");
+                  //   digitalWrite(LED_PIN, LOW);
+                  // }
+                });
+
+                WiFi.mode(WIFI_STA);
+                WiFi.begin(configData.mStrAp.c_str(), configData.mStrPassword.c_str());
+
+                _res_doc["result"] = "ok";
+              }
+              else if(value == "disconnect") {
+                WiFi.disconnect();
+                _res_doc["result"] = "ok";
+              }
+              else {
+                _res_doc["result"] = "fail";
+                _res_doc["ms"] = "unknown value";
+              }
             }
             else {
               _res_doc["result"] = "fail";
@@ -156,6 +218,7 @@ void setup()
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
 
+  pinMode(BTN_PIN, INPUT);
   pinMode(ANALOG_PIN, INPUT);
 
   Serial.begin(115200); // 시리얼 통신 초기화
