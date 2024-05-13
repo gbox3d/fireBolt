@@ -11,8 +11,9 @@
 #include "config.hpp"
 
 #ifdef SEED_XIAO_ESP32C3
-#define LED_PIN D0
-#define ANALOG_PIN A0
+#define LED_PIN D9
+#define ANALOG_PIN A0 
+#define BTN_PIN D2
 #elif defined(LOLIN_D32)
 #define LED_PIN 4
 #elif defined(BEETLE_ESP32C3)
