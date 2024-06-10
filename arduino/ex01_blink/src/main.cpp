@@ -35,7 +35,7 @@ Task task_Cmd(
 );
 
 Task task_blink(
-    200, TASK_FOREVER, []()
+    500, TASK_FOREVER, []()
     {
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
         // Serial.println("blink");/
