@@ -12,6 +12,8 @@ tonkey g_MainParser;
 
 Config g_config;
 
+std::vector<int> ledPins;
+
 void  ledOffCallback();
 void  ledOnCallback();
 Task tLedBlinker (500, TASK_FOREVER, &ledOnCallback, &g_ts, false);
@@ -61,9 +63,21 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                         _res_doc["ms"] = "config saved";
                     }
                     else if(subCmd == "dump") {
-                        _res_doc["result"] = "ok";
-                        // _res_doc["ms"] = g_config.dump();
-                        Serial.println(g_config.dump());
+                        
+                        //parse json g_config.dump()
+                        String jsonStr = g_config.dump();
+                        DeserializationError error = deserializeJson(_res_doc["ms"], jsonStr);
+                        if (error) {
+                            // Serial.print(F("deserializeJson() failed: "));
+                            // Serial.println(error.f_str());
+                            // return;
+                            _res_doc["result"] = "fail";
+                            _res_doc["ms"] = "json parse error";
+                        }
+                        else {
+                            _res_doc["result"] = "ok";
+                        }
+                        
                     }
                     else if(subCmd == "clear") {
                         g_config.clear();
@@ -82,6 +96,41 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                             _res_doc["result"] = "fail";
                             _res_doc["ms"] = "need key and value";
                         }
+                    }
+                    else if(subCmd == "setA") { //set json array
+                        if(g_MainParser.getTokenCount() > 2) {
+                            String key = g_MainParser.getToken(2);
+                            String value = g_MainParser.getToken(3);
+                            //parse json value
+                            // JSON 문자열 파싱을 위한 임시 객체
+                            JsonDocument tempDoc; // 임시 JSON 문서
+
+                            // JSON 문자열 파싱
+                            DeserializationError error = deserializeJson(tempDoc, value);
+                            // DeserializationError error = deserializeJson(g_config[key.c_str()], value);
+                            if (error) {
+                                // Serial.print(F("deserializeJson() failed: "));
+                                // Serial.println(error.f_str());
+                                // return;
+                                _res_doc["result"] = "fail";
+                                _res_doc["ms"] = "json parse error";
+                            }
+                            else {
+                                JsonArray array = tempDoc[key].as<JsonArray>();
+
+                                g_config.set(key.c_str(), tempDoc);
+                                _res_doc["result"] = "ok";
+                                _res_doc["ms"] = tempDoc;
+                            }
+                            // g_config.set(key.c_str(), value);
+                            // _res_doc["result"] = "ok";
+                            // _res_doc["ms"] = "config set";
+                        }
+                        else {
+                            _res_doc["result"] = "fail";
+                            _res_doc["ms"] = "need key and value";
+                        }
+                        
                     }
                     else if(subCmd == "get") {
                         if(g_MainParser.getTokenCount() > 2) {
@@ -108,16 +157,45 @@ Task task_Cmd(100, TASK_FOREVER, []() {
             else if (cmd == "on")
             {
               /* code */
-              digitalWrite(LED_BUILTIN, LOW); // turn the LED on (HIGH is the voltage level)
-              _res_doc["result"] = "ok";
-              _res_doc["ms"] = "led on";
+
+              if( g_MainParser.getTokenCount() > 1) {
+                int pinIndex = g_MainParser.getToken(1).toInt();
+
+                int pin = ledPins[pinIndex];
+
+                digitalWrite(pin, HIGH); // turn the LED on (HIGH is the voltage level)
+
+                _res_doc["result"] = "ok";
+                _res_doc["ms"] = "led on";
+              }
+              else {
+                digitalWrite(LED_BUILTIN, LOW); // turn the LED on (HIGH is the voltage level)
+                _res_doc["result"] = "ok";
+                _res_doc["ms"] = "led on";
+              }
+
+
+              
             }
             else if (cmd == "off")
             {
-              /* code */
-              digitalWrite(LED_BUILTIN, HIGH);  // turn the LED off by making the voltage LOW
-              _res_doc["result"] = "ok";
-              _res_doc["ms"] = "led off";
+                if( g_MainParser.getTokenCount() > 1) {
+                int pinIndex = g_MainParser.getToken(1).toInt();
+
+                int pin = ledPins[pinIndex];
+
+                digitalWrite(pin, LOW); // turn the LED on (HIGH is the voltage level)
+
+                _res_doc["result"] = "ok";
+                _res_doc["ms"] = "led on";
+              }
+              else {
+                digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
+                _res_doc["result"] = "ok";
+                _res_doc["ms"] = "led on";
+              }
+
+              
             }
             else if (cmd == "blink")  
             {
@@ -150,15 +228,43 @@ void setup()
 {
     // initialize digital pin LED_BUILTIN as an output.
     pinMode(LED_BUILTIN, OUTPUT);
-    
+    digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
+
     Serial.begin(115200);
+
+    g_config.load();
+
+    delay(500);
+
+    JsonDocument _doc_ledpins; 
+    g_config.getArray("ledpin",_doc_ledpins);
+
+    JsonArray ledpin = _doc_ledpins.as<JsonArray>();
+
+    for(JsonVariant v : ledpin) {
+        
+        int pin = v.as<int>();
+
+
+        
+        pinMode(pin, OUTPUT);
+        digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
+        ledPins.push_back(pin);
+
+        Serial.print("led pin : " + String(pin) + "\n");
+    }
+
+    
     // EEPROM.begin(512);
 
-    while (!Serial); // wait for serial attach
-    delay(500);
+    // while (!Serial); // wait for serial attach
+    
 
     Serial.println(":-]");
     Serial.println("Serial connected");
+#ifdef ESP8266
+    Serial.println("ESP8266");
+#endif
     
     g_ts.startNow();
 }
