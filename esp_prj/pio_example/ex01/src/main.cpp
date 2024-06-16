@@ -45,7 +45,8 @@ Task task_Cmd(100, TASK_FOREVER, []() {
             {
                 /* code */
                 _res_doc["result"] = "ok";
-                _res_doc["title"] = "example 01 - led";
+                _res_doc["os"] = "cronos-v1";
+                _res_doc["app"] = "example 01 - led";
                 _res_doc["version"] = "1.0.0";
                 _res_doc["author"] = "gbox3d";
             }
@@ -135,8 +136,19 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                     else if(subCmd == "get") {
                         if(g_MainParser.getTokenCount() > 2) {
                             String key = g_MainParser.getToken(2);
-                            _res_doc["result"] = "ok";
-                            _res_doc["value"] = g_config.get<String>(key.c_str());
+
+                            //check key exist
+                            if(!g_config.hasKey(key.c_str())) {
+                                _res_doc["result"] = "fail";
+                                _res_doc["ms"] = "key not exist";
+                                // serializeJson(_res_doc, Serial);
+                                // Serial.println();
+                                // return;
+                            }
+                            else {
+                                _res_doc["result"] = "ok";
+                                _res_doc["value"] = g_config.get<String>(key.c_str());
+                            }
                         }
                         else {
                             _res_doc["result"] = "fail";

@@ -77,6 +77,19 @@ public:
         return doc[key].as<T>();
     }
 
+    //check key exist
+    bool hasKey(const char* key) const {
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, jsonDoc);
+        if (error) {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return false;
+        }
+
+        return doc.containsKey(key);
+    }
+
     void getArray(const char* key, JsonDocument &_doc) const {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, jsonDoc);
