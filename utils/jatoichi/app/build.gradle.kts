@@ -33,6 +33,11 @@ application {
     mainClass.set("jatoichi.App")
 }
 
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+}
+
+
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
@@ -64,13 +69,17 @@ distributions {
 // Copy runtime dependencies to lib directory
 tasks.register<Copy>("copyLibs") {
     from(configurations.runtimeClasspath)
-    into("$buildDir/libs")
+    // into("$buildDir/libs")
+    into(layout.buildDirectory.dir("libs"))
 }
 
 tasks.withType<Tar> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn("copyLibs")
-    from("$buildDir/libs") {
+    // from("$buildDir/libs") {
+    //     into("lib")
+    // }
+    from(layout.buildDirectory.dir("libs")) {
         into("lib")
     }
 }
@@ -78,7 +87,10 @@ tasks.withType<Tar> {
 tasks.withType<Zip> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn("copyLibs")
-    from("$buildDir/libs") {
+    // from("$buildDir/libs") {
+    //     into("lib")
+    // }
+    from(layout.buildDirectory.dir("libs")) {
         into("lib")
     }
 }

@@ -29,6 +29,9 @@ public class MainFrame extends JFrame {
 
         // 설정
         setTitle(app.applicationName);
+        // 아이콘 설정
+        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/icon.png")));
+
         setSize(640, 480);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         // setLayout(new BorderLayout());
