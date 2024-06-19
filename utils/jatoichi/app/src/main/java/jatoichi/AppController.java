@@ -15,7 +15,6 @@ import javafx.scene.control.TextField;
 import org.json.JSONObject;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 
 public class AppController {
 
