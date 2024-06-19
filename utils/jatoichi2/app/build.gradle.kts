@@ -3,7 +3,7 @@ plugins {
     application
 
     // Apply the JavaFX plugin
-    id("org.openjfx.javafxplugin") version "0.1.0"
+    id("org.openjfx.javafxplugin") version "0.0.13"
 }
 
 repositories {
@@ -20,7 +20,9 @@ dependencies {
 
     // jSerialComm 라이브러리 추가
     implementation("com.fazecast:jSerialComm:2.11.0") // 최신 버전을 사용하세요.
+    
     implementation("org.json:json:20240303") // 최신 버전을 사용하세요.
+
 }
 
 javafx {
@@ -30,7 +32,7 @@ javafx {
 
 application {
     // Define the main class for the application.
-    mainClass.set("jatoichi.App")
+    mainClass.set("jatoichi2.App")
 }
 
 tasks.withType<JavaCompile> {

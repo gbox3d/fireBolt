@@ -239,6 +239,45 @@ Task task_Cmd(100, TASK_FOREVER, []() {
 }, &g_ts, true);
 
 
+
+void WiFiEvent(WiFiEvent_t event) 
+{
+    switch(event) 
+    {
+        case WIFI_EVENT_STAMODE_CONNECTED:
+            Serial.println("WiFi connected");
+            break;
+        case WIFI_EVENT_STAMODE_AUTHMODE_CHANGE:
+            Serial.println("Authentication mode of access point has changed");
+            break;
+        case WIFI_EVENT_STAMODE_GOT_IP:
+            Serial.println("Get IP address");
+            Serial.print("IP address: ");
+            Serial.println(WiFi.localIP());
+            digitalWrite(LED_BUILTIN, LOW);
+            break;
+        case WIFI_EVENT_STAMODE_DISCONNECTED:
+            Serial.println("WiFi lost connection");
+            digitalWrite(LED_BUILTIN, HIGH);
+            break;
+        case WIFI_EVENT_STAMODE_DHCP_TIMEOUT:
+            Serial.println("DHCP timeout");
+            break;
+        case WIFI_EVENT_SOFTAPMODE_STACONNECTED:
+            Serial.println("Station connected to soft-AP");
+            break;
+        case WIFI_EVENT_SOFTAPMODE_STADISCONNECTED:
+            Serial.println("Station disconnected from soft-AP");
+            break;
+        case WIFI_EVENT_SOFTAPMODE_PROBEREQRECVED:
+            Serial.println("Probe request received");
+            break;
+        default:
+            Serial.printf("[WiFi-event] event: %d\n", event);
+            break;
+    }
+}
+
 // the setup function runs once when you press reset or power the board
 void setup()
 {
@@ -252,30 +291,19 @@ void setup()
 
     delay(500);
 
-    JsonDocument _doc_ledpins; 
-    g_config.getArray("ledpin",_doc_ledpins);
-
-    JsonArray ledpin = _doc_ledpins.as<JsonArray>();
-
-    for(JsonVariant v : ledpin) {
-        
-        int pin = v.as<int>();
-        
-        pinMode(pin, OUTPUT);
-        digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
-        ledPins.push_back(pin);
-
-        Serial.print("led pin : " + String(pin) + "\n");
-    }
-
-    
-    // EEPROM.begin(512);
-
-    // while (!Serial); // wait for serial attach
-    
-
     Serial.println(":-]");
     Serial.println("Serial connected");
+
+    //connect to wifi
+    String ssid = g_config.get<String>("ssid");
+    String password = g_config.get<String>("password");
+
+    WiFi.onEvent(WiFiEvent);
+    WiFi.begin(ssid.c_str(), password.c_str());
+
+    //init led pins
+    
+
 #ifdef ESP8266
     Serial.println("ESP8266");
 #endif
