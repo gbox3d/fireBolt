@@ -31,6 +31,8 @@ const int builtingLed = BUILTIN_LED;
 
 #endif
 
+std::vector<int> vec;
+
 // for DHT11,
 SimpleDHT11 dht11(pinDHT11);
 

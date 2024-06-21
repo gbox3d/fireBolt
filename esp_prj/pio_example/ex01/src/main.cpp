@@ -1,5 +1,14 @@
 #include <Arduino.h>
+
+
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
+#elif ESP32
+#include <WiFi.h>
+#include <vector>
+#endif
+
+
 #include <TaskScheduler.h>
 #include <ArduinoJson.h>
 
