@@ -4,8 +4,11 @@
 #include <ESP8266WiFi.h>
 #elif ESP32
 #include <WiFi.h>
-#include <vector>
+#else
+
 #endif
+
+#include <Wire.h>
 
 #include <TaskScheduler.h>
 #include <ArduinoJson.h>
@@ -16,30 +19,11 @@
 
 Scheduler g_ts;
 tonkey g_MainParser;
-
 Config g_config;
-
-std::vector<int> ledPins;
-
-void ledOffCallback();
-void ledOnCallback();
-Task tLedBlinker(500, TASK_FOREVER, &ledOnCallback, &g_ts, false);
 
 #ifdef ESP32
 #define LED_BUILTIN 4
 #endif
-
-void ledOnCallback()
-{
-    digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
-    tLedBlinker.setCallback(&ledOffCallback);
-}
-
-void ledOffCallback()
-{
-    digitalWrite(LED_BUILTIN, LOW); // turn the LED off by making the voltage LOW
-    tLedBlinker.setCallback(&ledOnCallback);
-}
 
 Task task_Cmd(100, TASK_FOREVER, []()
               {
@@ -58,7 +42,7 @@ Task task_Cmd(100, TASK_FOREVER, []()
                 /* code */
                 _res_doc["result"] = "ok";
                 _res_doc["os"] = "cronos-v1";
-                _res_doc["app"] = "example 01 - led";
+                _res_doc["app"] = "example 11-i2cSlave";
                 _res_doc["version"] = "1.0.0";
                 _res_doc["author"] = "gbox3d";
 // esp8266 chip id
@@ -69,7 +53,15 @@ Task task_Cmd(100, TASK_FOREVER, []()
 #endif
             }
             else if(cmd == "reboot") {
-                ESP.restart();
+
+              #ifdef ESP8266
+              ESP.restart();
+              #elif ESP32
+              ESP.restart();
+              
+              #endif
+
+                // ESP.restart();
             }
             else if(cmd == "config") {
                 if(g_MainParser.getTokenCount() > 1) {
@@ -187,61 +179,6 @@ Task task_Cmd(100, TASK_FOREVER, []()
                     _res_doc["ms"] = "need sub command";
                 }
             }
-            else if (cmd == "on")
-            {
-              /* code */
-
-              if( g_MainParser.getTokenCount() > 1) {
-                int pinIndex = g_MainParser.getToken(1).toInt();
-
-                int pin = ledPins[pinIndex];
-
-                digitalWrite(pin, HIGH); // turn the LED on (HIGH is the voltage level)
-
-                _res_doc["result"] = "ok";
-                _res_doc["ms"] = "led on";
-              }
-              else {
-                digitalWrite(LED_BUILTIN, LOW); // turn the LED on (HIGH is the voltage level)
-                _res_doc["result"] = "ok";
-                _res_doc["ms"] = "led on";
-              }
-
-
-              
-            }
-            else if (cmd == "off")
-            {
-                if( g_MainParser.getTokenCount() > 1) {
-                int pinIndex = g_MainParser.getToken(1).toInt();
-
-                int pin = ledPins[pinIndex];
-
-                digitalWrite(pin, LOW); // turn the LED on (HIGH is the voltage level)
-
-                _res_doc["result"] = "ok";
-                _res_doc["ms"] = "led on";
-              }
-              else {
-                digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
-                _res_doc["result"] = "ok";
-                _res_doc["ms"] = "led on";
-              }
-            }
-            else if (cmd == "blink")  
-            {
-              /* code */
-              tLedBlinker.enable();
-              _res_doc["result"] = "ok";
-              _res_doc["ms"] = "led blink";
-            }
-            else if (cmd == "stopblk")
-            {
-              /* code */
-              tLedBlinker.disable();
-              _res_doc["result"] = "ok";
-              _res_doc["ms"] = "led stop blink";
-            }
             
             else {
               _res_doc["result"] = "fail";
@@ -256,48 +193,33 @@ Task task_Cmd(100, TASK_FOREVER, []()
 // the setup function runs once when you press reset or power the board
 void setup()
 {
-    // initialize digital pin LED_BUILTIN as an output.
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
 
-    Serial.begin(115200);
+  digitalWrite(LED_BUILTIN, LOW); // turn the LED off by making the voltage LOW
 
-    g_config.load();
+  Serial.begin(115200);
 
-    delay(500);
-
-    JsonDocument _doc_ledpins;
-    g_config.getArray("ledpin", _doc_ledpins);
-
-    JsonArray ledpin = _doc_ledpins.as<JsonArray>();
-
-    for (JsonVariant v : ledpin)
+  Wire.begin(0x42); // join i2c bus with address 0x42
+  
+  Wire.onReceive([](int _byteCount) {
+    while (Wire.available())
     {
-
-        int pin = v.as<int>();
-
-        pinMode(pin, OUTPUT);
-        digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
-        ledPins.push_back(pin);
-
-        Serial.print("led pin : " + String(pin) + "\n");
+      char c = Wire.read();
+      Serial.print(c);
     }
+  });
 
-    // EEPROM.begin(512);
+  g_config.load();
 
-    // while (!Serial); // wait for serial attach
+  Serial.println(":-]");
+  Serial.println("Serial connected");
 
-    Serial.println(":-]");
-    Serial.println("Serial connected");
-#ifdef ESP8266
-    Serial.println("ESP8266");
-#endif
-
-    g_ts.startNow();
+  g_ts.startNow();
 }
 
 // the loop function runs over and over again forever
 void loop()
 {
-    g_ts.execute();
+  g_ts.execute();
 }
