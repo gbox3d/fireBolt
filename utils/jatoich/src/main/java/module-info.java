@@ -1,6 +1,7 @@
 module com.bsq.jatoich {
     requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.graphics;
     requires org.json;
     requires com.fazecast.jSerialComm;
 
