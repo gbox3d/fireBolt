@@ -7,7 +7,12 @@
 #include <vector>
 #endif
 
+
+#ifdef ESP8266
+#include <ESPAsyncUDP.h>
+#elif ESP32
 #include <AsyncUDP.h>
+#endif
 
 #include <TaskScheduler.h>
 #include <ArduinoJson.h>
@@ -17,16 +22,22 @@
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 
-// Which pin on the Arduino is connected to the NeoPixels?
+
+#ifdef ESP8266
+#define PIN D5 // Pin where NeoPixels are connected to
+#elif SEED_XIAO_ESP32C3
 #define PIN        D1 // On Trinket or Gemma, suggest changing this to 1
+#endif
 
 // How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS 8 // Popular NeoPixel ring size
+// #define NUMPIXELS 8 // Popular NeoPixel ring size
 // When setting up the NeoPixel library, we tell it how many pixels,
 // and which pin to use to send signals. Note that for older NeoPixel
 // strips you might need to change the third parameter -- see the
 // strandtest example for more information on possible values.
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+int NUMPIXELS = 8;
+Adafruit_NeoPixel *g_pPixels;
 
 
 #include "tonkey.hpp"
@@ -37,10 +48,46 @@ Scheduler g_ts;
 tonkey g_MainParser;
 Config g_config;
 
+Task task_neoDemo_1(150, TASK_FOREVER, []() {
+    static int i = 0;
+    static int dir = 1;
+
+    static u_int8_t color[3] = {255, 0, 0};
+
+    // Adafruit_NeoPixel &pixels = *g_pPixels;
+    
+    g_pPixels->clear();
+    g_pPixels->setPixelColor(i, g_pPixels->Color(color[0], color[1], color[2]));
+    g_pPixels->show();
+
+    // pixels.clear();
+    // pixels.setPixelColor(i, pixels.Color(color[0], color[1], color[2]));
+    //pixels.show();
+
+    i += dir;
+    if(i >= NUMPIXELS) {
+        i = NUMPIXELS - 1;
+        dir = -1;
+        color[0] = 0;
+        color[1] = 0;
+        color[2] = 255;
+    }
+    else if(i < 0) {
+        i = 0;
+        dir = 1;
+        color[0] = 255;
+        color[1] = 0;
+        color[2] = 0;
+    }
+});
+
+
+
 
 Task task_Cmd(100, TASK_FOREVER, []() {
     if (Serial.available() > 0)
     {
+        // Adafruit_NeoPixel &pixels = *g_pPixels;
         String _strLine = Serial.readStringUntil('\n');
         _strLine.trim();
         Serial.println(_strLine);
@@ -54,7 +101,7 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                 /* code */
                 _res_doc["result"] = "ok";
                 _res_doc["os"] = "cronos-v1";
-                _res_doc["app"] = "example 01 - led";
+                _res_doc["app"] = "example 09 ws2812";
                 _res_doc["version"] = "1.0.0";
                 _res_doc["author"] = "gbox3d";
 
@@ -67,8 +114,12 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                     int r = g_MainParser.getToken(2).toInt();
                     int g = g_MainParser.getToken(3).toInt();
                     int b = g_MainParser.getToken(4).toInt();
-                    pixels.setPixelColor(index, pixels.Color(r, g, b));
-                    pixels.show();
+
+                    g_pPixels->setPixelColor(index, g_pPixels->Color(r, g, b));
+                    // pixels.setPixelColor(index, pixels.Color(r, g, b));
+                    g_pPixels->show();
+                    // pixels.show();
+
                     _res_doc["result"] = "ok";
                     _res_doc["ms"] = "neo set";
                 }
@@ -77,10 +128,42 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                     _res_doc["ms"] = "need index, r, g, b";
                 }
             }
+            else if(cmd == "demo") {
+                if(g_MainParser.getTokenCount() > 2) {
+                    String subCmd = g_MainParser.getToken(1);
+                    int demoIndex = g_MainParser.getToken(2).toInt();
+                    if(demoIndex == 1) {
+
+                        if(subCmd == "start") {
+                            task_neoDemo_1.enable();
+                            _res_doc["result"] = "ok";
+                            _res_doc["ms"] = "demo start";
+                        }
+                        else {
+                            task_neoDemo_1.disable();
+                            _res_doc["result"] = "ok";
+                            _res_doc["ms"] = "demo stop";
+                        }
+                    }
+                    else {
+                        _res_doc["result"] = "fail";
+                        _res_doc["ms"] = "unknown demo index";
+                    }
+                }
+                else {
+                    _res_doc["result"] = "fail";
+                    _res_doc["ms"] = "need sub command";
+                }
+                
+            }
             
             else if(cmd == "neoclear") {
-                pixels.clear();
-                pixels.show();
+                // pixels.clear();
+                // pixels.show();
+
+                g_pPixels->clear();
+                g_pPixels->show();
+
                 _res_doc["result"] = "ok";
                 _res_doc["ms"] = "neo clear";
 
@@ -226,22 +309,40 @@ void setup()
 #endif
   // END of Trinket-specific code.
 
+    g_config.load();
 
-    pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    pixels.clear(); // Set all pixel colors to 'off'
+    if(g_config.hasKey("numpixels")) {
+        NUMPIXELS = g_config.get<int>("numpixels");
+    }
+
+    g_pPixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+    // pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+
+    g_pPixels->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+    g_pPixels->clear(); // Set all pixel colors to 'off'
+
+    // pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+    // pixels.clear(); // Set all pixel colors to 'off'
 
     Serial.begin(115200);
-
-    g_config.load();
+    
 
     Serial.println(":-]");
     Serial.println("Serial connected");
+    Serial.println("num pixels : " + String(NUMPIXELS));
 #ifdef ESP8266
     Serial.println("ESP8266");
 #endif
+
+
+    g_ts.addTask(task_neoDemo_1);
+    task_neoDemo_1.enable();
     
     g_ts.startNow();
-}
+
+} 
 
 // the loop function runs over and over again forever
 void loop()
