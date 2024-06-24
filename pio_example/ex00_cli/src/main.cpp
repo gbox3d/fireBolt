@@ -1,72 +1,208 @@
 #include <Arduino.h>
 
-#include <TaskScheduler.h>
-
-#if defined(LOLIN_D32)
-// TTGO T1B V1.3 보드의 내장 LED는 GPIO 5번 핀에 연결되어 있습니다.
-#define LED_BUILTIN 5 // GPIO 핀 번호에 따라 변경할 수 있습니다.
-int pins[] = {13, 14, 18, 19, 23, 25, 26, 27, 32, 33};
-// 0,2,4,12,15 는 사용금지
-// 21,22 i2c
-const int ledPins[] = {4, 5};
-
-#elif defined(SEED_XIAO_ESP32C3)
-#define LED_BUILTIN D10 // GPIO 핀 번호에 따라 변경할 수 있습니다.
-int pins[] = {D10, D9};
-
-#elif defined(LOLIN_D32_LITE)
-const int ledPins[] = {22};
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#elif ESP32
+#include <WiFi.h>
+#include <vector>
 #endif
 
-int num_pins = sizeof(pins) / sizeof(pins[0]);
-int delay_time = 500; // 1초
+#include <TaskScheduler.h>
+#include <ArduinoJson.h>
 
-// const int interruptPin = 14;
+#include "tonkey.hpp"
 
-// Scheduler g_ts_blinker;
-Scheduler runner;
+#include "config.hpp"
 
+Scheduler g_ts;
+tonkey g_MainParser;
 
-Task task_Blink(
-    1000, TASK_FOREVER, []()
-    { 
-      for(int i = 0; i < num_pins; i++){
-        digitalWrite(pins[i], !digitalRead(pins[i]));
-      }
-    } 
-    );
+Config g_config;
 
-// volatile bool interruptFlag = false;
+#ifdef ESP32
+#define LED_BUILTIN 4
+#endif
 
-// void IRAM_ATTR isr()
-// {
-//   interruptFlag = true;
-// }
+Task task_Cmd(100, TASK_FOREVER, []()
+              {
+    if (Serial.available() > 0)
+    {
+        String _strLine = Serial.readStringUntil('\n');
+        _strLine.trim();
+        Serial.println(_strLine);
+        g_MainParser.parse(_strLine);
 
+        if(g_MainParser.getTokenCount() > 0) {
+          String cmd = g_MainParser.getToken(0);
+            JsonDocument _res_doc;
+            if (cmd == "about")
+            {
+                /* code */
+                _res_doc["result"] = "ok";
+                _res_doc["os"] = "cronos-v1";
+                _res_doc["app"] = "example-00 cli";
+                _res_doc["version"] = "1.0.0";
+                _res_doc["author"] = "gbox3d";
+// esp8266 chip id
+#ifdef ESP8266
+                _res_doc["chipid"] = ESP.getChipId();
+#elif ESP32
+                _res_doc["chipid"] = ESP.getEfuseMac();
+#endif
+            }
+            else if(cmd == "reboot") {
+#ifdef ESP8266
+                ESP.reset();
+#elif ESP32
+                ESP.restart();
+#endif
+            }
+            else if(cmd == "config") {
+                if(g_MainParser.getTokenCount() > 1) {
+                    String subCmd = g_MainParser.getToken(1);
+                    if(subCmd == "load") {
+                        g_config.load();
+                        _res_doc["result"] = "ok";
+                        _res_doc["ms"] = "config loaded";
+                    }
+                    else if(subCmd == "save") {
+                        g_config.save();
+                        _res_doc["result"] = "ok";
+                        _res_doc["ms"] = "config saved";
+                    }
+                    else if(subCmd == "dump") {
+                        
+                        //parse json g_config.dump()
+                        String jsonStr = g_config.dump();
+                        DeserializationError error = deserializeJson(_res_doc["ms"], jsonStr);
+                        if (error) {
+                            // Serial.print(F("deserializeJson() failed: "));
+                            // Serial.println(error.f_str());
+                            // return;
+                            _res_doc["result"] = "fail";
+                            _res_doc["ms"] = "json parse error";
+                        }
+                        else {
+                            _res_doc["result"] = "ok";
+                        }
+                        
+                    }
+                    else if(subCmd == "clear") {
+                        g_config.clear();
+                        _res_doc["result"] = "ok";
+                        _res_doc["ms"] = "config cleared";
+                    }
+                    else if(subCmd == "set") {
+                        if(g_MainParser.getTokenCount() > 2) {
+                            String key = g_MainParser.getToken(2);
+                            String value = g_MainParser.getToken(3);
+                            g_config.set(key.c_str(), value);
+                            _res_doc["result"] = "ok";
+                            _res_doc["ms"] = "config set";
+                        }
+                        else {
+                            _res_doc["result"] = "fail";
+                            _res_doc["ms"] = "need key and value";
+                        }
+                    }
+                    else if(subCmd == "setA") { //set json array
+                        if(g_MainParser.getTokenCount() > 2) {
+                            String key = g_MainParser.getToken(2);
+                            String value = g_MainParser.getToken(3);
+                            //parse json value
+                            // JSON 문자열 파싱을 위한 임시 객체
+                            JsonDocument tempDoc; // 임시 JSON 문서
+
+                            // JSON 문자열 파싱
+                            DeserializationError error = deserializeJson(tempDoc, value);
+                            // DeserializationError error = deserializeJson(g_config[key.c_str()], value);
+                            if (error) {
+                                // Serial.print(F("deserializeJson() failed: "));
+                                // Serial.println(error.f_str());
+                                // return;
+                                _res_doc["result"] = "fail";
+                                _res_doc["ms"] = "json parse error";
+                            }
+                            else {
+                                // JsonArray array = tempDoc[key].as<JsonArray>();
+
+                                g_config.set(key.c_str(), tempDoc);
+                                _res_doc["result"] = "ok";
+                                _res_doc["ms"] = tempDoc;
+                            }
+                            // g_config.set(key.c_str(), value);
+                            // _res_doc["result"] = "ok";
+                            // _res_doc["ms"] = "config set";
+                        }
+                        else {
+                            _res_doc["result"] = "fail";
+                            _res_doc["ms"] = "need key and value";
+                        }
+                        
+                    }
+                    else if(subCmd == "get") {
+                        if(g_MainParser.getTokenCount() > 2) {
+                            String key = g_MainParser.getToken(2);
+
+                            //check key exist
+                            if(!g_config.hasKey(key.c_str())) {
+                                _res_doc["result"] = "fail";
+                                _res_doc["ms"] = "key not exist";
+                                // serializeJson(_res_doc, Serial);
+                                // Serial.println();
+                                // return;
+                            }
+                            else {
+                                _res_doc["result"] = "ok";
+                                _res_doc["value"] = g_config.get<String>(key.c_str());
+                            }
+                        }
+                        else {
+                            _res_doc["result"] = "fail";
+                            _res_doc["ms"] = "need key";
+                        }
+                    }
+                    else {
+                        _res_doc["result"] = "fail";
+                        _res_doc["ms"] = "unknown sub command";
+                    
+                    }
+                }
+                else {
+                    _res_doc["result"] = "fail";
+                    _res_doc["ms"] = "need sub command";
+                }
+            }
+            
+            else {
+              _res_doc["result"] = "fail";
+              _res_doc["ms"] = "unknown command";
+            }
+            serializeJson(_res_doc, Serial);
+            Serial.println();
+            
+        }
+    } }, &g_ts, true);
+
+// the setup function runs once when you press reset or power the board
 void setup()
 {
-  Serial.begin(115200); // 시리얼 통신 초기화
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
 
-  for (int i = 0; i < num_pins; i++)
-  {
-    pinMode(pins[i], OUTPUT);
-    digitalWrite(pins[i], LOW);
-  }
+  Serial.begin(115200);
+  g_config.load();
 
-  //주의 : 아래 코드는 씨리얼 연결될때까지 대기 그래서 연ㅕㄹ되지않으면 다음 단계로 넘어가지 않음, 그래서 외부전원만 연결되어있으면 다음단계로 넘어가지 않음
-  // while (!Serial)
-  //   ; // wait for serial attach (for Leonardo/Micro/Zero)
 
   Serial.println(":-]");
   Serial.println("Serial connected");
-
-  runner.init();
-  runner.addTask(task_Blink);
-  task_Blink.enable();
   
+  g_ts.startNow();
 }
 
+// the loop function runs over and over again forever
 void loop()
 {
-  runner.execute();
+  g_ts.execute();
 }

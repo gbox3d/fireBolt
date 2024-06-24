@@ -11,9 +11,7 @@
 class Config
 {
 public:
-
     int version = 1;
-
 
 #ifdef ESP8266
     static const size_t EEPROM_SIZE = 1024;
@@ -41,7 +39,11 @@ public:
         ESP_ERROR_CHECK(err);
 #endif
 
+#ifdef AVR
+#else
         EEPROM.begin(EEPROM_SIZE);
+#endif
+
         load();
     }
 
@@ -60,7 +62,6 @@ public:
         Serial.println("data length: " + String(strlen(buffer))); // debug
         Serial.println("data: " + String(buffer));                // debug
 #endif
-
 
         // if empty, set default
         if (buffer[0] != '{' && buffer[0] != '[')
@@ -92,7 +93,12 @@ public:
         Serial.println("data: " + jsonDoc);                         // debug
 #endif
 
+#ifdef AVR
+
+#else
+
         EEPROM.commit();
+#endif
     }
 
     // Generic set and get
