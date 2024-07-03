@@ -30,6 +30,7 @@ AsyncUDP udp;
 
 IPAddress targetIP;
 uint16_t udp_port = 7204;
+String chipid = "udpcm_";
 
 // #ifdef ESP32
 // #define LED_BUILTIN 4
@@ -202,11 +203,10 @@ String ParseCmd(String _strLine)
         _res_doc["ms"] = "need sub command";
       }
     }
-
     else
     {
       _res_doc["result"] = "fail";
-      _res_doc["ms"] = "unknown command";
+      _res_doc["ms"] = "unknown command " + _strLine;
     }
 
     // serializeJson(_res_doc, Serial);
@@ -226,32 +226,35 @@ Task task_Cmd(100, TASK_FOREVER, []()
     if (Serial.available() > 0)
     {
         String _strLine = Serial.readStringUntil('\n');
+
         _strLine.trim();
 
-        String _res = ParseCmd(_strLine);
-        Serial.println(_res);
+        //! 로 시작하는지 판단
+        if(_strLine.startsWith("!")) {
+          // Serial.println("data : " + _strLine);
+          // ! 제거
+          JsonDocument _res_doc;
 
+          _strLine.remove(0,1);
 
-        Serial.println("Sent to target IP: " + targetIP.toString() + ":" + udp_port);
+          _res_doc["type"] = "data";
+          _res_doc["chipid"] = chipid;
+          _res_doc["data"] = _strLine;
 
+          String _res_str;
+          // serializeJson(_res_doc, _res_str);
+          _res_str = _res_doc.as<String>();
+          //target ip 로 전송
+          udp.writeTo((const uint8_t*)_res_str.c_str(), _res_str.length(), targetIP, udp_port);
 
-        udp.writeTo((const uint8_t*)_strLine.c_str(), _strLine.length(), targetIP, udp_port);
+        }
+        else {
+          
+          String _res = ParseCmd(_strLine);
+          Serial.println(_res);
+        }
 
-        // //json 형식문자열인지 판단
-        // if(_strLine.startsWith("{")) {
-        //   String _res = ParseCmd(_strLine);
-        //   Serial.println(_res);
-        //   // udp.broadcastTo(_strLine.c_str(), udp_port);
-        //   // return;
-        // }
-        // else {
-        //   //target ip 로 전송
-        //   // udp.writeTo(_strLine.c_str(), _strLine.length(), targetIP, udp_port);
-        //   udp.writeTo((const uint8_t*)_strLine.c_str(), _strLine.length(), targetIP, udp_port);
-        //   // Serial.println("Sent to target IP: " + targetIP.toString());
-
-        // }
-        // Serial.println(_strLine);
+        
         
     } }, &g_ts, true);
 
@@ -259,25 +262,13 @@ Task task_Cmd(100, TASK_FOREVER, []()
 Task task_Blink(150, TASK_FOREVER, []()
                 { digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); }, &g_ts, true);
 
-
 // udp broadcast task
-Task task_Broadcast(5000, TASK_FOREVER, []() {
+Task task_Broadcast(5000, TASK_FOREVER, []()
+                    {
 
   if (WiFi.status() == WL_CONNECTED) {
     JsonDocument broadcastDoc;
-
-    String chipid = "udpcm_";
     // broadcastDoc["chipid"] = "udpcm_";
-    
-#ifdef ESP8266
-    chipid += String(ESP.getChipId());
-    // broadcastDoc["chipid"] += String(ESP.getChipId());
-    
-#elif ESP32
-    chipid += String(ESP.getEfuseMac());
-    // broadcastDoc["chipid"] += String(ESP.getEfuseMac());
-#endif
-
     broadcastDoc["chipid"] = chipid;
     broadcastDoc["type"] = "broadcast";
     
@@ -285,28 +276,37 @@ Task task_Broadcast(5000, TASK_FOREVER, []() {
     serializeJson(broadcastDoc, broadcastMessage);
 
     udp.broadcastTo(broadcastMessage.c_str(), udp_port);
-  } 
-}, &g_ts, false);
+  } }, &g_ts, false);
 
 // WiFi events
 WiFiEventHandler staConnectedHandler;
 WiFiEventHandler staGotIPHandler;
 WiFiEventHandler staDisconnectedHandler;
 
-
 // UDP 수신 콜백 함수
-void onPacketReceived(AsyncUDPPacket packet) {
+void onPacketReceived(AsyncUDPPacket packet)
+{
 
-  //target ip 등록
-  // IPAddress targetIP = packet.remoteIP();
+  // target ip 등록
+  //  IPAddress targetIP = packet.remoteIP();
   targetIP = packet.remoteIP();
 
   Serial.write(packet.data(), packet.length());
+  Serial.println();
 }
 
 // the setup function runs once when you press reset or power the board
 void setup()
 {
+#ifdef ESP8266
+  chipid += String(ESP.getChipId());
+  // broadcastDoc["chipid"] += String(ESP.getChipId());
+
+#elif ESP32
+  chipid += String(ESP.getEfuseMac());
+  // broadcastDoc["chipid"] += String(ESP.getEfuseMac());
+#endif
+
   udp_port = g_config.get<int>("port");
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
@@ -325,49 +325,44 @@ void setup()
     Serial.print("password: ");
     Serial.println(g_config.get<String>("password"));
 
-
     // WiFi event handlers
     // on connected
-    staConnectedHandler = WiFi.onStationModeConnected([](const WiFiEventStationModeConnected &event) { 
+    staConnectedHandler = WiFi.onStationModeConnected([](const WiFiEventStationModeConnected &event)
+                                                      { Serial.println("WiFi connected : " + event.ssid); });
 
-      Serial.println( "WiFi connected : " + event.ssid); 
-    });
+    staGotIPHandler = WiFi.onStationModeGotIP([](const WiFiEventStationModeGotIP &event)
+                                              {
+                                                Serial.println("Get IP address");
+                                                Serial.print("IP address: ");
+                                                Serial.println(WiFi.localIP());
+                                                // stop blink task
+                                                task_Blink.disable();
 
-    staGotIPHandler = WiFi.onStationModeGotIP([](const WiFiEventStationModeGotIP &event) {
-      Serial.println("Get IP address");
-      Serial.print("IP address: ");
-      Serial.println(WiFi.localIP());
-      //stop blink task
-      task_Blink.disable();
+                                                digitalWrite(LED_BUILTIN, LOW);
 
-      digitalWrite(LED_BUILTIN, LOW); 
+                                                // UDP 수신 시작
+                                                if (udp.listen(udp_port))
+                                                { // 8888 포트로 UDP 수신 대기
+                                                  // Serial.println("UDP Listening on port 8888");
+                                                  udp.onPacket(onPacketReceived);
+                                                }
 
-          // UDP 수신 시작
-      if(udp.listen(udp_port)) {  // 8888 포트로 UDP 수신 대기
-        // Serial.println("UDP Listening on port 8888");
-        udp.onPacket(onPacketReceived);
-      }
+                                                // UDP 브로드캐스트 시작
+                                                task_Broadcast.enable(); });
 
-      // UDP 브로드캐스트 시작
-      task_Broadcast.enable();
+    staDisconnectedHandler = WiFi.onStationModeDisconnected([](const WiFiEventStationModeDisconnected &event)
+                                                            {
+                                                              Serial.println("WiFi lost connection");
+                                                              digitalWrite(LED_BUILTIN, HIGH);
+                                                              // start blink task
+                                                              task_Blink.enable();
 
-    });
-
-    staDisconnectedHandler = WiFi.onStationModeDisconnected([](const WiFiEventStationModeDisconnected &event) {
-      Serial.println("WiFi lost connection");
-      digitalWrite(LED_BUILTIN, HIGH); 
-      //start blink task
-      task_Blink.enable();
-
-      task_Broadcast.enable();
-
-    });
+                                                              task_Broadcast.enable(); });
 
     String _ssid = g_config.get<String>("ssid");
     String _password = g_config.get<String>("password");
 
     WiFi.begin(_ssid.c_str(), _password.c_str());
-
   }
   else
   {
