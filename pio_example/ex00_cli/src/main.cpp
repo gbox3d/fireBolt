@@ -25,6 +25,16 @@ Config g_config;
 
 Task task_Cmd(100, TASK_FOREVER, []()
               {
+
+#ifdef MEGA2560
+
+    if(Serial1.available() > 0) {
+        String _strLine = Serial1.readStringUntil('\n');
+        _strLine.trim();
+        Serial1.println(_strLine);
+    }
+#endif
+
     if (Serial.available() > 0)
     {
         String _strLine = Serial.readStringUntil('\n');
@@ -188,17 +198,23 @@ Task task_Cmd(100, TASK_FOREVER, []()
 void setup()
 {
   // initialize digital pin LED_BUILTIN as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
 
-  Serial.begin(115200);
-  g_config.load();
+    Serial.begin(115200);
 
+    g_config.load();
 
-  Serial.println(":-]");
-  Serial.println("Serial connected");
-  
-  g_ts.startNow();
+    Serial.println(":-]");
+    Serial.println("Serial connected");
+
+#ifdef MEGA2560
+    Serial1.begin(115200);
+    Serial1.println(":-]");
+    Serial1.println("Serial1 connected");
+#endif
+    
+    g_ts.startNow();
 }
 
 // the loop function runs over and over again forever
