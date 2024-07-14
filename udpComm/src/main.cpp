@@ -86,15 +86,11 @@ String ParseCmd(String _strLine)
         }
         else if (subCmd == "dump")
         {
-
           // parse json g_config.dump()
           String jsonStr = g_config.dump();
           DeserializationError error = deserializeJson(_res_doc["ms"], jsonStr);
           if (error)
           {
-            // Serial.print(F("deserializeJson() failed: "));
-            // Serial.println(error.f_str());
-            // return;
             _res_doc["result"] = "fail";
             _res_doc["ms"] = "json parse error";
           }
@@ -307,7 +303,10 @@ void setup()
   // broadcastDoc["chipid"] += String(ESP.getEfuseMac());
 #endif
 
+  
   udp_port = g_config.get<int>("port");
+
+
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
