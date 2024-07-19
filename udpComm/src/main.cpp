@@ -29,7 +29,9 @@ Config g_config;
 AsyncUDP udp;
 
 IPAddress targetIP;
-uint16_t udp_port = 7204;
+uint16_t udp_port = 8284;
+uint16_t udp_port_broadcast = 7204;
+
 String chipid = "udpcm_";
 
 // #ifdef ESP32
@@ -50,7 +52,7 @@ String ParseCmd(String _strLine)
       _res_doc["result"] = "ok";
       _res_doc["os"] = "cronos-v1";
       _res_doc["app"] = "udpComm";
-      _res_doc["version"] = "1.0.0";
+      _res_doc["version"] = g_config.version;
       _res_doc["author"] = "gbox3d";
 // esp8266 chip id
 #ifdef ESP8266
@@ -259,7 +261,7 @@ Task task_Blink(150, TASK_FOREVER, []()
                 { digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); }, &g_ts, true);
 
 // udp broadcast task
-Task task_Broadcast(5000, TASK_FOREVER, []()
+Task task_Broadcast(3000, TASK_FOREVER, []()
                     {
 
   if (WiFi.status() == WL_CONNECTED) {
@@ -271,7 +273,7 @@ Task task_Broadcast(5000, TASK_FOREVER, []()
     String broadcastMessage;
     serializeJson(broadcastDoc, broadcastMessage);
 
-    udp.broadcastTo(broadcastMessage.c_str(), udp_port);
+    udp.broadcastTo(broadcastMessage.c_str(), udp_port_broadcast);
   } }, &g_ts, false);
 
 // WiFi events
@@ -282,13 +284,23 @@ WiFiEventHandler staDisconnectedHandler;
 // UDP 수신 콜백 함수
 void onPacketReceived(AsyncUDPPacket packet)
 {
+  //브로드 캐스팅
+  if(packet.isBroadcast()) {
+    // Serial.println("broadcast");
+  }
+  else if(packet.isMulticast()) {
+    // Serial.println("multicast");
+  }
+  else {
+    // target ip 등록
+    //  IPAddress targetIP = packet.remoteIP();
+    targetIP = packet.remoteIP();
 
-  // target ip 등록
-  //  IPAddress targetIP = packet.remoteIP();
-  targetIP = packet.remoteIP();
+    Serial.write(packet.data(), packet.length());
+    // Serial.print(" from " + packet.remoteIP().toString() + ":" + packet.localPort());
+    Serial.println();
 
-  Serial.write(packet.data(), packet.length());
-  Serial.println();
+  }
 }
 
 // the setup function runs once when you press reset or power the board
@@ -339,10 +351,11 @@ void setup()
 
                                                 digitalWrite(LED_BUILTIN, LOW);
 
+                                                Serial.println("UDP Listening on port " + String(udp_port));
+
                                                 // UDP 수신 시작
                                                 if (udp.listen(udp_port))
-                                                { // 8888 포트로 UDP 수신 대기
-                                                  // Serial.println("UDP Listening on port 8888");
+                                                { 
                                                   udp.onPacket(onPacketReceived);
                                                 }
 

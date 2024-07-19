@@ -11,7 +11,7 @@
 class Config
 {
 public:
-    int version = 1;
+    int version = 2;
 
 #ifdef ESP8266
     static const size_t EEPROM_SIZE = 1024;
@@ -91,8 +91,15 @@ public:
 
         if(!hasKey("port"))
         {
-            set("port", 7204);
+            set("port", 8284);
         }
+
+        if(!hasKey("bc_port"))
+        {
+            set("bc_port", 7204);
+        }
+
+        
     }
 
     void save()
