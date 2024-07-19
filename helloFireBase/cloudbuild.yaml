@@ -1,0 +1,8 @@
+steps:
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['run', 'lint']
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['functions', 'deploy', 'helloWorld', '--runtime', 'nodejs18', '--trigger-http', '--allow-unauthenticated']
+
