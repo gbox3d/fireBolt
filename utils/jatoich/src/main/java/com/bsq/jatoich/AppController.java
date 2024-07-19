@@ -43,6 +43,17 @@ public class AppController {
     @FXML
     private TextField edtWifiPasswd;
 
+    //remote host
+    @FXML
+    private TextField edRemoteHost;
+    @FXML
+    private TextField edRemotePort;
+    @FXML
+    private Button btnRemoteInfoSet;
+    @FXML
+    private Button btnRemoteInfoRefresh;
+
+
     // device config
     @FXML
     private TextField edtDeviceID;
@@ -656,6 +667,138 @@ public class AppController {
             edtWifiSSID.clear();
         }
     }
+
+    // remote tab
+    @FXML
+    private void onClickRemoteSetBtn(Event event) {
+            
+        Task<Void> sendTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    String command = "config set remoteHost " + edRemoteHost.getText() + "\r\n";
+                    command += "config set remotePort " + edRemotePort.getText() + "\r\n";
+
+                    // 명령어 전송
+                    connectedPort.writeBytes(command.getBytes(), command.length());
+
+                    // 응답 읽기
+                    String response = readStringFromUart();
+
+                    Platform.runLater(() -> {
+                        taOutput.appendText(response);
+                    });
+
+                } catch (Exception e) {
+                    throw new Exception("Failed to send command: " + e.getMessage());
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void failed() {
+                // 실패 시 에러 메시지 다이얼로그
+                Throwable e = getException();
+                e.printStackTrace();
+                showErrorDialog("Error", "Failed to send command: " + e.getMessage());
+            }
+        };
+
+        Thread sendThread = new Thread(sendTask);
+        sendThread.setDaemon(true);
+        sendThread.start();
+    }
+
+
+    private void _RefreshRemoteInfoTab() {
+
+        Task<Void> sendTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    String command = "config dump\r\n";
+                    // 명령어 전송
+                    connectedPort.writeBytes(command.getBytes(), command.length());
+                    // 응답 읽기
+                    String response = readStringFromUart();
+
+                    // 응답을 줄 단위로 분리
+                    String[] lines = response.split("\\r?\\n");
+
+                    Platform.runLater(() -> {
+
+                        String _jsonResult = "{}";
+
+                        // find json string
+                        for (String line : lines) {
+                            if (isJson(line.trim())) {
+                                _jsonResult = line;
+                                JSONObject _json = new JSONObject(_jsonResult);
+
+                                if (_json.has("result") && _json.getString("result").equals("ok")) {
+
+                                    JSONObject _msJson = _json.getJSONObject("ms");
+
+                                    if (_msJson.has("remoteHost")) {
+                                        edRemoteHost.setText(_msJson.getString("remoteHost"));
+                                    }
+
+                                    if (_msJson.has("remotePort")) {
+                                        edRemotePort.setText( _msJson.getInt("remotePort") + "");
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    throw new Exception("Failed to send command: " + e.getMessage());
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void failed() {
+                // 실패 시 에러 메시지 다이얼로그
+                Throwable e = getException();
+                e.printStackTrace();
+                showErrorDialog("Error", "Failed to send command: " + e.getMessage());
+            }
+        };
+
+        Thread sendThread = new Thread(sendTask);
+        sendThread.setDaemon(true);
+        sendThread.start();
+
+    }
+
+    @FXML
+    private void OnSelecRemoteTab(Event event) {
+
+        Tab _Tab = (Tab) event.getSource();
+        if (_Tab.isSelected()) { // when selected tab
+            // check connected port
+            if (connectedPort == null || !connectedPort.isOpen()) {
+                showErrorDialog("Error", "No port connected.");
+                return;
+            }
+            _RefreshRemoteInfoTab();
+
+        } else {
+            // when unselect tab
+            edRemoteHost.clear();
+            edRemotePort.clear();
+        }
+    }
+
+    @FXML
+    private void onClickRefreshBtn(Event event) {
+
+        _RefreshRemoteInfoTab();
+        
+    }
+
 
     // device config tab
     @FXML

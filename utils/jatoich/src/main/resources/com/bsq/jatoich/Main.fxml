@@ -5,7 +5,6 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-
 <Pane id="rootPanel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="480.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bsq.jatoich.AppController">
    <children>
       <ImageView fitHeight="74.0" fitWidth="49.0" layoutX="577.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
@@ -54,6 +53,20 @@
                         </AnchorPane>
                   </content>
                 </Tab>
+                  <Tab onSelectionChanged="#OnSelecRemoteTab" text="Remote">
+                    <content>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <Label layoutX="34.0" layoutY="29.0" text="Host" />
+                              <TextField fx:id="edRemoteHost" layoutX="84.0" layoutY="24.0" />
+                              <Label layoutX="34.0" layoutY="62.0" text="Port" />
+                              <TextField fx:id="edRemotePort" layoutX="84.0" layoutY="57.0" />
+                              <Button fx:id="btnRemoteInfoSet" layoutX="535.0" layoutY="99.0" mnemonicParsing="false" onAction="#onClickRemoteSetBtn" text="Set" />
+                              <Button fx:id="btnRemoteInfoRefresh" layoutX="461.0" layoutY="99.0" mnemonicParsing="false" onAction="#onClickRefreshBtn" text="Refresh" />
+                           </children>
+                        </AnchorPane>
+                    </content>
+                  </Tab>
                   <Tab onSelectionChanged="#OnSelectDEviceTab" text="device">
                      <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
