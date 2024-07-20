@@ -55,6 +55,7 @@ export default () => {
                 devices[_deviceid].at = new Date().getTime()
             }
             else {
+                //create new device
                 console.log(`device ${_deviceid} is new`)
                 devices[_deviceid] = {
                     address: rinfo.address,
@@ -71,6 +72,35 @@ export default () => {
             if (postbox[_key]) {
                 postbox[_key](message)
                 delete postbox[_key]
+            }
+        }
+        else if(msg.startsWith('#POST_')){
+            
+            // console.log(msg)
+            // const _key = rinfo.address + ":" + rinfo.port
+
+            //sample : #POST_devid_TempSensor_26.5
+            let _msg = msg.toString().split('_')
+            let _deviceid = _msg[1]
+            let _key = _msg[2]
+            let _value = _msg[3]
+
+            if(devices[_deviceid]){
+                devices[_deviceid][_key] = _value
+                devices[_deviceid].at = new Date().getTime()
+
+                console.log(`device ${_deviceid} is updated ${_key} : ${_value}`)
+            }
+            else {
+                // create new device
+                devices[_deviceid] = {
+                    address: rinfo.address,
+                    port: rinfo.port,
+                    at: new Date().getTime()
+                }
+                devices[_deviceid][_key] = _value
+
+                console.log(`device ${_deviceid} is new ${_key} : ${_value}`)
             }
         }
 
