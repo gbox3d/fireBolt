@@ -52,7 +52,7 @@ String ParseCmd(String _strLine)
       _res_doc["result"] = "ok";
       _res_doc["os"] = "cronos-v1";
       _res_doc["app"] = "udpComm";
-      _res_doc["version"] = g_config.version;
+      _res_doc["version"] = "a1" + String(g_config.version);
       _res_doc["author"] = "gbox3d";
 // esp8266 chip id
 #ifdef ESP8266
