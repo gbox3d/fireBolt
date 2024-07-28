@@ -68,6 +68,16 @@ public:
             Serial.println((String("offset") + i + ": ").c_str() + String(mOffsets[i]));
         }
     }
+
+    JsonDocument dump()
+    {
+        JsonDocument doc;
+        doc["ssid"] = mStrAp;
+        doc["password"] = mStrPassword;
+
+        return doc;
+
+    }
 };
 
 #endif // CONFIG_HPP

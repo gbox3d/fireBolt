@@ -1,6 +1,15 @@
 #include <Arduino.h> // Arduino 헤더 파일 포함
+
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESPAsyncUDP.h>
+#elif ESP32
+
 #include <WiFi.h>
 #include <AsyncUDP.h>
+#define LED_BUILTIN 4
+#endif
+
 
 #include <TaskScheduler.h>
 #include <ArduinoJson.h>
@@ -23,8 +32,12 @@
 #elif defined(WROVER_KIT)
 #define LED_PIN 5
 #define ANALOG_PIN 34
+#define BTN_PIN 18
+#elif defined(ESP8266)
+#define LED_PIN D4
+#define ANALOG_PIN A0
+#define BTN_PIN D5
 #endif
-
 
 Scheduler g_runner;
 tonkey g_MainParser;
@@ -43,13 +56,14 @@ Task task_Cmd(
 
         if(g_MainParser.getTokenCount() > 0) {
           String cmd = g_MainParser.getToken(0);
-            DynamicJsonDocument _res_doc(1024);
+            // JsonDocument _res_doc();
+            JsonDocument _res_doc;
 
             if (cmd == "about")
             {
                 /* code */
                 _res_doc["result"] = "ok";
-                _res_doc["title"] = "example 01 - hello esp32";
+                _res_doc["title"] = "example 01 - cmd";
                 _res_doc["version"] = "1.0.0";
                 _res_doc["author"] = "gbox3d";
             }
@@ -159,11 +173,69 @@ Task task_Cmd(
             else if( cmd == "reboot") {
               ESP.restart();
             }
+            else if(cmd == "config") {
+              String key = g_MainParser.getToken(1);
+              String value = g_MainParser.getToken(2);
+              _res_doc["result"] = "ok";
+
+              if(key == "ap") {
+                configData.mStrAp = value;
+              }
+              else if(key == "password") {
+                configData.mStrPassword = value;
+              }
+              else if(key == "target_ip") {
+                configData.mTargetIp = value;
+              }
+              else if(key == "target_port") {
+                configData.mTargetPort = value.toInt();
+              }
+              else if(key == "dump") {
+                _res_doc["ms"] = configData.dump();
+              }
+              else {
+                _res_doc["result"] = "fail";
+                _res_doc["ms"] = "unknown key";
+              }
+            }
             else if(cmd == "wifi") {
               String value = g_MainParser.getToken(1);
               if(value == "connect") {
 
                 digitalWrite(LED_PIN, LOW);
+
+#if defined(ESP8266)
+
+        // WiFi event handlers
+        // on connected
+                WiFi.onStationModeConnected([](const WiFiEventStationModeConnected &event)
+                                                                  { Serial.println("WiFi connected : " + event.ssid); });
+
+                WiFi.onStationModeGotIP([](const WiFiEventStationModeGotIP &event)
+                                                          {
+                    Serial.println("Get IP address");
+                    Serial.print("IP address: ");
+                    Serial.println(WiFi.localIP());
+                    
+                    digitalWrite(LED_BUILTIN, LOW);
+
+                    
+                });
+
+                WiFi.onStationModeDisconnected([](const WiFiEventStationModeDisconnected &event) {
+                    Serial.println("WiFi lost connection");
+                    digitalWrite(LED_BUILTIN, HIGH);
+                    // start blink task
+                    // task_Blink.enable();
+                    // task_Broadcast.enable(); 
+                });
+                
+                WiFi.mode(WIFI_STA);
+                WiFi.begin(configData.mStrAp.c_str(), configData.mStrPassword.c_str());
+
+
+#elif defined(ESP32)
+                
                 
                 WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
                   Serial.printf("[WiFi-event] event: %d\n", event);
@@ -193,6 +265,8 @@ Task task_Cmd(
                 WiFi.mode(WIFI_STA);
                 WiFi.begin(configData.mStrAp.c_str(), configData.mStrPassword.c_str());
 
+                #endif
+
                 _res_doc["result"] = "ok";
               }
               else if(value == "disconnect") {
@@ -221,6 +295,8 @@ void setup()
 
   pinMode(BTN_PIN, INPUT);
   pinMode(ANALOG_PIN, INPUT);
+
+  configData.load();
 
   Serial.begin(115200); // 시리얼 통신 초기화
   
