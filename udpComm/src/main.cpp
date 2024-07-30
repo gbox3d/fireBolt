@@ -29,7 +29,7 @@ Config g_config;
 AsyncUDP udp;
 
 IPAddress targetIP;
-uint16_t udp_port = 8284;
+uint16_t udp_port_data = 8284;
 uint16_t udp_port_broadcast = 7204;
 
 String chipid = "udpcm_";
@@ -243,7 +243,7 @@ Task task_Cmd(100, TASK_FOREVER, []()
           // serializeJson(_res_doc, _res_str);
           _res_str = _res_doc.as<String>();
           //target ip 로 전송
-          udp.writeTo((const uint8_t*)_res_str.c_str(), _res_str.length(), targetIP, udp_port);
+          udp.writeTo((const uint8_t*)_res_str.c_str(), _res_str.length(), targetIP, udp_port_data);
 
         }
         else {
@@ -316,7 +316,7 @@ void setup()
 #endif
 
   
-  udp_port = g_config.get<int>("port");
+  udp_port_data = g_config.get<int>("port");
 
 
   // initialize digital pin LED_BUILTIN as an output.
@@ -351,10 +351,10 @@ void setup()
 
                                                 digitalWrite(LED_BUILTIN, LOW);
 
-                                                Serial.println("UDP Listening on port " + String(udp_port));
+                                                Serial.println("UDP Listening on port " + String(udp_port_data));
 
                                                 // UDP 수신 시작
-                                                if (udp.listen(udp_port))
+                                                if (udp.listen(udp_port_data))
                                                 { 
                                                   udp.onPacket(onPacketReceived);
                                                 }
