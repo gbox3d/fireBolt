@@ -19,6 +19,7 @@
 #include "config.hpp"
 
 #include "sampling_module.hpp"
+#include "tcp_server.hpp"
 
 extern String ParseCmd(String _strLine);
 
@@ -36,9 +37,11 @@ uint16_t udp_port_broadcast;
 const int MIC_PINS[] = {32, 33, 25, 26};
 const int NUM_CHANNELS = 4;
 const int SAMPLE_RATE = 8000;
-const int BUFFER_SIZE = 1000;  // 각 채널당 1000 샘플
+const int BUFFER_SIZE = 8000;  // 각 채널당 1000 샘플
 
+// SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
 SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
+TcpServer tcpServer(data_port, &sampler);
 
 // #if defined(ESP8266)
 // #elif defined(ESP32)
@@ -260,36 +263,30 @@ void setup()
 #elif defined(ESP32)
 
     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
-                    Serial.printf("[WiFi-event] event: %d\n", event);
+      Serial.printf("[WiFi-event] event: %d\n", event);
 
-                    switch(event) {
-                      case SYSTEM_EVENT_STA_GOT_IP:
-                        Serial.println("WiFi connected");
-                        Serial.print("IP address: ");
-                        Serial.println(WiFi.localIP());
+      switch(event) {
+        case SYSTEM_EVENT_STA_GOT_IP:
+          Serial.println("WiFi connected");
+          Serial.print("IP address: ");
+          Serial.println(WiFi.localIP());
 
-                        task_Blink.disable();
-                        digitalWrite(LED_BUILTIN, HIGH);
+          task_Blink.disable();
+          digitalWrite(LED_BUILTIN, HIGH);
 
-                        sampler.setupTCPServer(data_port);
+          tcpServer.begin();
+          
+          // sampler.setupTCPServer(data_port); // TCP 서버 시작
 
-                        // // UDP 수신 시작
-                        // if (udp.listen(udp_port_data))
-                        // { 
-                        //   udp.onPacket(onPacketReceived);
-
-                        //   Serial.println("UDP Listening on port " + String(udp_port_data));
-                        // }
-
-                        break;
-                      case SYSTEM_EVENT_STA_DISCONNECTED:
-                        Serial.println("WiFi lost connection");
-                        task_Blink.enable();
-                        // digitalWrite(LED_PIN, LOW);
-                        break;
-                      default: break;
-                    }
-                  });
+          break;
+        case SYSTEM_EVENT_STA_DISCONNECTED:
+          Serial.println("WiFi lost connection");
+          task_Blink.enable();
+          // digitalWrite(LED_PIN, LOW);
+          break;
+        default: break;
+      }
+    });
 
 #endif
 

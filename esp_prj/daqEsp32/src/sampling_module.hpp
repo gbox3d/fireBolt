@@ -1,27 +1,28 @@
-// #pragma once
+// sampling_module.hpp
+#pragma once
 
 #include <Arduino.h>
 
-#ifdef ESP8266
-#include <ESPAsyncUDP.h>
-#elif ESP32
-// #include <AsyncUDP.h>
-#include <AsyncTCP.h>
-
-#endif
-
 class SamplingModule {
+public:
+    SamplingModule(const int* mic_pins, int num_channels, int sample_rate, int buffer_size);
+    ~SamplingModule();
+
+    void setup();
+    void startSampling();
+    void stopSampling();
+    bool isDataReady();
+    uint32_t getSequenceNumber();
+    const uint8_t* getData();
+    size_t getDataSize();
+    void releaseData();
+
 private:
     struct SampleBuffer {
         uint8_t* data;
         uint32_t sequence;
         bool ready;
     };
-
-    AsyncServer* server;
-    AsyncClient* client;
-    uint16_t serverPort;
-    bool isClientConnected;
 
     const int* MIC_PINS;
     int NUM_CHANNELS;
@@ -40,21 +41,4 @@ private:
     static SamplingModule* instance;
 
     static void IRAM_ATTR onTimer();
-
-public:
-    SamplingModule(const int* mic_pins, int num_channels, int sample_rate, int buffer_size);
-    ~SamplingModule();
-
-    void setup();
-    void startSampling();
-    void stopSampling();
-    bool isDataReady();
-    uint32_t getSequenceNumber();
-    const uint8_t* getData();
-    void releaseData();
-    // void sendUdpData(AsyncUDP& udp, const IPAddress& host, uint16_t port);
-
-    
-    void setupTCPServer(uint16_t port);
-    void sendTcpData();
 };
