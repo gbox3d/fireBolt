@@ -63,3 +63,6 @@ config.yaml
 config.json
 
 outputs/
+
+__pycache__/
+
