@@ -41,7 +41,7 @@ const int BUFFER_SIZE = 8000;  // 각 채널당 1000 샘플
 
 // SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
 SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
-TcpServer tcpServer(data_port, &sampler);
+TcpServer *g_pTcpServer = nullptr;
 
 // #if defined(ESP8266)
 // #elif defined(ESP32)
@@ -97,6 +97,14 @@ Task task_Broadcast(3000, TASK_FOREVER, []()
   } }, &g_ts, false);
 
 Task task_SendBuffer(50, TASK_FOREVER, []() {
+
+    // sampling_module::sendUdpData(udp, targetIP, udp_port_data);
+  
+}, &g_ts, true);
+
+Task task_SendData(250, TASK_FOREVER, []() {
+
+  g_pTcpServer->sendData();
 
     // sampling_module::sendUdpData(udp, targetIP, udp_port_data);
   
@@ -191,11 +199,14 @@ WiFiEventHandler staDisconnectedHandler;
 //   }
 // }
 
+
+
 // the setup function runs once when you press reset or power the board
 void setup()
 {
 
   sampler.setup();
+  
 
 #ifdef ESP8266
   chipid += String(ESP.getChipId());
@@ -207,6 +218,8 @@ void setup()
   
   data_port = g_config.get<int>("port",8284);
   udp_port_broadcast = g_config.get<int>("broadcast_port",7204);
+
+  g_pTcpServer = new TcpServer(data_port,&sampler);
 
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
@@ -274,8 +287,9 @@ void setup()
           task_Blink.disable();
           digitalWrite(LED_BUILTIN, HIGH);
 
-          tcpServer.begin();
-          
+          if(g_pTcpServer) g_pTcpServer->begin();
+
+          // tcpServer.begin();
           // sampler.setupTCPServer(data_port); // TCP 서버 시작
 
           break;
