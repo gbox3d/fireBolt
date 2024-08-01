@@ -5,7 +5,9 @@
 #ifdef ESP8266
 #include <ESPAsyncUDP.h>
 #elif ESP32
-#include <AsyncUDP.h>
+// #include <AsyncUDP.h>
+#include <AsyncTCP.h>
+
 #endif
 
 class SamplingModule {
@@ -15,6 +17,11 @@ private:
         uint32_t sequence;
         bool ready;
     };
+
+    AsyncServer* server;
+    AsyncClient* client;
+    uint16_t serverPort;
+    bool isClientConnected;
 
     const int* MIC_PINS;
     int NUM_CHANNELS;
@@ -45,5 +52,9 @@ public:
     uint32_t getSequenceNumber();
     const uint8_t* getData();
     void releaseData();
-    void sendUdpData(AsyncUDP& udp, const IPAddress& host, uint16_t port);
+    // void sendUdpData(AsyncUDP& udp, const IPAddress& host, uint16_t port);
+
+    
+    void setupTCPServer(uint16_t port);
+    void sendTcpData();
 };

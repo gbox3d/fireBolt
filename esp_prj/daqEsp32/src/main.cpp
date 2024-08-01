@@ -29,8 +29,16 @@ Config g_config;
 AsyncUDP udp;
 
 IPAddress targetIP;
-uint16_t udp_port_data;
+
+uint16_t data_port;
 uint16_t udp_port_broadcast;
+
+const int MIC_PINS[] = {32, 33, 25, 26};
+const int NUM_CHANNELS = 4;
+const int SAMPLE_RATE = 8000;
+const int BUFFER_SIZE = 1000;  // 각 채널당 1000 샘플
+
+SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
 
 // #if defined(ESP8266)
 // #elif defined(ESP32)
@@ -100,93 +108,92 @@ WiFiEventHandler staDisconnectedHandler;
 #endif
 
 
-void sendResponse(AsyncUDP& udp, const IPAddress& remoteIP, uint16_t remotePort, uint8_t resultCode) {
-    S_PACKET_RES response;
-    response.header.header = MAGIC_NUMBER;
-    response.header.chipId = ESP.getEfuseMac(); // ESP32의 고유 ID
-    response.header.type = PacketType::RES;
-    response.header.packet_size = sizeof(S_PACKET_RES);
-    response.result_code = resultCode;
+// void sendResponse(AsyncUDP& udp, const IPAddress& remoteIP, uint16_t remotePort, uint8_t resultCode) {
+//     S_PACKET_RES response;
+//     response.header.header = MAGIC_NUMBER;
+//     response.header.chipId = ESP.getEfuseMac(); // ESP32의 고유 ID
+//     response.header.type = PacketType::RES;
+//     response.header.packet_size = sizeof(S_PACKET_RES);
+//     response.result_code = resultCode;
 
-    udp.writeTo((uint8_t*)&response, sizeof(S_PACKET_RES), remoteIP, remotePort);
-}
+//     udp.writeTo((uint8_t*)&response, sizeof(S_PACKET_RES), remoteIP, remotePort);
+// }
 
-void handleRequest( const S_PACKET_REQ* req, const IPAddress& remoteIP, uint16_t remotePort) {
-    uint8_t resultCode = 0; // 성공을 의미하는 기본값
+// void handleRequest( const S_PACKET_REQ* req, const IPAddress& remoteIP, uint16_t remotePort) {
+//     uint8_t resultCode = 0; // 성공을 의미하는 기본값
 
-    switch(req->cmd) {
-        case Command::CMD_PING:
+//     switch(req->cmd) {
+//         case Command::CMD_PING:
 
-            targetIP = remoteIP;
-            // Serial.print("Ping received from ");
-            // Serial.print(remoteIP.toString());
-            // Serial.print(":");
-            // Serial.println(remotePort);
-            // Serial.println("Ping received");
-            // 상태 정보 처리
+//             targetIP = remoteIP;
+//             // Serial.print("Ping received from ");
+//             // Serial.print(remoteIP.toString());
+//             // Serial.print(":");
+//             // Serial.println(remotePort);
+//             // Serial.println("Ping received");
+//             // 상태 정보 처리
 
-            break;
-        case Command::CMD_START_SAMPLING:
-            break;
-        case Command::CMD_STOP_SAMPLING:
-            break;
-        default:
-            resultCode = 1; // 알 수 없는 명령어
-            break;
-    }
+//             break;
+//         case Command::CMD_START_SAMPLING:
+//             break;
+//         case Command::CMD_STOP_SAMPLING:
+//             break;
+//         default:
+//             resultCode = 1; // 알 수 없는 명령어
+//             break;
+//     }
 
-    sendResponse(udp, remoteIP, remotePort, resultCode);
-}
+//     sendResponse(udp, remoteIP, remotePort, resultCode);
+// }
 
-// UDP 수신 콜백 함수
-void onPacketReceived(AsyncUDPPacket packet)
-{
+// // UDP 수신 콜백 함수
+// void onPacketReceived(AsyncUDPPacket packet)
+// {
 
-  Serial.print("UDP Packet Type: ");
-  //브로드 캐스팅
-  if(packet.isBroadcast()) {
-    Serial.println("broadcast");
-  }
-  else if(packet.isMulticast()) {
-    Serial.println("multicast");
-  }
-  else {
+//   Serial.print("UDP Packet Type: ");
+//   //브로드 캐스팅
+//   if(packet.isBroadcast()) {
+//     Serial.println("broadcast");
+//   }
+//   else if(packet.isMulticast()) {
+//     Serial.println("multicast");
+//   }
+//   else {
 
-    Serial.println("unicast");
+//     Serial.println("unicast");
 
-    S_PACKET_HEADER* header = (S_PACKET_HEADER*)packet.data();
+//     S_PACKET_HEADER* header = (S_PACKET_HEADER*)packet.data();
 
-    Serial.print("magic number: ");
-    Serial.println(header->header);
+//     Serial.print("magic number: ");
+//     Serial.println(header->header);
 
-    Serial.print("type: ");
-    Serial.println(header->type);
+//     Serial.print("type: ");
+//     Serial.println(header->type);
 
-    switch(header->type) {
-        case PacketType::REQ:
-            handleRequest( (S_PACKET_REQ*)packet.data(), packet.remoteIP(), packet.remotePort());
+//     switch(header->type) {
+//         case PacketType::REQ:
+//             handleRequest( (S_PACKET_REQ*)packet.data(), packet.remoteIP(), packet.remotePort());
             
-            break;
-        case PacketType::RES:
-            // 응답 패킷 처리 (필요한 경우)
-            break;
-        case PacketType::SYS:
-            // 시스템 패킷 처리
-            break;
-        default:
-            Serial.println("Unknown packet type");
-            break;
-    }
-
-
-
-    
-  }
-}
+//             break;
+//         case PacketType::RES:
+//             // 응답 패킷 처리 (필요한 경우)
+//             break;
+//         case PacketType::SYS:
+//             // 시스템 패킷 처리
+//             break;
+//         default:
+//             Serial.println("Unknown packet type");
+//             break;
+//     }
+//   }
+// }
 
 // the setup function runs once when you press reset or power the board
 void setup()
 {
+
+  sampler.setup();
+
 #ifdef ESP8266
   chipid += String(ESP.getChipId());
   // broadcastDoc["chipid"] += String(ESP.getChipId());
@@ -195,7 +202,7 @@ void setup()
   // broadcastDoc["chipid"] += String(ESP.getEfuseMac());
 #endif
   
-  udp_port_data = g_config.get<int>("port",8284);
+  data_port = g_config.get<int>("port",8284);
   udp_port_broadcast = g_config.get<int>("broadcast_port",7204);
 
   // initialize digital pin LED_BUILTIN as an output.
@@ -264,16 +271,15 @@ void setup()
                         task_Blink.disable();
                         digitalWrite(LED_BUILTIN, HIGH);
 
-                        // UDP 수신 시작
-                        if (udp.listen(udp_port_data))
-                        { 
-                          udp.onPacket(onPacketReceived);
+                        sampler.setupTCPServer(data_port);
 
-                          Serial.println("UDP Listening on port " + String(udp_port_data));
-                        }
+                        // // UDP 수신 시작
+                        // if (udp.listen(udp_port_data))
+                        // { 
+                        //   udp.onPacket(onPacketReceived);
 
-
-
+                        //   Serial.println("UDP Listening on port " + String(udp_port_data));
+                        // }
 
                         break;
                       case SYSTEM_EVENT_STA_DISCONNECTED:
