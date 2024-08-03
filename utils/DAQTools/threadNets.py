@@ -6,6 +6,9 @@ from PyQt6.QtCore import QFile, QThread, pyqtSignal
 
 import socket
 import struct
+import time
+
+import math
 
 MAGIC_NUMBER = 20240729
 
@@ -42,17 +45,17 @@ class ClientThread(QThread):
         self.socket = None
         self.is_running = False
         
-    def receive_exact(sock, size):
-        data = bytearray()
-        print(f"Receiving {size} bytes")
-        while len(data) < size:
-            packet = sock.recv(size - len(data))
-            if not packet:
-                print("Connection closed")
-                break;
-            data.extend(packet)
-            print(f"Received {len(packet)} bytes")
-        return data
+    # def receive_exact(sock, size):
+    #     data = bytearray()
+    #     # print(f"Receiving {size} bytes")
+    #     while len(data) < size:
+    #         packet = sock.recv(size - len(data))
+    #         if not packet:
+    #             print("Connection closed")
+    #             break;
+    #         data.extend(packet)
+    #         # print(f"Received {len(packet)} bytes")
+    #     return data
 
     def run(self):
         try:
@@ -78,9 +81,6 @@ class ClientThread(QThread):
                     print("DAQ packet received")
                     daq_header = self.socket.recv(8)
                     sequence, data_size = struct.unpack(PACKET_DAQ_FORMAT, daq_header)
-                    
-                    
-                    
                     print(f"Sequence: {sequence}, Data size: {data_size}")
                     
                     data = bytearray()
@@ -91,24 +91,22 @@ class ClientThread(QThread):
                                 print("Connection closed")
                                 break
                             data.extend(packet)
-                            print(f"Received {len(packet)} bytes, Total: {len(data)}/{data_size}")
+                            # print(f"Received {len(packet)} bytes, Total: {len(data)}/{data_size}")
                         except socket.timeout:
                             print("Socket timeout, retrying...")
                             continue
                         except Exception as e:
                             print(f"Error receiving data: {str(e)}")
                             break
-                    print(f"Data received: {len(data)}")
-                    
-                    
-                    
+                        
+                    # print(f"Data received: {len(data)}")
                     self.daq_data_received.emit(sequence, bytes(data))
                     
                 else:
                     body = self.socket.recv(packet_size - 16)
                     self.response_received.emit(packet_type, packet_size - 16,body)
-            
-            
+        except socket.timeout:
+            pass
         except Exception as e:
             print(f"Error: {str(e)}")
             self.connection_result.emit(False, f"Connection failed: {str(e)}")
@@ -121,3 +119,46 @@ class ClientThread(QThread):
     def send_packet(self, packet):
         if self.socket:
             self.socket.sendall(packet)
+            
+
+
+class GraphUpdateThread(QThread):
+    update_signal = pyqtSignal(list)
+    maximum_extract_size = 800
+    base_extract_size = 80
+
+    def __init__(self, data_queue):
+        super().__init__()
+        self.data_queue = data_queue
+        self.running = True
+        
+    def calculate_extract_size(self, queue_length):
+        
+        if queue_length <= 0:
+            return self.base_extract_size
+        
+        # 로그 함수를 사용하여 추출 크기 계산
+        log_factor = math.log(queue_length , 2)  # 1000부터 시작하도록 조정
+        extract_size = int(self.base_extract_size * (1 + log_factor))
+        
+        # 최대 1000으로 제한
+        return min(extract_size, self.maximum_extract_size)
+
+    def run(self):
+        while self.running:
+            time.sleep(0.01)  # 100Hz (초당 100번)
+            data_to_plot = []
+            
+            queue_length =  len(self.data_queue) - 8000
+            extract_size = self.calculate_extract_size(queue_length)
+            
+            for _ in range(extract_size):
+                if self.data_queue:
+                    data_to_plot.append(self.data_queue.popleft())
+                else:
+                    break
+            if data_to_plot:
+                self.update_signal.emit(data_to_plot)
+
+    def stop(self):
+        self.running = False

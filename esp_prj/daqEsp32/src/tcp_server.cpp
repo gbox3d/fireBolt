@@ -97,33 +97,50 @@ void TcpServer::handleDisconnect() {
 
 void TcpServer::sendData() {
     if (isClientConnected && samplingModule->isDataReady() && client) {
-
+        const uint32_t CHUNK_SIZE = 4096;
+        
         S_PACKET_DAQ _daqPacket;
-        makeHeaderPacket(&_daqPacket.header, ESP.getEfuseMac(), PacketType::DAQ, sizeof(S_PACKET_DAQ));
-        
-        
-
-        // makeHeaderPacket(&response.header, ESP.getEfuseMac(), PacketType::RES, sizeof(S_PACKET_RES));
-
         uint32_t sequence = samplingModule->getSequenceNumber();
         const uint8_t* data = samplingModule->getData();
-        size_t dataSize = samplingModule->getDataSize();
+        size_t totalDataSize = samplingModule->getDataSize();
 
+        // 헤더 패킷 생성 및 전송 (한 번만)
+        makeHeaderPacket(&_daqPacket.header, ESP.getEfuseMac(), PacketType::DAQ, sizeof(S_PACKET_DAQ));
         _daqPacket.sequence = sequence;
-        _daqPacket.data_size = dataSize;
+        _daqPacket.data_size = totalDataSize;
 
         client->write((const char*)&_daqPacket, sizeof(S_PACKET_DAQ));
-        client->write((const char*)data, dataSize);
 
-        // uint32_t header[2] = {MAGIC_NUMBER, sequence};
+        // 데이터를 청크로 나누어 전송
+        size_t remainingData = totalDataSize;
+        size_t offset = 0;
+        int totalSent = 0;
 
-        // client->write((const char*)header, sizeof(header));
-        // client->write((const char*)data, dataSize);
-        Serial.print("sqeuence: ");
+        while (remainingData > 0) {
+            size_t chunkSize = (remainingData > CHUNK_SIZE) ? CHUNK_SIZE : remainingData;
+            int datasent = client->write((const char*)(data + offset), chunkSize);
+
+            totalSent += datasent;
+            remainingData -= datasent;
+            offset += datasent;
+
+            Serial.print("sequence: ");
+            Serial.print(sequence);
+            Serial.print(" Chunk sent: ");
+            Serial.print(datasent);
+            Serial.print(" Total sent: ");
+            Serial.print(totalSent);
+            Serial.print("/");
+            Serial.println(totalDataSize);
+
+            // 각 청크 전송 후 약간의 지연을 줄 수 있습니다.
+            delay(10);
+        }
+
+        Serial.print("Sequence ");
         Serial.print(sequence);
-        Serial.print(" Data size: ");
-        Serial.print(dataSize);
-        Serial.println(" sent");
+        Serial.print(" completed. Total data sent: ");
+        Serial.println(totalSent);
 
         samplingModule->releaseData();
     }

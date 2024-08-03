@@ -81,12 +81,11 @@ Task task_Blink(150, TASK_FOREVER, []()
                 { digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); }, &g_ts, true);
 
 // udp broadcast task
-Task task_Broadcast(3000, TASK_FOREVER, []()
+Task task_Broadcast(5000, TASK_FOREVER, []()
                     {
 
   if (WiFi.status() == WL_CONNECTED) {
     JsonDocument broadcastDoc;
-    // broadcastDoc["chipid"] = "udpcm_";
     broadcastDoc["chipid"] = chipid;
     broadcastDoc["type"] = "broadcast";
     
@@ -117,89 +116,6 @@ WiFiEventHandler staConnectedHandler;
 WiFiEventHandler staGotIPHandler;
 WiFiEventHandler staDisconnectedHandler;
 #endif
-
-
-// void sendResponse(AsyncUDP& udp, const IPAddress& remoteIP, uint16_t remotePort, uint8_t resultCode) {
-//     S_PACKET_RES response;
-//     response.header.header = MAGIC_NUMBER;
-//     response.header.chipId = ESP.getEfuseMac(); // ESP32의 고유 ID
-//     response.header.type = PacketType::RES;
-//     response.header.packet_size = sizeof(S_PACKET_RES);
-//     response.result_code = resultCode;
-
-//     udp.writeTo((uint8_t*)&response, sizeof(S_PACKET_RES), remoteIP, remotePort);
-// }
-
-// void handleRequest( const S_PACKET_REQ* req, const IPAddress& remoteIP, uint16_t remotePort) {
-//     uint8_t resultCode = 0; // 성공을 의미하는 기본값
-
-//     switch(req->cmd) {
-//         case Command::CMD_PING:
-
-//             targetIP = remoteIP;
-//             // Serial.print("Ping received from ");
-//             // Serial.print(remoteIP.toString());
-//             // Serial.print(":");
-//             // Serial.println(remotePort);
-//             // Serial.println("Ping received");
-//             // 상태 정보 처리
-
-//             break;
-//         case Command::CMD_START_SAMPLING:
-//             break;
-//         case Command::CMD_STOP_SAMPLING:
-//             break;
-//         default:
-//             resultCode = 1; // 알 수 없는 명령어
-//             break;
-//     }
-
-//     sendResponse(udp, remoteIP, remotePort, resultCode);
-// }
-
-// // UDP 수신 콜백 함수
-// void onPacketReceived(AsyncUDPPacket packet)
-// {
-
-//   Serial.print("UDP Packet Type: ");
-//   //브로드 캐스팅
-//   if(packet.isBroadcast()) {
-//     Serial.println("broadcast");
-//   }
-//   else if(packet.isMulticast()) {
-//     Serial.println("multicast");
-//   }
-//   else {
-
-//     Serial.println("unicast");
-
-//     S_PACKET_HEADER* header = (S_PACKET_HEADER*)packet.data();
-
-//     Serial.print("magic number: ");
-//     Serial.println(header->header);
-
-//     Serial.print("type: ");
-//     Serial.println(header->type);
-
-//     switch(header->type) {
-//         case PacketType::REQ:
-//             handleRequest( (S_PACKET_REQ*)packet.data(), packet.remoteIP(), packet.remotePort());
-            
-//             break;
-//         case PacketType::RES:
-//             // 응답 패킷 처리 (필요한 경우)
-//             break;
-//         case PacketType::SYS:
-//             // 시스템 패킷 처리
-//             break;
-//         default:
-//             Serial.println("Unknown packet type");
-//             break;
-//     }
-//   }
-// }
-
-
 
 // the setup function runs once when you press reset or power the board
 void setup()
@@ -287,11 +203,10 @@ void setup()
           task_Blink.disable();
           digitalWrite(LED_BUILTIN, HIGH);
 
+          task_Broadcast.enable();
+
           if(g_pTcpServer) g_pTcpServer->begin();
-
-          // tcpServer.begin();
-          // sampler.setupTCPServer(data_port); // TCP 서버 시작
-
+          
           break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
           Serial.println("WiFi lost connection");

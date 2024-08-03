@@ -18,9 +18,23 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>IP</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLineEdit" name="lineEdit_IP">
         <property name="placeholderText">
          <string>IP Address</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Port</string>
         </property>
        </widget>
       </item>
@@ -57,9 +71,30 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnStopDaq">
+        <property name="text">
+         <string>Stop DAQ</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnFindDevice">
+        <property name="text">
+         <string>findDevice</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnCapture">
+        <property name="text">
+         <string>Start Capture</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -89,7 +124,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>43</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuAbout">

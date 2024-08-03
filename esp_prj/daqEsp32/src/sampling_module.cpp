@@ -34,12 +34,8 @@ void IRAM_ATTR SamplingModule::onTimer() {
     for (int i = 0; i < instance->NUM_CHANNELS; i++) {
         sample |= (digitalRead(instance->MIC_PINS[i]) << i);
     }
-    
-    int byteIndex = instance->writeIndex / 8;
-    int bitIndex = instance->writeIndex % 8;
-    
-    instance->buffers[instance->currentBuffer].data[byteIndex] = sample;
-    
+
+    instance->buffers[instance->currentBuffer].data[instance->writeIndex] = sample;
     instance->writeIndex++;
     
     if (instance->writeIndex >= instance->BUFFER_SIZE) {

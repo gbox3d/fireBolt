@@ -29,6 +29,7 @@ private:
     int SAMPLE_RATE;
     int BUFFER_SIZE;
     int BUFFER_SIZE_BYTES;
+    // int BUFFER_COUNT;
 
     SampleBuffer* buffers;
     volatile int currentBuffer;
