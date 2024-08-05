@@ -11,10 +11,14 @@ import os
 import struct
 import numpy as np
 
+from time import sleep, time
+
 from threadNets import ClientThread,PACKET_HEADER_FORMAT,PACKET_REQ_FORMAT,PACKET_RES_FORMAT,PacketType,Command,MAGIC_NUMBER 
 from threadNets import GraphUpdateThread
 
 from findDeviceDlg import FindDeviceDialog
+
+from threading import Thread,Event
 
         
         
@@ -37,41 +41,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.captureFile = None  # 파일 핸들
         
         # 그래프 위젯 생성
-        self.graphWidget = pg.PlotWidget()
-        layout = QtWidgets.QVBoxLayout(self.graphContainer)
-        layout.addWidget(self.graphWidget)
-
-        # 4개 채널에 대한 데이터 저장을 위한 배열 (각 채널당 500개 샘플)
-        # self.datas = np.zeros((4, 500), dtype=np.uint8)
-        
-        self.data = deque(maxlen=80000)
-        # self.data.extend([0] * 10000)  # 초기화
-
-        # 4개의 선 그래프 생성
-        self.curves = []
-        colors = ['r', 'g', 'b', 'y']  # 각 채널별 색상
-        # for i in range(4):
-        #     curve = self.graphWidget.plot(pen=colors[i])
-        #     self.curves.append(curve)
-        
-        # 1개의 선 그래프 생성 (채널 0만 표시)
-        # 그래프에 표시할 데이터
-        self.plot_data = np.zeros(4000)
-        self.curve = self.graphWidget.plot(self.plot_data, pen='g')  # 파란색 선으로 표시
-        # self.curve = self.graphWidget.plot(pen='g')  # 파란색 선으로 표시
-
-
-        # 그래프 설정
-        self.graphWidget.setTitle("Real-time 4-Channel Digital Data")
-        self.graphWidget.setLabel('left', 'Value')
-        self.graphWidget.setLabel('bottom', 'Sample')
-        self.graphWidget.setYRange(0, 1)
-        self.graphWidget.setXRange(0, 4000)
-        self.graphWidget.showGrid(x=True, y=True)
+        self.setup_line_graph()
 
         # 버튼 연결
-        # self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')
-        
         self.btnConnect.clicked.connect(self.connect_clicked)
 
         # self.btnPing = self.findChild(QtWidgets.QPushButton, 'btnPing')
@@ -82,6 +54,8 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # self.btnFindDevice = self.findChild(QtWidgets.QPushButton, 'btnFindDevice')
         self.btnFindDevice.clicked.connect(self.OnClickFindDevice)
+        
+        self.btnCapture.clicked.connect(self.OnClickCapture)
         
         
         # IP, Port 입력 필드
@@ -100,16 +74,51 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.client_thread = None
         self.response_callback = None
+        # self.ping_timeout_event = Event()
         
         # 그래프 업데이트 스레드 시작
         self.update_thread = GraphUpdateThread(self.data)
         self.update_thread.update_signal.connect(self.update_plot)
+        self.update_thread.update_signal_bufferSize.connect(self.update_plot_dataInfo)
         self.update_thread.start()
+        
+        
+        
+    def setup_line_graph(self):
+        self.graphWidget = pg.PlotWidget()
+        layout = QtWidgets.QVBoxLayout(self.graphContainer)
+        layout.addWidget(self.graphWidget)
+
+        # 4개 채널에 대한 데이터 저장을 위한 배열 (각 채널당 500개 샘플)
+        # self.datas = np.zeros((4, 500), dtype=np.uint8)
+        
+        self.data = deque(maxlen=40000)
+        # self.data.extend([0] * 10000)  # 초기화
+        # 그래프 생성
+        plot_len = 4000
+        self.curves = []
+        # 그래프에 표시할 데이터
+        self.plot_data = np.zeros(plot_len)
+        self.curve = self.graphWidget.plot(self.plot_data, pen='g')  # 파란색 선으로 표시
+        # self.curve = self.graphWidget.plot(pen='g')  # 파란색 선으로 표시
+
+        # 그래프 설정
+        self.graphWidget.setTitle("Real-time 4-Channel Digital Data")
+        self.graphWidget.setLabel('left', 'Value')
+        self.graphWidget.setLabel('bottom', 'Sample')
+        self.graphWidget.setYRange(0, 1)
+        self.graphWidget.setXRange(0, plot_len)
+        self.graphWidget.showGrid(x=True, y=True)
+        
+        # X축에 대해서만 확대/축소 허용
+        self.graphWidget.setMouseEnabled(x=True, y=False)
         
     def update_plot(self, new_data):
         self.plot_data = np.roll(self.plot_data, -len(new_data))
         self.plot_data[-len(new_data):] = new_data
         self.curve.setData(self.plot_data)
+    def update_plot_dataInfo(self, queSize):
+        self.labelInfo.setText(f"Received DAQ data. Buffer Size: {queSize}")
 
         
     def connect_clicked(self):
@@ -139,12 +148,34 @@ class MainWindow(QtWidgets.QMainWindow):
         self.client_thread.start()
         
     def disconnect(self):
-        if self.client_thread:
-            self.client_thread.stop()
-            self.client_thread = None
-        self.connectionStatus = False
-        self.btnConnect.setText("Connect")
-        self.statusBar().showMessage("Disconnected")
+        
+        self.btnConnect.setEnabled(False)
+        
+        event_timeout = Event()
+        
+        def _wait_disconnect():
+            if self.client_thread:
+                self.client_thread.stop()
+                self.client_thread = None
+            self.connectionStatus = False
+            self.btnConnect.setText("Connect")
+            self.statusBar().showMessage("Disconnected")
+            self.btnConnect.setEnabled(True)
+            event_timeout.set() # Signal to stop the timeout thread
+            
+        wait_thread = Thread(target=_wait_disconnect)
+        wait_thread.start()
+        
+        # 10초 이내에 연결이 끊기지 않으면 타임아웃 메시지 출력
+        def _timeout():
+            timeout_occurred = not event_timeout.wait(10)
+            if timeout_occurred:
+                self.btnConnect.setEnabled(True)
+                self.statusBar().showMessage("Disconnect timeout")
+                print("Disconnect timeout")
+        
+        timeout_thread = Thread(target=_timeout)
+        timeout_thread.start()
 
     def on_connection_result(self, success, message):
         self.btnConnect.setEnabled(True)
@@ -168,20 +199,16 @@ class MainWindow(QtWidgets.QMainWindow):
                 # 다른 패킷 타입에 대한 처리를 추가할 수 있습니다.
         else:
             print(f"Unknown packet type: {packet_type}")
-            
-    def handle_daq_data(self, sequence, data):
         
-        # 데이터 처리
-        # index = 0
+        
+    def handle_daq_data(self, sequence, data):
         for byte in data:
             # 첫 번째 비트만 추출
             bit = byte & 0x01
             self.data.append(bit)
-        # print(f"Received DAQ data. Sequence: {sequence}, Size: {len(data)}")
-        print(f"que Data: {len(self.data)}")
-        
+            
         if self.isCapturing:
-            self.captureFile.append(data)
+            self.captureFile.write(data)
         
     def onClickPing(self):
         if not self.connectionStatus:
@@ -193,6 +220,8 @@ class MainWindow(QtWidgets.QMainWindow):
         header = struct.pack(PACKET_HEADER_FORMAT, MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
         cmd = struct.pack(PACKET_REQ_FORMAT, Command.CMD_PING, 10,0,0)
         packet = header + cmd
+        
+        # curTick = int(.time())
 
         def _resCallback(check_code, rescode):
             self.btnPing.setEnabled(True)
@@ -200,9 +229,29 @@ class MainWindow(QtWidgets.QMainWindow):
             if check_code == 10:
                 self.statusBar().showMessage("Ping success")
                 print(f"Ping success: {rescode}")
+                ping_timeout_event.set()  # Signal to stop the wait threa
             else:
                 self.statusBar().showMessage(f"Ping failed: {rescode}")
                 print(f"Ping failed: {rescode}")
+        
+        # def waitThred():
+        #     sleep(5)
+        #     self.btnPing.setEnabled(True)
+        #     self.response_callback = None
+        #     self.statusBar().showMessage("Ping failed")
+        #     print(f"Ping failed")
+        
+        def waitThread():
+            # Wait for 5 seconds or until the event is set
+            timeout_occurred = not ping_timeout_event.wait(5)
+            if timeout_occurred:
+                self.btnPing.setEnabled(True)
+                self.response_callback = None
+                self.statusBar().showMessage("Ping failed")
+                
+        ping_timeout_event = Event()
+        wait_thread = Thread(target=waitThread)
+        wait_thread.start()
                 
         self.response_callback = _resCallback
         self.client_thread.send_packet(packet)
@@ -216,16 +265,44 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         try:
-            # Start DAQ 패킷 생성
-            header = struct.pack( PACKET_HEADER_FORMAT , MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
-            cmd = struct.pack( PACKET_REQ_FORMAT , Command.CMD_START_SAMPLING, 0,0,0)
+            if self.btn_startDAQ.text() == "Stop DAQ":
+                # Stop DAQ 패킷 생성
+                header = struct.pack( PACKET_HEADER_FORMAT , MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
+                cmd = struct.pack( PACKET_REQ_FORMAT , Command.CMD_STOP_SAMPLING, 0,0,0)
+                
+                packet = header + cmd
+
+                # 패킷 전송
+                # self.socket.sendall(packet)
+                self.client_thread.send_packet(packet)
+                self.btn_startDAQ.setText("Start DAQ")
+                self.statusBar().showMessage("DAQ stopped")
+                # self.stopDAQ = False
+                # return
+            else :
+                
+                
+                
+                #  Stop DAQ 패킷 생성
             
-            packet = header + cmd
+                self.stopDAQ = True
+                
+                header = struct.pack( PACKET_HEADER_FORMAT , MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
+                cmd = struct.pack( PACKET_REQ_FORMAT , Command.CMD_START_SAMPLING, 0,0,0)
+                
+                packet = header + cmd
 
-            # 패킷 전송
-            # self.socket.sendall(packet)
-            self.client_thread.send_packet(packet)
-
+                # 패킷 전송
+                # self.socket.sendall(packet)
+                self.client_thread.send_packet(packet)
+                
+                # self.btn_startDAQ.setEnabled(False)
+                # sleep(5)
+                
+                self.btn_startDAQ.setText("Stop DAQ")
+                # self.btn_startDAQ.setEnabled(True)
+                self.statusBar().showMessage("DAQ Stop")
+                
         except Exception as e:
             print(f"Start DAQ failed: {str(e)}")
             self.statusBar().showMessage(f"Start DAQ failed: {str(e)}")
@@ -268,7 +345,7 @@ class MainWindow(QtWidgets.QMainWindow):
             print("Capture button clicked")
             if self.isCapturing == False:
                 filename = self.get_next_capture_filename()
-                self.captureFile = open(filename, "wb")
+                self.captureFile = open(filename, "ab")
                 self.isCapturing = True
                 # self.captureFile = open("capture.bin", "wb")
                 self.btnCapture.setText("Stop Capture")

@@ -108,3 +108,9 @@ class FindDeviceDialog(QtWidgets.QDialog):
         # print("closeEvent called : FindDeviceDialog")
         self.cleanup()
         super().closeEvent(event)
+        
+if __name__ == "__main__":
+    app = QtWidgets.QApplication([])
+    dialog = FindDeviceDialog()
+    dialog.exec()
+    app.exit()

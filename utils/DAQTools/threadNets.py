@@ -68,8 +68,8 @@ class ClientThread(QThread):
             
             while self.is_running:
                 header = self.socket.recv(16)
-                if not header or len(header) != 16:
-                    break
+                # if not header or len(header) != 16:
+                #     break
 
                 magic, chip_id, packet_type, packet_size, _ = struct.unpack(PACKET_HEADER_FORMAT, header)
                 
@@ -78,10 +78,10 @@ class ClientThread(QThread):
                     continue
 
                 if packet_type == PacketType.DAQ:
-                    print("DAQ packet received")
+                    # print("DAQ packet received")
                     daq_header = self.socket.recv(8)
                     sequence, data_size = struct.unpack(PACKET_DAQ_FORMAT, daq_header)
-                    print(f"Sequence: {sequence}, Data size: {data_size}")
+                    # print(f"Sequence: {sequence}, Data size: {data_size}")
                     
                     data = bytearray()
                     while len(data) < data_size:
@@ -99,7 +99,7 @@ class ClientThread(QThread):
                             print(f"Error receiving data: {str(e)}")
                             break
                         
-                    # print(f"Data received: {len(data)}")
+                    # print(f"Sequence: {sequence} , Data received: {len(data)} / {data_size}")
                     self.daq_data_received.emit(sequence, bytes(data))
                     
                 else:
@@ -112,9 +112,13 @@ class ClientThread(QThread):
             self.connection_result.emit(False, f"Connection failed: {str(e)}")
 
     def stop(self):
-        self.is_running = False
-        if self.socket:
-            self.socket.close()
+        try:
+            self.is_running = False
+            # sleep(0.1)
+            if self.socket:
+                self.socket.close()
+        except Exception as e:
+            print(f"Error stopping client thread: {str(e)}")
 
     def send_packet(self, packet):
         if self.socket:
@@ -124,6 +128,7 @@ class ClientThread(QThread):
 
 class GraphUpdateThread(QThread):
     update_signal = pyqtSignal(list)
+    update_signal_bufferSize = pyqtSignal(int)
     maximum_extract_size = 800
     base_extract_size = 80
 
@@ -141,6 +146,10 @@ class GraphUpdateThread(QThread):
         log_factor = math.log(queue_length , 2)  # 1000부터 시작하도록 조정
         extract_size = int(self.base_extract_size * (1 + log_factor))
         
+        extract_size = self.base_extract_size + int(extract_size/10)
+        
+        # print(f"Queue length: {queue_length}, Extract size: {extract_size}")
+        
         # 최대 1000으로 제한
         return min(extract_size, self.maximum_extract_size)
 
@@ -149,14 +158,16 @@ class GraphUpdateThread(QThread):
             time.sleep(0.01)  # 100Hz (초당 100번)
             data_to_plot = []
             
-            queue_length =  len(self.data_queue) - 8000
+            queue_length =  len(self.data_queue) - 4000
             extract_size = self.calculate_extract_size(queue_length)
             
             for _ in range(extract_size):
                 if self.data_queue:
                     data_to_plot.append(self.data_queue.popleft())
+                    self.update_signal_bufferSize.emit(len(self.data_queue))
                 else:
                     break
+                
             if data_to_plot:
                 self.update_signal.emit(data_to_plot)
 
