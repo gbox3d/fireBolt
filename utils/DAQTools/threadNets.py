@@ -66,6 +66,8 @@ class ClientThread(QThread):
             
             self.is_running = True
             
+            time.sleep(0.5)
+            
             while self.is_running:
                 header = self.socket.recv(16)
                 # if not header or len(header) != 16:

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>DAQ Tool</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="_2">
@@ -175,7 +175,7 @@
     <property name="title">
      <string>Data Process</string>
     </property>
-    <addaction name="actionform1"/>
+    <addaction name="DataProcessBasicForm"/>
    </widget>
    <addaction name="menuHelp"/>
    <addaction name="menuData_Process"/>
@@ -186,7 +186,7 @@
     <string>About</string>
    </property>
   </action>
-  <action name="actionform1">
+  <action name="DataProcessBasicForm">
    <property name="text">
     <string>basic</string>
    </property>

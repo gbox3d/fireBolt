@@ -11,14 +11,16 @@ import os
 import struct
 import numpy as np
 
+from threading import Thread,Event
+
+
 from time import sleep, time
 
 from threadNets import ClientThread,PACKET_HEADER_FORMAT,PACKET_REQ_FORMAT,PACKET_RES_FORMAT,PacketType,Command,MAGIC_NUMBER 
 from threadNets import GraphUpdateThread
 
 from findDeviceDlg import FindDeviceDialog
-
-from threading import Thread,Event
+from dataProcBasicForm import DataForm
 
         
         
@@ -83,6 +85,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_thread.start()
         
         
+        #menu bar
+        self.DataProcessBasicForm.triggered.connect(self.openDataProcessBasicForm)
+        
+   
+    def openDataProcessBasicForm(self):
+        print("Data Process Basic Form")
+        self.dataForm = DataForm()
+        self.dataForm.show()     
         
     def setup_line_graph(self):
         self.graphWidget = pg.PlotWidget()
@@ -151,35 +161,46 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.btnConnect.setEnabled(False)
         
-        event_timeout = Event()
-        
-        def _wait_disconnect():
-            if self.client_thread:
-                self.client_thread.stop()
-                self.client_thread = None
-            self.connectionStatus = False
-            self.btnConnect.setText("Connect")
-            self.statusBar().showMessage("Disconnected")
-            self.btnConnect.setEnabled(True)
-            event_timeout.set() # Signal to stop the timeout thread
+        if self.client_thread:
+            self.client_thread.stop()
+            self.client_thread = None
             
-        wait_thread = Thread(target=_wait_disconnect)
-        wait_thread.start()
+        self.connectionStatus = False
+        self.btnConnect.setText("Connect")
+        self.statusBar().showMessage("Disconnected")
+        self.btnConnect.setEnabled(True)
         
-        # 10초 이내에 연결이 끊기지 않으면 타임아웃 메시지 출력
-        def _timeout():
-            timeout_occurred = not event_timeout.wait(10)
-            if timeout_occurred:
-                self.btnConnect.setEnabled(True)
-                self.statusBar().showMessage("Disconnect timeout")
-                print("Disconnect timeout")
+        # event_timeout = Event()
         
-        timeout_thread = Thread(target=_timeout)
-        timeout_thread.start()
+        # def _wait_disconnect():
+        #     if self.client_thread:
+        #         self.client_thread.stop()
+        #         self.client_thread = None
+        #     self.connectionStatus = False
+        #     self.btnConnect.setText("Connect")
+        #     self.statusBar().showMessage("Disconnected")
+        #     self.btnConnect.setEnabled(True)
+        #     event_timeout.set() # Signal to stop the timeout thread
+            
+        # wait_thread = Thread(target=_wait_disconnect)
+        # wait_thread.start()
+        
+        # # 10초 이내에 연결이 끊기지 않으면 타임아웃 메시지 출력
+        # def _timeout():
+        #     timeout_occurred = not event_timeout.wait(10)
+        #     if timeout_occurred:
+        #         self.btnConnect.setEnabled(True)
+        #         self.statusBar().showMessage("Disconnect timeout")
+        #         print("Disconnect timeout")
+        
+        # timeout_thread = Thread(target=_timeout)
+        # timeout_thread.start()
 
     def on_connection_result(self, success, message):
         self.btnConnect.setEnabled(True)
+        sleep(1)
         if success:
+            
             self.connectionStatus = True
             self.btnConnect.setText("Disconnect")
         self.statusBar().showMessage(message)
@@ -259,7 +280,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #RES 패킷을 받으면 버튼 활성화 하기 위하여 콜백함수로 처리
 
     def OnClickStartDAQ(self):
-        print("Start DAQ button clicked")
+        # print("Start DAQ button clicked")
         if not self.connectionStatus:
             self.statusBar().showMessage("Not connected")
             return

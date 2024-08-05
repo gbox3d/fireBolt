@@ -41,9 +41,9 @@
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton_2">
+     <widget class="QPushButton" name="btnFindNext">
       <property name="text">
-       <string>PushButton</string>
+       <string>FindNextData</string>
       </property>
      </widget>
     </item>
@@ -73,6 +73,19 @@
    </property>
    <property name="text">
     <string>info text</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="labelCurIndex">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>90</y>
+     <width>201</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>current index</string>
    </property>
   </widget>
  </widget>
