@@ -50,9 +50,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # self.btnPing = self.findChild(QtWidgets.QPushButton, 'btnPing')
         self.btnPing.clicked.connect(self.onClickPing)
+        self.btnPing.setEnabled(False)
         
         # self.btnStartDAQ = self.findChild(QtWidgets.QPushButton, 'btn_startDAQ')
         self.btn_startDAQ.clicked.connect(self.OnClickStartDAQ)
+        self.btn_startDAQ.setEnabled(False)
         
         # self.btnFindDevice = self.findChild(QtWidgets.QPushButton, 'btnFindDevice')
         self.btnFindDevice.clicked.connect(self.OnClickFindDevice)
@@ -157,7 +159,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.client_thread.daq_data_received.connect(self.handle_daq_data)
         self.client_thread.start()
         
+        
+        
     def disconnect(self):
+        
+        if self.isCapturing == True:
+            self.isCapturing = False
+            self.captureFile.close()
+            self.captureFile = None
+            self.btnCapture.setText("Start Capture")
         
         self.btnConnect.setEnabled(False)
         
@@ -169,6 +179,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btnConnect.setText("Connect")
         self.statusBar().showMessage("Disconnected")
         self.btnConnect.setEnabled(True)
+        
+        self.btnPing.setEnabled(False)
+        self.btn_startDAQ.setEnabled(False)
+        
         
         # event_timeout = Event()
         
@@ -203,11 +217,20 @@ class MainWindow(QtWidgets.QMainWindow):
             
             self.connectionStatus = True
             self.btnConnect.setText("Disconnect")
+            
+            self._sendStopDAQPacket()
+        
+            self.btnPing.setEnabled(True)
+            self.btn_startDAQ.setEnabled(True)
+            self.btn_startDAQ.setText("Start DAQ")
+            
         self.statusBar().showMessage(message)
 
     def handle_response(self, packet_type, packet_size, response):
         
         (rescode,p1,p2,p3) = struct.unpack(PACKET_RES_FORMAT, response)
+        
+        # print(rescode,p1,p2,p3)
         
         if packet_type == PacketType.SYS:
             print(f"System message received: {rescode}")
@@ -253,14 +276,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 ping_timeout_event.set()  # Signal to stop the wait threa
             else:
                 self.statusBar().showMessage(f"Ping failed: {rescode}")
-                print(f"Ping failed: {rescode}")
+                print(f"Ping failed: {check_code}")
         
-        # def waitThred():
-        #     sleep(5)
-        #     self.btnPing.setEnabled(True)
-        #     self.response_callback = None
-        #     self.statusBar().showMessage("Ping failed")
-        #     print(f"Ping failed")
         
         def waitThread():
             # Wait for 5 seconds or until the event is set
@@ -279,6 +296,16 @@ class MainWindow(QtWidgets.QMainWindow):
         
         #RES 패킷을 받으면 버튼 활성화 하기 위하여 콜백함수로 처리
 
+    def _sendStopDAQPacket(self):
+        # Stop DAQ 패킷 생성
+        header = struct.pack( PACKET_HEADER_FORMAT , MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
+        cmd = struct.pack( PACKET_REQ_FORMAT , Command.CMD_STOP_SAMPLING, 0,0,0)
+        
+        packet = header + cmd
+
+        # 패킷 전송
+        self.client_thread.send_packet(packet)
+
     def OnClickStartDAQ(self):
         # print("Start DAQ button clicked")
         if not self.connectionStatus:
@@ -288,22 +315,22 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             if self.btn_startDAQ.text() == "Stop DAQ":
                 # Stop DAQ 패킷 생성
-                header = struct.pack( PACKET_HEADER_FORMAT , MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
-                cmd = struct.pack( PACKET_REQ_FORMAT , Command.CMD_STOP_SAMPLING, 0,0,0)
+                # header = struct.pack( PACKET_HEADER_FORMAT , MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
+                # cmd = struct.pack( PACKET_REQ_FORMAT , Command.CMD_STOP_SAMPLING, 0,0,0)
                 
-                packet = header + cmd
+                # packet = header + cmd
 
-                # 패킷 전송
-                # self.socket.sendall(packet)
-                self.client_thread.send_packet(packet)
+                # # 패킷 전송
+                # # self.socket.sendall(packet)
+                # self.client_thread.send_packet(packet)
+                
+                self._sendStopDAQPacket()
+                
                 self.btn_startDAQ.setText("Start DAQ")
                 self.statusBar().showMessage("DAQ stopped")
                 # self.stopDAQ = False
                 # return
             else :
-                
-                
-                
                 #  Stop DAQ 패킷 생성
             
                 self.stopDAQ = True

@@ -66,49 +66,54 @@ class ClientThread(QThread):
             
             self.is_running = True
             
-            time.sleep(0.5)
+            # time.sleep(0.5)
             
             while self.is_running:
-                header = self.socket.recv(16)
-                # if not header or len(header) != 16:
-                #     break
-
-                magic, chip_id, packet_type, packet_size, _ = struct.unpack(PACKET_HEADER_FORMAT, header)
                 
-                if magic != MAGIC_NUMBER:
-                    print("Invalid magic number")
-                    continue
+                try :
+                    header = self.socket.recv(16)
+                    
+                    magic, chip_id, packet_type, packet_size, _ = struct.unpack(PACKET_HEADER_FORMAT, header)
+                    
+                    if magic != MAGIC_NUMBER:
+                        print("Invalid magic number")
+                        continue
 
-                if packet_type == PacketType.DAQ:
-                    # print("DAQ packet received")
-                    daq_header = self.socket.recv(8)
-                    sequence, data_size = struct.unpack(PACKET_DAQ_FORMAT, daq_header)
-                    # print(f"Sequence: {sequence}, Data size: {data_size}")
-                    
-                    data = bytearray()
-                    while len(data) < data_size:
-                        try:
-                            packet = self.socket.recv(min(4096, data_size - len(data)))
-                            if not packet:
-                                print("Connection closed")
-                                break
-                            data.extend(packet)
-                            # print(f"Received {len(packet)} bytes, Total: {len(data)}/{data_size}")
-                        except socket.timeout:
-                            print("Socket timeout, retrying...")
-                            continue
-                        except Exception as e:
-                            print(f"Error receiving data: {str(e)}")
-                            break
+                    if packet_type == PacketType.DAQ:
+                        # print("DAQ packet received")
+                        daq_header = self.socket.recv(8)
+                        sequence, data_size = struct.unpack(PACKET_DAQ_FORMAT, daq_header)
+                        # print(f"Sequence: {sequence}, Data size: {data_size}")
                         
-                    # print(f"Sequence: {sequence} , Data received: {len(data)} / {data_size}")
-                    self.daq_data_received.emit(sequence, bytes(data))
-                    
-                else:
-                    body = self.socket.recv(packet_size - 16)
-                    self.response_received.emit(packet_type, packet_size - 16,body)
-        except socket.timeout:
-            pass
+                        data = bytearray()
+                        while len(data) < data_size:
+                            try:
+                                packet = self.socket.recv(min(4096, data_size - len(data)))
+                                if not packet:
+                                    print("Connection closed")
+                                    break
+                                data.extend(packet)
+                                # print(f"Received {len(packet)} bytes, Total: {len(data)}/{data_size}")
+                            except socket.timeout:
+                                print("Socket timeout, retrying...")
+                                continue
+                            except Exception as e:
+                                print(f"Error receiving data: {str(e)}")
+                                break
+                            
+                        # print(f"Sequence: {sequence} , Data received: {len(data)} / {data_size}")
+                        self.daq_data_received.emit(sequence, bytes(data))
+                        
+                    else:
+                        print(f"header size:{len(header)}")
+                        body = self.socket.recv(packet_size - 16)
+                        self.response_received.emit(packet_type, packet_size - 16,body)
+                except socket.timeout:
+                    pass
+                except Exception as e:
+                    print(f"Error receiving data: {str(e)}")
+                    break
+                
         except Exception as e:
             print(f"Error: {str(e)}")
             self.connection_result.emit(False, f"Connection failed: {str(e)}")
