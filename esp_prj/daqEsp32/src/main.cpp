@@ -3,12 +3,16 @@
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <ESPAsyncUDP.h>
+
 #elif ESP32
 #include <WiFi.h>
 #include <vector>
 #include <AsyncUDP.h>
+
 #define LED_BUILTIN 5
 #endif
+
+#include <SPIFFS.h>
 
 #include <TaskScheduler.h>
 #include <ArduinoJson.h>
@@ -35,6 +39,7 @@ uint16_t data_port;
 uint16_t udp_port_broadcast;
 
 const int MIC_PINS[] = {32, 33, 25, 26};
+const int LED_PINS[] = {2,12,15};
 const int NUM_CHANNELS = 4;
 const int SAMPLE_RATE = 8000;
 const int BUFFER_SIZE = 8000;  // 각 채널당 1000 샘플
@@ -105,6 +110,12 @@ Task task_SendData(250, TASK_FOREVER, []() {
 
   g_pTcpServer->sendData();
 
+  if(g_pTcpServer->onTimeOut) {
+    g_pTcpServer->onTimeOut();
+  }
+
+  
+
     // sampling_module::sendUdpData(udp, targetIP, udp_port_data);
   
 }, &g_ts, true);
@@ -135,14 +146,37 @@ void setup()
   data_port = g_config.get<int>("port",8284);
   udp_port_broadcast = g_config.get<int>("broadcast_port",7204);
 
-  g_pTcpServer = new TcpServer(data_port,&sampler);
+  g_pTcpServer = new TcpServer(data_port,&sampler,LED_PINS);
 
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
 
+  for(int i=0;i< sizeof(LED_PINS)/sizeof(int);i++) {
+    pinMode(LED_PINS[i], OUTPUT);
+    digitalWrite(LED_PINS[i], LOW);
+  }
+
+
   Serial.begin(115200);
   // g_config.load();
+
+  if(!SPIFFS.begin(true)){
+    Serial.println("SPIFFS Mount Failed");
+    if(SPIFFS.format()){
+        Serial.println("SPIFFS Formatted");
+        if(SPIFFS.begin(true)){
+            Serial.println("SPIFFS Mounted");
+        } else {
+            Serial.println("SPIFFS Mount Failed after format");
+        }
+    } else {
+        Serial.println("SPIFFS Format Failed");
+    }
+  }
+  else {
+    Serial.println("SPIFFS Mounted");
+  }
 
   // ssid, password 가 졵재하면 wifi 연결
   if (g_config.hasKey("ssid") && g_config.hasKey("password"))

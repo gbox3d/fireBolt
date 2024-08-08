@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <SPIFFS.h>
 
 #include "tonkey.hpp"
 #include "config.hpp"
@@ -41,6 +42,49 @@ String ParseCmd(String _strLine)
 #elif ESP32
             ESP.restart();
 #endif
+        }
+        else if(cmd == "heap") {
+            _res_doc["result"] = "ok";
+            _res_doc["heap"] = ESP.getFreeHeap();
+        }
+        else if (cmd == "file") {
+            String subCmd = g_MainParser.getToken(1);
+        if (subCmd == "info")
+        {
+            if(!SPIFFS.begin(true)){
+                _res_doc["result"] = "fail";
+                _res_doc["ms"] = "An error has occurred while mounting SPIFFS";
+            } else {
+                _res_doc["result"] = "ok";
+                _res_doc["total"] = SPIFFS.totalBytes();
+                _res_doc["used"] = SPIFFS.usedBytes();
+                _res_doc["free"] = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+            }
+        }
+        else if (subCmd == "list")
+        {
+            if(!SPIFFS.begin(true)){
+                _res_doc["result"] = "fail";
+                _res_doc["ms"] = "An error has occurred while mounting SPIFFS";
+            } else {
+                File root = SPIFFS.open("/");
+                File file = root.openNextFile();
+                JsonArray fileList = _res_doc["files"].to<JsonArray>();
+                while(file){
+                    JsonObject fileObj = fileList.add<JsonObject>();
+                    fileObj["name"] = String(file.name());
+                    fileObj["size"] = file.size();
+                    file = root.openNextFile();
+                }
+                _res_doc["result"] = "ok";
+            }
+        }
+        else
+        {
+            _res_doc["result"] = "fail";
+            _res_doc["ms"] = "unknown sub command";
+        }
+
         }
         else if (cmd == "config")
         {

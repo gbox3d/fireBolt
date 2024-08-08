@@ -2,10 +2,12 @@
 #include "tcp_server.hpp"
 #include "packet.hpp"
 
-TcpServer::TcpServer(uint16_t port, SamplingModule* sampler)
-    : serverPort(port), isClientConnected(false), samplingModule(sampler) {
+TcpServer::TcpServer(uint16_t port, SamplingModule* sampler, const int *pLedPins)
+    : serverPort(port), isClientConnected(false), samplingModule(sampler), pLedPins(pLedPins)  {
     server = new AsyncServer(serverPort);
     client = nullptr;
+    onTimeOut = nullptr;
+
 }
 
 TcpServer::~TcpServer() {
@@ -71,17 +73,21 @@ void TcpServer::handleData(void* data, size_t len) {
                     S_PACKET_RES response;
                     makeHeaderPacket(&response.header, ESP.getEfuseMac(), PacketType::RES, sizeof(S_PACKET_RES));
                     response.result_code = 0;
+                    // Serial.println("ping response" + String(req->param[0]));
                     response.extra[0] = req->param[0];
                     client->write((const char*)&response, response.header.packet_size);
+                    
                 }
                 break;
             case Command::CMD_START_SAMPLING:
                 samplingModule->startSampling();
                 Serial.println("Start sampling");
+                digitalWrite(pLedPins[0], HIGH);
                 break;
             case Command::CMD_STOP_SAMPLING:
                 samplingModule->stopSampling();
                 Serial.println("Stop sampling");
+                digitalWrite(pLedPins[0], LOW);
                 break;
             default:
                 break;
@@ -97,6 +103,10 @@ void TcpServer::handleDisconnect() {
 
 void TcpServer::sendData() {
     if (isClientConnected && samplingModule->isDataReady() && client) {
+
+        digitalWrite(pLedPins[0], HIGH);
+
+
         const uint32_t CHUNK_SIZE = 4096;
         
         S_PACKET_DAQ _daqPacket;
@@ -124,23 +134,25 @@ void TcpServer::sendData() {
             remainingData -= datasent;
             offset += datasent;
 
-            Serial.print("sequence: ");
-            Serial.print(sequence);
-            Serial.print(" Chunk sent: ");
-            Serial.print(datasent);
-            Serial.print(" Total sent: ");
-            Serial.print(totalSent);
-            Serial.print("/");
-            Serial.println(totalDataSize);
+            // Serial.print("sequence: ");
+            // Serial.print(sequence);
+            // Serial.print(" Chunk sent: ");
+            // Serial.print(datasent);
+            // Serial.print(" Total sent: ");
+            // Serial.print(totalSent);
+            // Serial.print("/");
+            // Serial.println(totalDataSize);
 
             // 각 청크 전송 후 약간의 지연을 줄 수 있습니다.
-            delay(10);
+            // delay(50);
         }
 
-        Serial.print("Sequence ");
-        Serial.print(sequence);
-        Serial.print(" completed. Total data sent: ");
-        Serial.println(totalSent);
+        // Serial.print("Sequence ");
+        // Serial.print(sequence);
+        // Serial.print(" completed. Total data sent: ");
+        // Serial.println(totalSent);
+
+        digitalWrite(pLedPins[0], LOW);
 
         samplingModule->releaseData();
     }
