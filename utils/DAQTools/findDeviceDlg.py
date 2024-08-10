@@ -1,15 +1,22 @@
 
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import QFile, QThread, pyqtSignal
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QStandardItemModel, QStandardItem
+# from PyQt6 import QtWidgets, uic
+# from PyQt6.QtCore import QFile, QThread, pyqtSignal
+# from PyQt6.QtCore import Qt
+# from PyQt6.QtGui import QStandardItemModel, QStandardItem
+
+from PySide6 import QtWidgets
+from PySide6.QtCore import QFile, QThread, Signal, Qt
+from PySide6.QtGui import QStandardItemModel, QStandardItem
+
 import socket
 
 import json
 
+import UI.findDeviceDlg_ui
+
 class UDPListener(QThread):
     
-    data_received = pyqtSignal(str, str)  # 데이터와 주소를 함께 전달하는 시그널
+    data_received = Signal(str, str)  # 데이터와 주소를 함께 전달하는 시그널
 
     def __init__(self):
         super().__init__()
@@ -32,15 +39,17 @@ class UDPListener(QThread):
     def stop(self):
         self.running = False
 
-class FindDeviceDialog(QtWidgets.QDialog):
+class FindDeviceDialog(QtWidgets.QDialog, UI.findDeviceDlg_ui.Ui_Dialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         
         # UI 파일 로드
-        ui_file = QFile("findDeviceDlg.ui")
-        ui_file.open(QFile.OpenModeFlag.ReadOnly)
-        uic.loadUi(ui_file, self)
-        ui_file.close()
+        # ui_file = QFile("findDeviceDlg.ui")
+        # ui_file.open(QFile.OpenModeFlag.ReadOnly)
+        # uic.loadUi(ui_file, self)
+        # ui_file.close()
+        
+        self.setupUi(self)
         
         self.device_dict = {}  # chipid를 키로 사용하여 중복 제거
 
@@ -105,7 +114,6 @@ class FindDeviceDialog(QtWidgets.QDialog):
         super().reject()
 
     def closeEvent(self, event):
-        # print("closeEvent called : FindDeviceDialog")
         self.cleanup()
         super().closeEvent(event)
         

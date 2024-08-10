@@ -1,8 +1,10 @@
 
-import sys
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import QFile
-from PyQt6.QtCore import QFile, QThread, pyqtSignal
+# import sys
+# from PyQt6 import QtWidgets, uic
+# from PyQt6.QtCore import QFile
+# from PyQt6.QtCore import QFile, QThread, pyqtSignal
+
+from PySide6.QtCore import QFile, QThread, Signal
 
 import socket
 import struct
@@ -34,9 +36,12 @@ PACKET_DAQ_FORMAT = "<LL"  # L: sequence, L: data size
 
 
 class ClientThread(QThread):
-    connection_result = pyqtSignal(bool, str)
-    response_received = pyqtSignal(int,int,bytes)
-    daq_data_received = pyqtSignal(int,bytes)
+    # connection_result = pyqtSignal(bool, str)
+    # response_received = pyqtSignal(int,int,bytes)
+    # daq_data_received = pyqtSignal(int,bytes)
+    connection_result = Signal(bool, str)
+    response_received = Signal(int, int, bytes)
+    daq_data_received = Signal(int, bytes)
 
     def __init__(self, ip, port):
         super().__init__()
@@ -44,18 +49,6 @@ class ClientThread(QThread):
         self.port = port
         self.socket = None
         self.is_running = False
-        
-    # def receive_exact(sock, size):
-    #     data = bytearray()
-    #     # print(f"Receiving {size} bytes")
-    #     while len(data) < size:
-    #         packet = sock.recv(size - len(data))
-    #         if not packet:
-    #             print("Connection closed")
-    #             break;
-    #         data.extend(packet)
-    #         # print(f"Received {len(packet)} bytes")
-    #     return data
 
     def run(self):
         try:
@@ -65,8 +58,6 @@ class ClientThread(QThread):
             self.connection_result.emit(True, "Connected successfully")
             
             self.is_running = True
-            
-            # time.sleep(0.5)
             
             while self.is_running:
                 
@@ -131,11 +122,14 @@ class ClientThread(QThread):
         if self.socket:
             self.socket.sendall(packet)
             
-
-
 class GraphUpdateThread(QThread):
-    update_signal = pyqtSignal(list)
-    update_signal_bufferSize = pyqtSignal(int)
+    
+    # update_signal = pyqtSignal(list)
+    # update_signal_bufferSize = pyqtSignal(int)
+    
+    update_signal = Signal(list)
+    update_signal_bufferSize = Signal(int)
+    
     maximum_extract_size = 800
     base_extract_size = 80
 

@@ -1,33 +1,41 @@
 import sys
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import QFile
-from PyQt6.QtCore import QFile, QThread, pyqtSignal
+# from PyQt6 import QtWidgets, uic
+# from PyQt6.QtCore import QFile
+# from PyQt6.QtCore import QFile, QThread, pyqtSignal
+
+from PySide6.QtWidgets import QFileDialog, QWidget,QLabel,QVBoxLayout,QApplication
 import pyqtgraph as pg
+
 from collections import deque
 
 # data_form.py
 
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtWidgets import QFileDialog
 
-from procData import process_channel_data, export_to_csv, read_and_process_data
+# from PyQt6 import QtWidgets, uic
+# from PyQt6.QtWidgets import QFileDialog
+
+from procData import read_and_process_data
 
 import numpy as np
 
+import UI.dataProcBasic_ui
 
-class DataForm(QtWidgets.QWidget):
+
+class DataForm(QWidget, UI.dataProcBasic_ui.Ui_Form):
     def __init__(self):
         super().__init__()
         
+        self.setupUi(self)
+        
         # UI 파일 로드
-        uic.loadUi('dataProcBasic.ui', self)
+        # uic.loadUi('dataProcBasic.ui', self)
         
         # 버튼 연결
         self.btnLoadData.clicked.connect(self.load_data)
         self.btnFindNext.clicked.connect(self.onClickFindNextBtn)
         
         # 위젯 참조
-        self.labelInfo = self.findChild(QtWidgets.QLabel, 'labelInfo')
+        self.labelInfo = self.findChild(QLabel, 'labelInfo')
         
         # PyQtGraph 위젯 설정
         self.setup_line_graph()
@@ -42,7 +50,7 @@ class DataForm(QtWidgets.QWidget):
         self.plot_widget = pg.PlotWidget()
         
         # widgetLineGraphContainer에 그래프 추가
-        layout = QtWidgets.QVBoxLayout(self.widgetLineGraphContainer)
+        layout = QVBoxLayout(self.widgetLineGraphContainer)
         layout.addWidget(self.plot_widget)
         
         # 그래프 스타일 설정
@@ -135,7 +143,7 @@ class DataForm(QtWidgets.QWidget):
             
 #개발 테스트
 if __name__ == "__main__":
-    app = QtWidgets.QApplication([])
+    app = QApplication([])
     window = DataForm()
     window.show()
     sys.exit(app.exec())

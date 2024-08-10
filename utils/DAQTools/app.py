@@ -25,7 +25,7 @@ from threadNets import GraphUpdateThread
 from findDeviceDlg import FindDeviceDialog
 from dataProcBasicForm import DataForm
 
-import mainWindow_ui
+import UI.mainWindow_ui as mainWindow_ui
         
 class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
     
@@ -68,16 +68,18 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
         
         
         # IP, Port 입력 필드
-        self.leIpAddress = self.findChild(QtWidgets.QLineEdit, 'lineEdit_IP')
-        self.lePort = self.findChild(QtWidgets.QLineEdit, 'lineEdit_Port')
+        # self.leIpAddress = self.findChild(QtWidgets.QLineEdit, 'lineEdit_IP')
+        # self.lePort = self.findChild(QtWidgets.QLineEdit, 'lineEdit_Port')
         
         # 최근 접속한 주소 불러오기
         try:
             with open("recently_address.txt", "r") as f:
                 ip = f.readline().strip()
                 port = f.readline().strip()
-                self.leIpAddress.setText(ip)
-                self.lePort.setText(port)
+                self.lineEdit_IP.setText(ip)
+                self.lineEdit_Port.setText(port)
+                # self.leIpAddress.setText(ip)
+                # self.lePort.setText(port)
         except:
             pass
         
@@ -91,9 +93,10 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
         self.update_thread.update_signal_bufferSize.connect(self.update_plot_dataInfo)
         self.update_thread.start()
         
-        
         #menu bar
         self.DataProcessBasicForm.triggered.connect(self.openDataProcessBasicForm)
+        
+        # self.labelInfo.setText("Ready")
         
    
     def openDataProcessBasicForm(self):
@@ -139,32 +142,34 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
 
         
     def connect_clicked(self):
+        
         if self.connectionStatus:
             self.disconnect()
         else:
             self.connect()
         
     def connect(self):
-        self.btnConnect.setEnabled(False)
-        self.statusBar().showMessage("Connecting...")
-        
-        # ip = '192.168.4.82'
-        # port = 8284
-        
-        ip = self.leIpAddress.text()
-        port = int(self.lePort.text())
-        
-        # recently address 파일에 저장 , 나중에 로드할때 사용
-        with open("recently_address.txt", "w") as f:
-            f.write(f"{ip}\n{port}")
-        
-        self.client_thread = ClientThread(ip, port)
-        self.client_thread.connection_result.connect(self.on_connection_result)
-        self.client_thread.response_received.connect(self.handle_response)
-        self.client_thread.daq_data_received.connect(self.handle_daq_data)
-        self.client_thread.start()
-        
-        
+        try:
+            self.btnConnect.setEnabled(False)
+            self.statusBar().showMessage("Connecting...")
+            
+            ip = self.lineEdit_IP.text()
+            port = int(self.lineEdit_Port.text())
+            
+            # recently address 파일에 저장 , 나중에 로드할때 사용
+            with open("recently_address.txt", "w") as f:
+                f.write(f"{ip}\n{port}")
+            
+            self.client_thread = ClientThread(ip, port)
+            self.client_thread.connection_result.connect(self.on_connection_result)
+            self.client_thread.response_received.connect(self.handle_response)
+            self.client_thread.daq_data_received.connect(self.handle_daq_data)
+            self.client_thread.start()
+            
+        except Exception as e:
+            print(f"Connection failed: {str(e)}")
+            self.statusBar().showMessage(f"Connection failed: {str(e)}")
+            self.btnConnect.setEnabled(True)
         
     def disconnect(self):
         
@@ -178,6 +183,7 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
         
         if self.client_thread:
             self.client_thread.stop()
+            self.client_thread.wait()
             self.client_thread = None
             
         self.connectionStatus = False
@@ -187,33 +193,6 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
         
         self.btnPing.setEnabled(False)
         self.btn_startDAQ.setEnabled(False)
-        
-        
-        # event_timeout = Event()
-        
-        # def _wait_disconnect():
-        #     if self.client_thread:
-        #         self.client_thread.stop()
-        #         self.client_thread = None
-        #     self.connectionStatus = False
-        #     self.btnConnect.setText("Connect")
-        #     self.statusBar().showMessage("Disconnected")
-        #     self.btnConnect.setEnabled(True)
-        #     event_timeout.set() # Signal to stop the timeout thread
-            
-        # wait_thread = Thread(target=_wait_disconnect)
-        # wait_thread.start()
-        
-        # # 10초 이내에 연결이 끊기지 않으면 타임아웃 메시지 출력
-        # def _timeout():
-        #     timeout_occurred = not event_timeout.wait(10)
-        #     if timeout_occurred:
-        #         self.btnConnect.setEnabled(True)
-        #         self.statusBar().showMessage("Disconnect timeout")
-        #         print("Disconnect timeout")
-        
-        # timeout_thread = Thread(target=_timeout)
-        # timeout_thread.start()
 
     def on_connection_result(self, success, message):
         self.btnConnect.setEnabled(True)
@@ -248,7 +227,6 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
                 # 다른 패킷 타입에 대한 처리를 추가할 수 있습니다.
         else:
             print(f"Unknown packet type: {packet_type}")
-        
         
     def handle_daq_data(self, sequence, data):
         for byte in data:
@@ -413,6 +391,35 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
             print(f"Capture failed: {str(e)}")
             self.statusBar().showMessage(f"Capture failed: {str(e)}")
             # self.disconnect()
+
+    def closeEvent(self, event):
+        if self.isCapturing == True:
+            self.isCapturing = False
+            self.captureFile.close()
+            self.captureFile = None
+            
+            print("Capture stopped")
+            
+        if self.client_thread:
+            self.client_thread.stop()
+            self.client_thread = None
+            
+        if self.update_thread:
+            self.update_thread.stop()
+            self.update_thread.wait()
+            print("Update thread stopped")
+            
+        if self.client_thread:
+            self.client_thread.stop()
+            self.client_thread.wait()
+            
+            print("Client thread stopped")
+            
+            # self.client_thread = None
+        print("Close event completed")
+        
+        super().closeEvent(event)
+        
         
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

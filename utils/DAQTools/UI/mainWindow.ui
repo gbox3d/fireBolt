@@ -18,10 +18,10 @@
     <item>
      <widget class="QFrame" name="frame">
       <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
+       <enum>QFrame::Shape::StyledPanel</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
+       <enum>QFrame::Shadow::Raised</enum>
       </property>
       <widget class="QWidget" name="layoutWidget_2">
        <property name="geometry">
@@ -78,8 +78,8 @@
         <rect>
          <x>10</x>
          <y>50</y>
-         <width>431</width>
-         <height>42</height>
+         <width>761</width>
+         <height>52</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="MenuBttonBar">
@@ -121,7 +121,7 @@
         <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -149,7 +149,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>TextLabel</string>
+        <string>Ready</string>
        </property>
       </widget>
      </widget>
@@ -162,7 +162,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>43</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">

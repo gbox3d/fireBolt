@@ -5,6 +5,11 @@ This repository contains a collection of tools for data acquisition (DAQ) and da
 
 ## Installation
 
+### Requirements
+```bash
+pip install -r requirements.txt
+
+```
 
 ## Development
 
@@ -12,5 +17,5 @@ compile the .ui file to a .py file using the following command:
 ```bash
 pyside6-uic mainwindow.ui -o mainWindow_ui.py
 pyside6-uic dataProcBasic.ui -o dataProcBasic_ui.py
-pyside6-uic findDeviceDlg.ui -o dataProcBasic_ui.py
+pyside6-uic findDeviceDlg.ui -o findDeviceDlg_ui.py
 ```
