@@ -1,7 +1,10 @@
 import sys
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import QFile
-from PyQt6.QtCore import QFile, QThread, pyqtSignal
+# from PyQt6 import QtWidgets, uic
+# from PyQt6.QtCore import QFile
+# from PyQt6.QtCore import QFile, QThread, pyqtSignal
+
+from PySide6 import QtWidgets
+
 import pyqtgraph as pg
 from collections import deque
 
@@ -22,18 +25,20 @@ from threadNets import GraphUpdateThread
 from findDeviceDlg import FindDeviceDialog
 from dataProcBasicForm import DataForm
 
+import mainWindow_ui
         
-        
-class MainWindow(QtWidgets.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
     
     def __init__(self):
         super().__init__()
         
+        self.setupUi(self)
+        
         # UI 파일 로드
-        ui_file = QFile("layout.ui")
-        ui_file.open(QFile.OpenModeFlag.ReadOnly)
-        uic.loadUi(ui_file, self)
-        ui_file.close()
+        # ui_file = QFile("layout.ui")
+        # ui_file.open(QFile.OpenModeFlag.ReadOnly)
+        # uic.loadUi(ui_file, self)
+        # ui_file.close()
         
          # 메뉴바 표시 설정
         self.menuBar().setVisible(True)
