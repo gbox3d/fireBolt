@@ -144,7 +144,7 @@ class GraphUpdateThread(QThread):
             return self.base_extract_size
         
         # 로그 함수를 사용하여 추출 크기 계산
-        log_factor = math.log(queue_length , 2)  # 1000부터 시작하도록 조정
+        log_factor = math.log(queue_length , 2)  
         extract_size = int(self.base_extract_size * (1 + log_factor))
         
         extract_size = self.base_extract_size + int(extract_size/10)
@@ -156,21 +156,28 @@ class GraphUpdateThread(QThread):
 
     def run(self):
         while self.running:
-            time.sleep(0.01)  # 100Hz (초당 100번)
-            data_to_plot = []
             
-            queue_length =  len(self.data_queue) - 4000
-            extract_size = self.calculate_extract_size(queue_length)
-            
-            for _ in range(extract_size):
-                if self.data_queue:
-                    data_to_plot.append(self.data_queue.popleft())
-                    self.update_signal_bufferSize.emit(len(self.data_queue))
-                else:
-                    break
+            if len(self.data_queue) > 0 :
+                time.sleep(0.01)  # 100Hz (초당 100번)
+                data_to_plot = []
                 
-            if data_to_plot:
-                self.update_signal.emit(data_to_plot)
+                queue_length =  len(self.data_queue) - 8000
+                if queue_length < 0:
+                    queue_length = 0
+                    
+                extract_size = self.calculate_extract_size(queue_length)
+                
+                # print(f"Queue length: {len(self.data_queue)}, Extract size: {extract_size}")
+                
+                for _ in range(extract_size):
+                    if self.data_queue:
+                        data_to_plot.append(self.data_queue.popleft())
+                        self.update_signal_bufferSize.emit(len(self.data_queue))
+                    else:
+                        break
+                # print(f"Data to plot: {len(data_to_plot)}")
+                if data_to_plot:
+                    self.update_signal.emit(data_to_plot)
 
     def stop(self):
         self.running = False

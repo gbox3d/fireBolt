@@ -30,7 +30,7 @@ void IRAM_ATTR SamplingModule::onTimer() {
 
     portENTER_CRITICAL_ISR(&instance->timerMux);
     
-    uint8_t sample = 0;
+    volatile uint8_t sample = 0;
     for (int i = 0; i < instance->NUM_CHANNELS; i++) {
         sample |= (digitalRead(instance->MIC_PINS[i]) << i);
     }

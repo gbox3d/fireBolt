@@ -136,6 +136,7 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
     def update_plot(self, new_data):
         self.plot_data = np.roll(self.plot_data, -len(new_data))
         self.plot_data[-len(new_data):] = new_data
+        # print(f"Plot data: {len(self.plot_data)}")
         self.curve.setData(self.plot_data)
     def update_plot_dataInfo(self, queSize):
         self.labelInfo.setText(f"Received DAQ data. Buffer Size: {queSize}")
@@ -318,17 +319,27 @@ class MainWindow(QtWidgets.QMainWindow , mainWindow_ui.Ui_MainWindow):
             
                 self.stopDAQ = True
                 
-                header = struct.pack( PACKET_HEADER_FORMAT , MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
-                cmd = struct.pack( PACKET_REQ_FORMAT , Command.CMD_START_SAMPLING, 0,0,0)
+                # header = struct.pack( PACKET_HEADER_FORMAT , MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
+                # cmd = struct.pack( PACKET_REQ_FORMAT , Command.CMD_START_SAMPLING, 0,0,0)
                 
-                packet = header + cmd
+                # packet = header + cmd
 
-                # 패킷 전송
-                # self.socket.sendall(packet)
-                self.client_thread.send_packet(packet)
+                # # 패킷 전송
+                # # self.socket.sendall(packet)
+                # self.client_thread.send_packet(packet)
                 
                 # self.btn_startDAQ.setEnabled(False)
                 # sleep(5)
+                
+                # duration = 10000  # 300 ms
+                
+                bufferSize =  int(self.leBufferLimt.text())
+
+                header = struct.pack(PACKET_HEADER_FORMAT, MAGIC_NUMBER, 0, PacketType.REQ, 4, b'\x00' * 5)
+                cmd = struct.pack(PACKET_REQ_FORMAT, Command.CMD_START_SAMPLING, (bufferSize >> 8) & 0xFF, bufferSize & 0xFF , 00)
+
+                packet = header + cmd
+                self.client_thread.send_packet(packet)
                 
                 self.btn_startDAQ.setText("Stop DAQ")
                 # self.btn_startDAQ.setEnabled(True)

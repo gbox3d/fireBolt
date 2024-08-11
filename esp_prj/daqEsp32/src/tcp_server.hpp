@@ -6,6 +6,8 @@
 // #include <TaskScheduler.h>
 #include "sampling_module.hpp"
 
+#define MAX_BUFFER_SIZE 4096
+
 class TcpServer {
 public:
     TcpServer(uint16_t port, SamplingModule* sampler, const int *pLedPins);
@@ -14,10 +16,16 @@ public:
     void begin();
     void sendData();
 
-    //callback functions pointer
-    // void (*onTimeOut)(void);
-    std::function<void()> onTimeOut;
+    void sendDataByEvent();
 
+    void setBufferLimit(int limit) {
+        
+        if(limit > MAX_BUFFER_SIZE) limit = MAX_BUFFER_SIZE;
+
+        bufferLimit = limit;
+    }
+
+    
 private:
     AsyncServer* server;
     AsyncClient* client;
@@ -26,6 +34,11 @@ private:
     SamplingModule* samplingModule;
 
     const int *pLedPins;
+
+    int m_bufferFSM;
+    uint8_t m_buffer[MAX_BUFFER_SIZE];
+    int bufferIndex;
+    int bufferLimit;
 
     // Scheduler *m_pTaskMng;
 

@@ -66,7 +66,7 @@ class Ui_MainWindow(object):
 
         self.graphContainer = QWidget(self.frame)
         self.graphContainer.setObjectName(u"graphContainer")
-        self.graphContainer.setGeometry(QRect(10, 110, 751, 221))
+        self.graphContainer.setGeometry(QRect(0, 180, 751, 221))
         self.layoutWidget = QWidget(self.frame)
         self.layoutWidget.setObjectName(u"layoutWidget")
         self.layoutWidget.setGeometry(QRect(10, 50, 761, 52))
@@ -83,11 +83,6 @@ class Ui_MainWindow(object):
 
         self.MenuBttonBar.addWidget(self.btnPing)
 
-        self.btn_startDAQ = QPushButton(self.layoutWidget)
-        self.btn_startDAQ.setObjectName(u"btn_startDAQ")
-
-        self.MenuBttonBar.addWidget(self.btn_startDAQ)
-
         self.btnFindDevice = QPushButton(self.layoutWidget)
         self.btnFindDevice.setObjectName(u"btnFindDevice")
 
@@ -102,14 +97,51 @@ class Ui_MainWindow(object):
 
         self.MenuBttonBar.addItem(self.horizontalSpacer)
 
-        self.labelInfo = QLabel(self.frame)
+        self.widget = QWidget(self.frame)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(10, 440, 771, 45))
+        self.horizontalLayout = QHBoxLayout(self.widget)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.labelInfo = QLabel(self.widget)
         self.labelInfo.setObjectName(u"labelInfo")
-        self.labelInfo.setGeometry(QRect(10, 350, 771, 20))
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.labelInfo.sizePolicy().hasHeightForWidth())
         self.labelInfo.setSizePolicy(sizePolicy)
+
+        self.horizontalLayout.addWidget(self.labelInfo)
+
+        self.horizontalLayoutWidget = QWidget(self.frame)
+        self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
+        self.horizontalLayoutWidget.setGeometry(QRect(10, 120, 761, 33))
+        self.DAQ_ControlBar = QHBoxLayout(self.horizontalLayoutWidget)
+        self.DAQ_ControlBar.setObjectName(u"DAQ_ControlBar")
+        self.DAQ_ControlBar.setContentsMargins(0, 0, 0, 0)
+        self.label_3 = QLabel(self.horizontalLayoutWidget)
+        self.label_3.setObjectName(u"label_3")
+
+        self.DAQ_ControlBar.addWidget(self.label_3)
+
+        self.leBufferLimt = QLineEdit(self.horizontalLayoutWidget)
+        self.leBufferLimt.setObjectName(u"leBufferLimt")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.leBufferLimt.sizePolicy().hasHeightForWidth())
+        self.leBufferLimt.setSizePolicy(sizePolicy1)
+
+        self.DAQ_ControlBar.addWidget(self.leBufferLimt)
+
+        self.btn_startDAQ = QPushButton(self.horizontalLayoutWidget)
+        self.btn_startDAQ.setObjectName(u"btn_startDAQ")
+
+        self.DAQ_ControlBar.addWidget(self.btn_startDAQ)
+
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.DAQ_ControlBar.addItem(self.horizontalSpacer_2)
+
 
         self._2.addWidget(self.frame)
 
@@ -146,10 +178,12 @@ class Ui_MainWindow(object):
         self.lineEdit_Port.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Port", None))
         self.btnConnect.setText(QCoreApplication.translate("MainWindow", u"Connect", None))
         self.btnPing.setText(QCoreApplication.translate("MainWindow", u"Ping", None))
-        self.btn_startDAQ.setText(QCoreApplication.translate("MainWindow", u"Start DAQ", None))
         self.btnFindDevice.setText(QCoreApplication.translate("MainWindow", u"findDevice", None))
         self.btnCapture.setText(QCoreApplication.translate("MainWindow", u"Start Capture", None))
         self.labelInfo.setText(QCoreApplication.translate("MainWindow", u"Ready", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"BufferLimit", None))
+        self.leBufferLimt.setText(QCoreApplication.translate("MainWindow", u"2048", None))
+        self.btn_startDAQ.setText(QCoreApplication.translate("MainWindow", u"Start DAQ", None))
         self.menuHelp.setTitle(QCoreApplication.translate("MainWindow", u"Help", None))
         self.menuData_Process.setTitle(QCoreApplication.translate("MainWindow", u"Data Process", None))
     # retranslateUi

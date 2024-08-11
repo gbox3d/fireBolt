@@ -100,24 +100,16 @@ Task task_Broadcast(5000, TASK_FOREVER, []()
     udp.broadcastTo(broadcastMessage.c_str(), udp_port_broadcast);
   } }, &g_ts, false);
 
-Task task_SendBuffer(50, TASK_FOREVER, []() {
+// Task task_SendBuffer(50, TASK_FOREVER, []() {
 
-    // sampling_module::sendUdpData(udp, targetIP, udp_port_data);
+//     // sampling_module::sendUdpData(udp, targetIP, udp_port_data);
   
-}, &g_ts, true);
+// }, &g_ts, true);
 
 Task task_SendData(250, TASK_FOREVER, []() {
-
-  g_pTcpServer->sendData();
-
-  if(g_pTcpServer->onTimeOut) {
-    g_pTcpServer->onTimeOut();
-  }
-
   
+  g_pTcpServer->sendDataByEvent();
 
-    // sampling_module::sendUdpData(udp, targetIP, udp_port_data);
-  
 }, &g_ts, true);
 
 
