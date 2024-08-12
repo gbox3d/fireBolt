@@ -247,7 +247,7 @@ void TcpServer::sendDataByEvent()
                         client->write((const char *)&_daqPacket, sizeof(S_PACKET_DAQ));
                         client->write((const char *)m_buffer, _daqPacket.data_size);
 
-                        Serial.println("Buffer sent step 0");
+                        // Serial.println("Buffer sent step 0");
 
                         bufferIndex = 0;
                     }

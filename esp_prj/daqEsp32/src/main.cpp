@@ -28,6 +28,8 @@
 extern String ParseCmd(String _strLine);
 
 Scheduler g_ts;
+Scheduler g_ts2;  // 두 번째 스케줄러 추가
+
 tonkey g_MainParser;
 
 Config g_config;
@@ -106,11 +108,20 @@ Task task_Broadcast(5000, TASK_FOREVER, []()
   
 // }, &g_ts, true);
 
+
+// Task2를 위한 FreeRTOS 태스크 함수
+void Task2(void * pvParameters) {
+    for(;;) {
+        g_ts2.execute();
+        vTaskDelay(1);
+    }
+}
+
 Task task_SendData(250, TASK_FOREVER, []() {
   
   g_pTcpServer->sendDataByEvent();
 
-}, &g_ts, true);
+}, &g_ts2, true);
 
 
 #ifdef ESP8266
@@ -259,6 +270,18 @@ void setup()
   Serial.println("Serial connected");
 
   g_ts.startNow();
+  g_ts2.startNow();  // 두 번째 스케줄러 시작
+
+  // Task2를 코어 1에 할당
+  xTaskCreatePinnedToCore(
+      Task2,
+      "Task2",
+      10000,
+      NULL,
+      1,
+      NULL,
+      1  // 코어 1에 할당
+  );
 
   // sampling_module::setup();
 
