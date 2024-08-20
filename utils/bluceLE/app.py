@@ -1,16 +1,27 @@
 import sys
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QSpacerItem, QSizePolicy,
-                               QMessageBox)
+                               QMessageBox,QTextEdit,QLineEdit)
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
-from PySide6.QtBluetooth import QBluetoothDeviceDiscoveryAgent, QBluetoothDeviceInfo, QLowEnergyController
+
+from PySide6.QtBluetooth import QBluetoothDeviceDiscoveryAgent, QBluetoothDeviceInfo, QLowEnergyController, QLowEnergyService, QLowEnergyCharacteristic,QBluetoothUuid
+
 
 class MainWindow(QWidget):
+    
+    
+    
     def __init__(self):
         super().__init__()
         
         self.discovered_devices = []  # 발견된 디바이스 정보를 저장할 리스트
+        
+        self.target_service_uuid = "457556f0-842a-41ac-b777-cb4af6f47720"
+        self.target_characteristic_uuid = "3c3ffbea-1856-460a-b0dd-b8a2a3a8352b"
+        self.ble_controller = None
+        self.ble_service = None
+        self.ble_characteristic = None
         
         self.initUI()
         self.initBLE()
@@ -39,6 +50,24 @@ class MainWindow(QWidget):
 
         # 버튼 레이아웃을 메인 레이아웃에 추가
         main_layout.addLayout(button_layout)
+        
+        
+        
+        # uuid 위제 추가
+        uuid_layout = QHBoxLayout()
+        self.service_uuid_label = QLabel("Service UUID:")
+        uuid_layout.addWidget(self.service_uuid_label)
+        self.service_uuid_le = QLineEdit()
+        self.service_uuid_le.setText(self.target_service_uuid)
+        uuid_layout.addWidget(self.service_uuid_le)
+        
+        self.characteristic_uuid_label = QLabel("Characteristic UUID:")
+        uuid_layout.addWidget(self.characteristic_uuid_label)
+        self.characteristic_uuid_le = QLineEdit()
+        self.characteristic_uuid_le.setText(self.target_characteristic_uuid)
+        uuid_layout.addWidget(self.characteristic_uuid_le)
+        
+        main_layout.addLayout(uuid_layout)
 
         # 테이블 위젯 추가
         self.device_table = QTableWidget()
@@ -52,11 +81,47 @@ class MainWindow(QWidget):
         
         main_layout.addWidget(self.device_table)
         
+        # 데이터 표시 위젯 추가
+        self.data_display = QTextEdit()
+        self.data_display.setReadOnly(True)
+        self.data_display.setFont(QFont("Courier", 10))
+        self.data_display.setFixedHeight(200)  # 높이를 200으로 고정
+        main_layout.addWidget(self.data_display)
+        
+        # 커멘드 입력 위젯 추가
+        cmdLayout = QHBoxLayout()
+        
+        self.cmdInput = QLineEdit()
+        self.cmdInput.setPlaceholderText("Enter command")
+        cmdLayout.addWidget(self.cmdInput)
+        
+        self.btnSend = QPushButton("Send")
+        self.btnSend.clicked.connect(self.send_command)
+        cmdLayout.addWidget(self.btnSend)
+        
+        main_layout.addLayout(cmdLayout)
+        
+                
          # 수직 스페이서 추가 (테이블 아래 공간을 채움)
         main_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
 
         self.setLayout(main_layout)
+        
+    def send_command(self):
+        if not self.ble_characteristic or not self.ble_service:
+            QMessageBox.warning(self, "Error", "No characteristic selected.")
+            return
+        
+        cmd = self.cmdInput.text()
+        if not cmd:
+            QMessageBox.warning(self, "Error", "Please enter a command.")
+            return
+        
+        cmd_bytes = bytes(cmd, 'utf-8')
+        self.ble_service.writeCharacteristic(self.ble_characteristic, cmd_bytes)
+        self.log(f"Sent command: {cmd}")
+        self.cmdInput.clear()
 
     def initBLE(self):
         self.discovery_agent = QBluetoothDeviceDiscoveryAgent()
@@ -142,7 +207,7 @@ class MainWindow(QWidget):
         else:
             self.connect_button.setText("Connect")
             self.disconnect_device()
-    
+     
     def connect_device(self):
         selected_items = self.device_table.selectedItems()
         if not selected_items:
@@ -156,29 +221,29 @@ class MainWindow(QWidget):
 
         device_info = self.discovered_devices[selected_row]
         
-        # 연결 프로세스 시작
         self.ble_controller = QLowEnergyController.createCentral(device_info)
         self.ble_controller.connected.connect(self.device_connected)
         self.ble_controller.disconnected.connect(self.device_disconnected)
         self.ble_controller.errorOccurred.connect(self.connection_error)
+        self.ble_controller.serviceDiscovered.connect(self.service_discovered)
+        self.ble_controller.discoveryFinished.connect(self.service_scan_done)
 
-        print(f"Attempting to connect to {device_info.name()} ({device_info.address().toString()})")
+        self.log(f"Attempting to connect to {device_info.name()} ({device_info.address().toString()})")
         self.ble_controller.connectToDevice()
+
     def disconnect_device(self):
         if self.ble_controller:
             self.ble_controller.disconnectFromDevice()
             self.ble_controller = None
-            print("Disconnected from device")
-            QMessageBox.information(self, "Disconnected", "Disconnected from device.")
         else:
             print("No device to disconnect")
-            QMessageBox.warning(self, "Warning", "No device to disconnect.")
-        
+    
     def device_connected(self):
-        print("Device connected successfully!")
-        QMessageBox.information(self, "Success", "Device connected successfully!")
-        
+        self.log("Device connected successfully!")
+        # QMessageBox.information(self, "Success", "Device connected successfully!")
         self.connect_button.setText("Disconnect")
+        self.log("Starting service discovery...")
+        self.ble_controller.discoverServices()
 
     def device_disconnected(self):
         print("Device disconnected")
@@ -188,6 +253,89 @@ class MainWindow(QWidget):
         error_message = f"Connection error: {error}"
         print(error_message)
         QMessageBox.critical(self, "Error", error_message)
+    def update_connect_button(self):
+        self.connect_button.setEnabled(len(self.device_table.selectedItems()) > 0)
+        
+    def service_discovered(self, service_uuid):
+        self.log(f"Service discovered: {service_uuid}")
+        
+    def service_scan_done(self):
+        self.log("Service scan completed")
+        services = self.ble_controller.services()
+        for service in services:
+            
+            if service.toString()[1:-1] == self.target_service_uuid:
+            
+                ble_service = self.ble_controller.createServiceObject(service)
+                if ble_service:
+                    ble_service.stateChanged.connect(self.service_state_changed)
+                    ble_service.characteristicChanged.connect(self.characteristic_changed)
+                    ble_service.characteristicRead.connect(self.characteristic_read)
+                    self.log(f"Discovering details for service: {service.toString()}")
+                    ble_service.discoverDetails()
+                self.ble_service = ble_service
+                self.log("Found the desired service")
+                break
+            
+        if not self.ble_service:
+            self.log("Error: Could not find the desired service")
+    
+    def service_state_changed(self, state):
+        if state == QLowEnergyService.ServiceDiscovered:
+            
+            service = self.ble_service
+            self.log(F"Service details discovered : uuid={self.ble_service.serviceUuid().toString()}")
+            characteristics = service.characteristics()
+            
+            for char in characteristics:
+                self.log(f"Found characteristic: {char.uuid().toString()}")
+                
+                # {...} 에서 대괄호만 제거
+                uuid = char.uuid().toString()
+                uuid = uuid[1:-1]
+                
+                if uuid == self.target_characteristic_uuid:
+                # if char.properties() & QLowEnergyCharacteristic.Notify:
+                    # self.log(f"Found notify characteristic: {char.uuid().toString()}")
+                    self.ble_characteristic = char
+                    cccd_uuid = QBluetoothUuid(QBluetoothUuid.DescriptorType.ClientCharacteristicConfiguration)
+                    descriptor = char.descriptor(cccd_uuid)
+                    if descriptor.isValid():
+                        self.log(f"Enabling notifications for characteristic: {char.uuid().toString()}")
+                        self.ble_service.writeDescriptor(descriptor, bytes([0x01, 0x00]))
+                        self.ble_service.readCharacteristic(char) # Read the characteristic value
+                        # QMessageBox.information(self, "Success", "Connected to device successfully!")
+                    else:
+                        self.log(f"Invalid descriptor for characteristic: {char.uuid().toString()}")
+                # elif char.properties() & QLowEnergyCharacteristic.Read:
+                #     self.log(f"Reading characteristic: {char.uuid().toString()}")
+                #     self.ble_service.readCharacteristic(char)
+
+    def characteristic_changed(self, characteristic, value):
+        hex_data = self.byte_array_to_hex(value)
+        ascii_data = self.byte_array_to_ascii(value)
+        display_text = f"Received: {hex_data} (ASCII: {ascii_data})"
+        # self.log(display_text)
+        self.data_display.append(display_text)
+        
+    def characteristic_read(self, characteristic, value):
+        hex_data = self.byte_array_to_hex(value)
+        ascii_data = self.byte_array_to_ascii(value)
+        display_text = f"Read: {hex_data} (ASCII: {ascii_data})"
+        # self.log(display_text)
+        self.data_display.append(display_text)
+
+    def byte_array_to_hex(self, value):
+        return value.toHex().data().hex()
+
+    def byte_array_to_ascii(self, value):
+        return ''.join([chr(b) if 32 <= b <= 126 else '.' for b in value.data()])
+        
+    def log(self, message):
+        print(message)
+        self.data_display.append(f"[LOG] {message}")    
+    
+        
     def update_connect_button(self):
         self.connect_button.setEnabled(len(self.device_table.selectedItems()) > 0)
     
