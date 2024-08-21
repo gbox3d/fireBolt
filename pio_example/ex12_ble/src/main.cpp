@@ -52,26 +52,26 @@ bool deviceConnected = false;
 //     }
 // }, &g_ts, false);
 
-// 전역 변수로 선언
-JsonDocument g_res_doc;
 
 String ParseCmd(String _strLine) {
-    g_MainParser.parse(_strLine);
-    g_res_doc.clear();  // 응답 문서 초기화
+
+    JsonDocument _res_doc;
 
     g_MainParser.parse(_strLine);
+    // _res_doc.clear();  // 응답 문서 초기화
+    // g_MainParser.parse(_strLine);
 
     if(g_MainParser.getTokenCount() > 0) {
         String cmd = g_MainParser.getToken(0);
         if (cmd == "about")
         {
             /* code */
-            g_res_doc["result"] = "ok";
-            g_res_doc["os"] = "cronos-v1";
-            g_res_doc["app"] = "ex12-ble";
-            g_res_doc["version"] = "1.0.0";
-            g_res_doc["author"] = "gbox3d";
-            g_res_doc["chipid"] = ESP.getEfuseMac();
+            _res_doc["result"] = "ok";
+            _res_doc["os"] = "cronos-v1";
+            _res_doc["app"] = "ex12-ble";
+            _res_doc["version"] = "1.0.0";
+            _res_doc["author"] = "gbox3d";
+            _res_doc["chipid"] = getChipID();
             
         }
         else if(cmd == "reboot") {
@@ -82,47 +82,47 @@ String ParseCmd(String _strLine) {
                 String subCmd = g_MainParser.getToken(1);
                 if(subCmd == "load") {
                     g_config.load();
-                    g_res_doc["result"] = "ok";
-                    g_res_doc["ms"] = "config loaded";
+                    _res_doc["result"] = "ok";
+                    _res_doc["ms"] = "config loaded";
                 }
                 else if(subCmd == "save") {
                     g_config.save();
-                    g_res_doc["result"] = "ok";
-                    g_res_doc["ms"] = "config saved";
+                    _res_doc["result"] = "ok";
+                    _res_doc["ms"] = "config saved";
                 }
                 else if(subCmd == "dump") {
                     
                     //parse json g_config.dump()
                     String jsonStr = g_config.dump();
-                    DeserializationError error = deserializeJson(g_res_doc["ms"], jsonStr);
+                    DeserializationError error = deserializeJson(_res_doc["ms"], jsonStr);
                     if (error) {
                         // Serial.print(F("deserializeJson() failed: "));
                         // Serial.println(error.f_str());
                         // return;
-                        g_res_doc["result"] = "fail";
-                        g_res_doc["ms"] = "json parse error";
+                        _res_doc["result"] = "fail";
+                        _res_doc["ms"] = "json parse error";
                     }
                     else {
-                        g_res_doc["result"] = "ok";
+                        _res_doc["result"] = "ok";
                     }
                     
                 }
                 else if(subCmd == "clear") {
                     g_config.clear();
-                    g_res_doc["result"] = "ok";
-                    g_res_doc["ms"] = "config cleared";
+                    _res_doc["result"] = "ok";
+                    _res_doc["ms"] = "config cleared";
                 }
                 else if(subCmd == "set") {
                     if(g_MainParser.getTokenCount() > 2) {
                         String key = g_MainParser.getToken(2);
                         String value = g_MainParser.getToken(3);
                         g_config.set(key.c_str(), value);
-                        g_res_doc["result"] = "ok";
-                        g_res_doc["ms"] = "config set";
+                        _res_doc["result"] = "ok";
+                        _res_doc["ms"] = "config set";
                     }
                     else {
-                        g_res_doc["result"] = "fail";
-                        g_res_doc["ms"] = "need key and value";
+                        _res_doc["result"] = "fail";
+                        _res_doc["ms"] = "need key and value";
                     }
                 }
                 else if(subCmd == "setA") { //set json array
@@ -140,23 +140,23 @@ String ParseCmd(String _strLine) {
                             // Serial.print(F("deserializeJson() failed: "));
                             // Serial.println(error.f_str());
                             // return;
-                            g_res_doc["result"] = "fail";
-                            g_res_doc["ms"] = "json parse error";
+                            _res_doc["result"] = "fail";
+                            _res_doc["ms"] = "json parse error";
                         }
                         else {
                             // JsonArray array = tempDoc[key].as<JsonArray>();
 
                             g_config.set(key.c_str(), tempDoc);
-                            g_res_doc["result"] = "ok";
-                            g_res_doc["ms"] = tempDoc;
+                            _res_doc["result"] = "ok";
+                            _res_doc["ms"] = tempDoc;
                         }
                         // g_config.set(key.c_str(), value);
                         // _res_doc["result"] = "ok";
                         // _res_doc["ms"] = "config set";
                     }
                     else {
-                        g_res_doc["result"] = "fail";
-                        g_res_doc["ms"] = "need key and value";
+                        _res_doc["result"] = "fail";
+                        _res_doc["ms"] = "need key and value";
                     }
                     
                 }
@@ -166,31 +166,31 @@ String ParseCmd(String _strLine) {
 
                         //check key exist
                         if(!g_config.hasKey(key.c_str())) {
-                            g_res_doc["result"] = "fail";
-                            g_res_doc["ms"] = "key not exist";
+                            _res_doc["result"] = "fail";
+                            _res_doc["ms"] = "key not exist";
                             // serializeJson(_res_doc, Serial);
                             // Serial.println();
                             // return;
                         }
                         else {
-                            g_res_doc["result"] = "ok";
-                            g_res_doc["value"] = g_config.get<String>(key.c_str());
+                            _res_doc["result"] = "ok";
+                            _res_doc["value"] = g_config.get<String>(key.c_str());
                         }
                     }
                     else {
-                        g_res_doc["result"] = "fail";
-                        g_res_doc["ms"] = "need key";
+                        _res_doc["result"] = "fail";
+                        _res_doc["ms"] = "need key";
                     }
                 }
                 else {
-                    g_res_doc["result"] = "fail";
-                    g_res_doc["ms"] = "unknown sub command";
+                    _res_doc["result"] = "fail";
+                    _res_doc["ms"] = "unknown sub command";
                 
                 }
             }
             else {
-                g_res_doc["result"] = "fail";
-                g_res_doc["ms"] = "need sub command";
+                _res_doc["result"] = "fail";
+                _res_doc["ms"] = "need sub command";
             }
         }
         else if(cmd == "ble") {
@@ -199,18 +199,18 @@ String ParseCmd(String _strLine) {
             if(g_MainParser.getTokenCount() > 1) {
                 String subCmd = g_MainParser.getToken(1);
                 if(subCmd == "info") {
-                    g_res_doc["result"] = "ok";
-                    g_res_doc["ms"] = "ble info";
-                    g_res_doc["deviceConnected"] = deviceConnected;
-                    g_res_doc["serviceUUID"] = SERVICE_UUID;
-                    g_res_doc["characteristicUUID"] = CHARACTERISTIC_UUID;
+                    _res_doc["result"] = "ok";
+                    _res_doc["ms"] = "ble info";
+                    _res_doc["deviceConnected"] = deviceConnected;
+                    _res_doc["serviceUUID"] = SERVICE_UUID;
+                    _res_doc["characteristicUUID"] = CHARACTERISTIC_UUID;
 
                     if (BLEDevice::getInitialized()) {
                         // return "BLE not initialized";
                         BLEAddress bleAddress = BLEDevice::getAddress();
                         String addressStr = bleAddress.toString().c_str();
                         
-                        g_res_doc["address"] = addressStr;
+                        _res_doc["address"] = addressStr;
                         
                             // ESP32의 MAC 주소 가져오기
                         uint8_t macAddr[6];
@@ -220,41 +220,41 @@ String ParseCmd(String _strLine) {
                                 macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
 
                         if (addressStr == String(macStr)) {
-                            g_res_doc["addressType"] = "Public";
+                            _res_doc["addressType"] = "Public";
                         } else {
-                            g_res_doc["addressType"] = "Random";
+                            _res_doc["addressType"] = "Random";
                         }
                     }
                     else {
-                        g_res_doc["address"] = "ble not initialized";
+                        _res_doc["address"] = "ble not initialized";
                     }
 
                     
                     // // BLE 스택 상태 추가
-                    g_res_doc["bleStackStarted"] = btStarted() ? "Yes" : "No";
+                    _res_doc["bleStackStarted"] = btStarted() ? "Yes" : "No";
                 }
             }
             else {
-                g_res_doc["result"] = "fail";
-                g_res_doc["ms"] = "need sub command";
+                _res_doc["result"] = "fail";
+                _res_doc["ms"] = "need sub command";
             }
             
         }
         else {
-            g_res_doc["result"] = "fail";
-            g_res_doc["ms"] = "unknown command";
+            _res_doc["result"] = "fail";
+            _res_doc["ms"] = "unknown command";
         }
         // serializeJson(g_res_doc, Serial);
         // Serial.println();
         
     }
     else {
-        g_res_doc["result"] = "fail";
-        g_res_doc["ms"] = "need command";
+        _res_doc["result"] = "fail";
+        _res_doc["ms"] = "need command";
     }
 
     String response;
-    serializeJson(g_res_doc, response);
+    serializeJson(_res_doc, response);
     return response;
 }
 
