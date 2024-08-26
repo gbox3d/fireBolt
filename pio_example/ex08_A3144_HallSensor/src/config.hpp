@@ -1,72 +1,198 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#include <Preferences.h>
+#include <ArduinoJson.h>
+#include <EEPROM.h>
 
-class CCongifData
+#ifdef ESP32
+#include <nvs_flash.h>
+#endif
+
+class Config
 {
-    Preferences preferences;
-
 public:
-    String mStrAp;
-    String mStrPassword;
-    String mTargetIp;
-    int mTargetPort;
-    int16_t mOffsets[6];
+    int version = 1;
 
-    bool save()
+#ifdef ESP8266
+    static const size_t EEPROM_SIZE = 1024;
+    static const int EEPROM_START_ADDRESS = 0;
+#elif ESP32
+    static const size_t EEPROM_SIZE = 1024;
+    static const int EEPROM_START_ADDRESS = 0;
+#else
+    static const size_t EEPROM_SIZE = 512;
+    static const int EEPROM_START_ADDRESS = 0;
+#endif
+    String jsonDoc;
+
+    Config()
     {
-        preferences.begin("config", false);
-        preferences.putString("mStrAp", mStrAp);
-        preferences.putString("mStrPassword", mStrPassword);
-        preferences.putString("mTargetIp", mTargetIp);
-        preferences.putInt("mTargetPort", mTargetPort);
 
-        for (int i = 0; i < 6; i++)
+#ifdef ESP32
+        // NVS 초기화
+        esp_err_t err = nvs_flash_init();
+        if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
         {
-            preferences.putInt((String("offset") + i).c_str(), mOffsets[i]);
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            err = nvs_flash_init();
         }
+        ESP_ERROR_CHECK(err);
+#endif
 
-        preferences.end();
-        return true;
+#ifdef AVR
+#else
+        EEPROM.begin(EEPROM_SIZE);
+#endif
+
+        load();
     }
 
-    bool load()
+    void load()
     {
-        preferences.begin("config", true);
-
-        mStrAp = preferences.getString("mStrAp", "");
-        mStrPassword = preferences.getString("mStrPassword", "");
-        mTargetIp = preferences.getString("mTargetIp", "");
-        mTargetPort = preferences.getInt("mTargetPort", 0);
-
-        for (int i = 0; i < 6; i++)
+        char buffer[EEPROM_SIZE];
+        for (size_t i = 0; i < EEPROM_SIZE; ++i)
         {
-            mOffsets[i] = preferences.getInt((String("offset") + i).c_str(), 0);
+            buffer[i] = EEPROM.read(i);
+#ifdef DEBUG
+            Serial.print(buffer[i]); // debug
+#endif
         }
 
-        preferences.end();
-        return true;
+#ifdef DEBUG
+        Serial.println("data length: " + String(strlen(buffer))); // debug
+        Serial.println("data: " + String(buffer));                // debug
+#endif
+        // if empty, set default
+        if (buffer[0] != '{' && buffer[0] != '[')
+        {
+            jsonDoc = "{}";
+        }
+        else
+        {
+            jsonDoc = String(buffer);
+        }
+
+        if(!hasKey("password"))
+        {
+            set("password", "1111");
+        }
+
     }
 
-    bool clear()
+    void save()
     {
-        preferences.begin("config", false);
-        preferences.clear();
-        preferences.end();
-        return true;
-    }
-    void print()
-    {
-        Serial.println("mStrAp: " + mStrAp);
-        Serial.println("mStrPassword: " + mStrPassword);
-        Serial.println("mTargetIp: " + mTargetIp);
-        Serial.println("mTargetPort: " + String(mTargetPort));
-        Serial.println("mOffsets: ");
-        for (int i = 0; i < 6; i++)
+        for (size_t i = 0; i < EEPROM_SIZE; ++i)
         {
-            Serial.println((String("offset") + i + ": ").c_str() + String(mOffsets[i]));
+            if (i < jsonDoc.length())
+            {
+                EEPROM.write(i, jsonDoc[i]);
+            }
+            else
+            {
+                EEPROM.write(i, 0);
+            }
         }
+
+#ifdef DEBUG
+        Serial.println("data length: " + String(jsonDoc.length())); // debug
+        Serial.println("data: " + jsonDoc);                         // debug
+#endif
+
+#ifdef AVR
+
+#else
+
+        EEPROM.commit();
+#endif
+    }
+
+    // Generic set and get
+    template <typename T>
+    void set(const char *key, T value)
+    {
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, jsonDoc);
+        if (error)
+        {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return;
+        }
+
+        doc[key] = value;
+        serializeJson(doc, jsonDoc);
+        save();
+    }
+
+    template <typename T>
+    T get(const char *key) const
+    {
+
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, jsonDoc);
+        if (error)
+        {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return T();
+        }
+
+        return doc[key].as<T>();
+    }
+
+    // check key exist
+    bool hasKey(const char *key) const
+    {
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, jsonDoc);
+        if (error)
+        {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            return false;
+        }
+
+        return doc.containsKey(key);
+    }
+
+    void getArray(const char *key, JsonDocument &_doc) const
+    {
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, jsonDoc);
+
+        Serial.println(doc[key].as<String>());
+
+        if (error)
+        {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            // return JsonArray();
+        }
+
+        JsonDocument tempDoc;
+
+        error = deserializeJson(_doc, doc[key].as<String>());
+        if (error)
+        {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.f_str());
+            // return JsonArray();
+        }
+
+        Serial.println(_doc.as<JsonArray>().size());
+        // array = tempDoc.as<JsonArray>();
+        // return tempDoc.as<JsonArray>();
+    }
+
+    String dump() const
+    {
+        return jsonDoc;
+    }
+
+    void clear()
+    {
+        jsonDoc = "{}";
+        save();
     }
 };
 
