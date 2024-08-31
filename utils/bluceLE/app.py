@@ -7,11 +7,9 @@ from PySide6.QtGui import QFont
 
 from PySide6.QtBluetooth import QBluetoothDeviceDiscoveryAgent, QBluetoothDeviceInfo, QLowEnergyController, QLowEnergyService, QLowEnergyCharacteristic,QBluetoothUuid
 
-
+  
+  
 class MainWindow(QWidget):
-    
-    
-    
     def __init__(self):
         super().__init__()
         
@@ -22,6 +20,8 @@ class MainWindow(QWidget):
         self.ble_controller = None
         self.ble_service = None
         self.ble_characteristic = None
+        
+        self.load_uuids_from_file()  # UUID 파일에서 값을 로드
         
         self.initUI()
         self.initBLE()
@@ -44,6 +44,11 @@ class MainWindow(QWidget):
         self.connect_button = QPushButton("Connect")
         self.connect_button.clicked.connect(self.onClick_connect)
         button_layout.addWidget(self.connect_button)
+        
+        # ble reset 버튼 추가
+        self.reset_button = QPushButton("Reset BLE")
+        self.reset_button.clicked.connect(self.onClickResetBle)
+        button_layout.addWidget(self.reset_button)
         
         # 수평 스페이서 추가 (버튼을 왼쪽으로 밀어냄)
         button_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
@@ -130,6 +135,13 @@ class MainWindow(QWidget):
          # 스캔 타임아웃 설정 (10초)
         self.discovery_agent.setLowEnergyDiscoveryTimeout(10000)
         
+    def onClickResetBle(self):
+        
+        self.initBLE()
+        self.discovered_devices = []
+        print("Device reset")
+        
+        
     def toggle_scan(self):
         if self.discovery_agent.isActive():
             self.stop_scan()
@@ -137,6 +149,8 @@ class MainWindow(QWidget):
             self.start_scan()
 
     def start_scan(self):
+        
+        self.discovered_devices = []  # 발견된 디바이스 정보 초기화
         self.device_table.setRowCount(0)  # 테이블 초기화
         self.discovery_agent.start(QBluetoothDeviceDiscoveryAgent.LowEnergyMethod)
         self.scan_button.setText("Stop Scan")
@@ -200,14 +214,35 @@ class MainWindow(QWidget):
     
     
     def onClick_connect(self):
-        print("Connect button clicked")
+        # print("Connect button clicked")
+        # 현재 설정 저장
+        self.target_service_uuid = self.service_uuid_le.text()
+        self.target_characteristic_uuid = self.characteristic_uuid_le.text()
+        self.save_uuids_to_file()
+            
         if self.connect_button.text() == "Connect":
             self.connect_button.setText("Disconnect")
             self.connect_device()
         else:
             self.connect_button.setText("Connect")
             self.disconnect_device()
-     
+    
+    def load_uuids_from_file(self):
+        try:
+            with open('uuid.txt', 'r') as file:
+                lines = file.readlines()
+                if len(lines) >= 2:
+                    self.target_service_uuid = lines[0].strip()
+                    self.target_characteristic_uuid = lines[1].strip()
+        except FileNotFoundError:
+            # 파일이 없으면 기본값 사용
+            print("UUID file not found,use default values")
+            pass
+    def save_uuids_to_file(self):
+        with open('uuid.txt', 'w') as file:
+            file.write(f"{self.target_service_uuid}\n")
+            file.write(f"{self.target_characteristic_uuid}\n")
+         
     def connect_device(self):
         selected_items = self.device_table.selectedItems()
         if not selected_items:
@@ -225,8 +260,8 @@ class MainWindow(QWidget):
         self.ble_controller.connected.connect(self.device_connected)
         self.ble_controller.disconnected.connect(self.device_disconnected)
         self.ble_controller.errorOccurred.connect(self.connection_error)
-        self.ble_controller.serviceDiscovered.connect(self.service_discovered)
-        self.ble_controller.discoveryFinished.connect(self.service_scan_done)
+        self.ble_controller.serviceDiscovered.connect(self.service_discovered) # 서비스 발견 시 호출
+        self.ble_controller.discoveryFinished.connect(self.service_scan_done) # 서비스 스캔 완료 시 호출
 
         self.log(f"Attempting to connect to {device_info.name()} ({device_info.address().toString()})")
         self.ble_controller.connectToDevice()
@@ -295,8 +330,7 @@ class MainWindow(QWidget):
                 uuid = uuid[1:-1]
                 
                 if uuid == self.target_characteristic_uuid:
-                # if char.properties() & QLowEnergyCharacteristic.Notify:
-                    # self.log(f"Found notify characteristic: {char.uuid().toString()}")
+                
                     self.ble_characteristic = char
                     cccd_uuid = QBluetoothUuid(QBluetoothUuid.DescriptorType.ClientCharacteristicConfiguration)
                     descriptor = char.descriptor(cccd_uuid)
@@ -307,10 +341,7 @@ class MainWindow(QWidget):
                         # QMessageBox.information(self, "Success", "Connected to device successfully!")
                     else:
                         self.log(f"Invalid descriptor for characteristic: {char.uuid().toString()}")
-                # elif char.properties() & QLowEnergyCharacteristic.Read:
-                #     self.log(f"Reading characteristic: {char.uuid().toString()}")
-                #     self.ble_service.readCharacteristic(char)
-
+                
     def characteristic_changed(self, characteristic, value):
         hex_data = self.byte_array_to_hex(value)
         ascii_data = self.byte_array_to_ascii(value)
