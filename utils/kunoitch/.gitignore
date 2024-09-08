@@ -1,3 +1,7 @@
 dist/
 build/
 app.spec
+.DS_Store
+__pycache__/
+UI/*.py
+bak/

@@ -19,9 +19,23 @@ Config g_config;
 
 extern String parseCmd(String _strLine);
 
-#ifdef ESP32
-#define LED_BUILTIN 4
+// #ifdef ESP32
+// #define LED_BUILTIN 4
+// #endif
+
+#ifdef LOLIN_D32 || WROVER_KIT
+// this device aready defined LED_BUILTIN 4 -> D5 
+
+#elif SEED_XIAO_ESP32C3
+#define LED_BUILTIN D10
+
 #endif
+
+
+Task task_LedBlink(500, TASK_FOREVER, []()
+              {
+                  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+              }, &g_ts, true);
 
 Task task_Cmd(100, TASK_FOREVER, []()
               {
