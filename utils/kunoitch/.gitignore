@@ -5,3 +5,6 @@ app.spec
 __pycache__/
 UI/*.py
 bak/
+.venv/
+firmware/
+_fw.txt
