@@ -23,7 +23,7 @@ extern String parseCmd(String _strLine);
 // #define LED_BUILTIN 4
 // #endif
 
-#ifdef LOLIN_D32 || WROVER_KIT
+#if defined(LOLIN_D32) | defined(LOLIN_D32_PRO) | defined(WROVER_KIT)
 // this device aready defined LED_BUILTIN 4 -> D5 
 
 #elif SEED_XIAO_ESP32C3
@@ -73,11 +73,19 @@ void setup()
     Serial.println(":-]");
     Serial.println("Serial connected");
 
+    int _value = g_config.get<int>("value", 727);
+    String _name = g_config.get<String>("name", "dallos");
+
+    Serial.printf("value: %d\n", _value);
+    Serial.printf("name: %s\n", _name.c_str());
+
 #ifdef MEGA2560
     Serial1.begin(115200);
     Serial1.println(":-]");
     Serial1.println("Serial1 connected");
 #endif
+
+
     
     g_ts.startNow();
 }

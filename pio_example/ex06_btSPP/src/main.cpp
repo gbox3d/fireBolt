@@ -70,20 +70,19 @@ Task task_CheckBTConnection(500, TASK_FOREVER, []() {
   if (SerialBT.hasClient() && !isBluetoothConnected) {
 
     task_LedBlink.disable();
+    Serial.println("Bluetooth device is connected");
 
 #if defined(LOLIN_D32) | defined(LOLIN_D32_PRO) | defined(WROVER_KIT)
-
     digitalWrite(ledPins_status, LOW); // LOLIN D32의 내장 LED를 끈다.
 #else
     digitalWrite(ledPins_status, HIGH); // LOLIN D32의 내장 LED를 끈다.
 #endif
-
     isBluetoothConnected = true;  // Bluetooth가 연결되었을 때 상태 업데이트
-
-    
   } 
   else if (!SerialBT.hasClient() && isBluetoothConnected) {
+    Serial.println("Bluetooth device is disconnected");
     task_LedBlink.enable();
+    isBluetoothConnected = false;  // Bluetooth가 연결이 끊겼을 때 상태 업데이트
   }
 
 }, &g_ts, true);

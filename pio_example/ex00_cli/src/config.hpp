@@ -62,7 +62,6 @@ public:
         Serial.println("data length: " + String(strlen(buffer))); // debug
         Serial.println("data: " + String(buffer));                // debug
 #endif
-
         // if empty, set default
         if (buffer[0] != '{' && buffer[0] != '[')
         {
@@ -72,6 +71,17 @@ public:
         {
             jsonDoc = String(buffer);
         }
+
+        // if(!hasKey("password"))
+        // {
+        //     set("password", "1111");
+        // }
+
+        // if(!hasKey("debounceDelay"))
+        // {
+        //     set("debounceDelay", 50);
+        // }
+
     }
 
     void save()
@@ -120,16 +130,20 @@ public:
     }
 
     template <typename T>
-    T get(const char *key) const
+    T get(const char *key, T defaultValue = T()) const
     {
-
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, jsonDoc);
         if (error)
         {
             Serial.print(F("deserializeJson() failed: "));
             Serial.println(error.f_str());
-            return T();
+            return defaultValue;
+        }
+
+        if (!doc.containsKey(key))
+        {
+            return defaultValue;
         }
 
         return doc[key].as<T>();
