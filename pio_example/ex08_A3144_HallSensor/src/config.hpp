@@ -11,7 +11,7 @@
 class Config
 {
 public:
-    int version = 1;
+    int version = 2;
 
 #ifdef ESP8266
     static const size_t EEPROM_SIZE = 1024;
@@ -72,10 +72,15 @@ public:
             jsonDoc = String(buffer);
         }
 
-        if(!hasKey("password"))
-        {
-            set("password", "1111");
-        }
+        // if(!hasKey("password"))
+        // {
+        //     set("password", "1111");
+        // }
+
+        // if(!hasKey("debounceDelay"))
+        // {
+        //     set("debounceDelay", 50);
+        // }
 
     }
 
@@ -125,16 +130,20 @@ public:
     }
 
     template <typename T>
-    T get(const char *key) const
+    T get(const char *key, T defaultValue = T()) const
     {
-
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, jsonDoc);
         if (error)
         {
             Serial.print(F("deserializeJson() failed: "));
             Serial.println(error.f_str());
-            return T();
+            return defaultValue;
+        }
+
+        if (!doc.containsKey(key))
+        {
+            return defaultValue;
         }
 
         return doc[key].as<T>();

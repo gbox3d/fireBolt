@@ -9,6 +9,9 @@ tonkey g_MainParser;
 extern Config g_config;
 
 
+extern void startSensorTask();
+extern void stopSensorTask();
+
 String parseCmd(String _strLine) {
 
     JsonDocument _res_doc;
@@ -22,7 +25,7 @@ String parseCmd(String _strLine) {
                 /* code */
                 _res_doc["result"] = "ok";
                 _res_doc["os"] = "cronos-v1";
-                _res_doc["app"] = "example-00 cli";
+                _res_doc["app"] = "example08-a3144-hallsensor";
                 _res_doc["version"] = "1.0.0";
                 _res_doc["author"] = "gbox3d";
 // esp8266 chip id
@@ -38,6 +41,16 @@ String parseCmd(String _strLine) {
 #elif ESP32
                 ESP.restart();
 #endif
+            }
+            else if(cmd == "start") {
+                startSensorTask();
+                _res_doc["result"] = "ok";
+                _res_doc["ms"] = "sensor task started";
+            }
+            else if(cmd == "stop") {
+                stopSensorTask();
+                _res_doc["result"] = "ok";
+                _res_doc["ms"] = "sensor task stopped";
             }
             else if(cmd == "config") {
                 if(g_MainParser.getTokenCount() > 1) {
