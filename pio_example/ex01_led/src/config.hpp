@@ -11,9 +11,7 @@
 class Config
 {
 public:
-
-    int version = 1;
-
+    int version = 2;
 
 #ifdef ESP8266
     static const size_t EEPROM_SIZE = 1024;
@@ -41,7 +39,11 @@ public:
         ESP_ERROR_CHECK(err);
 #endif
 
+#ifdef AVR
+#else
         EEPROM.begin(EEPROM_SIZE);
+#endif
+
         load();
     }
 
@@ -60,8 +62,6 @@ public:
         Serial.println("data length: " + String(strlen(buffer))); // debug
         Serial.println("data: " + String(buffer));                // debug
 #endif
-
-
         // if empty, set default
         if (buffer[0] != '{' && buffer[0] != '[')
         {
@@ -71,6 +71,17 @@ public:
         {
             jsonDoc = String(buffer);
         }
+
+        // if(!hasKey("password"))
+        // {
+        //     set("password", "1111");
+        // }
+
+        // if(!hasKey("debounceDelay"))
+        // {
+        //     set("debounceDelay", 50);
+        // }
+
     }
 
     void save()
@@ -92,7 +103,12 @@ public:
         Serial.println("data: " + jsonDoc);                         // debug
 #endif
 
+#ifdef AVR
+
+#else
+
         EEPROM.commit();
+#endif
     }
 
     // Generic set and get
@@ -114,16 +130,20 @@ public:
     }
 
     template <typename T>
-    T get(const char *key) const
+    T get(const char *key, T defaultValue = T()) const
     {
-
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, jsonDoc);
         if (error)
         {
             Serial.print(F("deserializeJson() failed: "));
             Serial.println(error.f_str());
-            return T();
+            return defaultValue;
+        }
+
+        if (!doc.containsKey(key))
+        {
+            return defaultValue;
         }
 
         return doc[key].as<T>();

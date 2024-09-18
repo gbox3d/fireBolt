@@ -112,9 +112,6 @@ String parseCmd(String _strLine) {
                                 _res_doc["result"] = "ok";
                                 _res_doc["ms"] = tempDoc;
                             }
-                            // g_config.set(key.c_str(), value);
-                            // _res_doc["result"] = "ok";
-                            // _res_doc["ms"] = "config set";
                         }
                         else {
                             _res_doc["result"] = "fail";
@@ -130,9 +127,7 @@ String parseCmd(String _strLine) {
                             if(!g_config.hasKey(key.c_str())) {
                                 _res_doc["result"] = "fail";
                                 _res_doc["ms"] = "key not exist";
-                                // serializeJson(_res_doc, Serial);
-                                // Serial.println();
-                                // return;
+                                
                             }
                             else {
                                 _res_doc["result"] = "ok";
@@ -160,8 +155,6 @@ String parseCmd(String _strLine) {
               _res_doc["result"] = "fail";
               _res_doc["ms"] = "unknown command";
             }
-            
-            
         }
         else {
             _res_doc["result"] = "fail";
