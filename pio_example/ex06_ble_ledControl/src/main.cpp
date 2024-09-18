@@ -7,83 +7,113 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-// #include "config.hpp"
+#include <WiFi.h>
+#include <vector>
 
-#if defined(LOLIN_D32)
-// const int builtInLed = LED_BUILTIN;
-// #define LED_BUILTIN 5
-const int ledPins[] = {4, 5};
-#elif defined(SEED_XIAO_ESP32C3)
-// #define LED_BUILTIN -1
-// const int builtInLed = D5; //실재론 없다
-const int ledPins[] = {D10, D9};
-const int analogPins[] = {D0, D1};
-const int buttonPins[] = {D8, D2, D3};
-#elif defined(LOLIN_D32_LITE)
-// const int builtInLed = 22;
-const int ledPins[] = {
-    22, 27, 26, 25, 23, 19, 18, 13, 14};
-const int analogPins[] = {34, 35, 36, 39};
-const int buttonPins[] = {32, 33};
+#include <TaskScheduler.h>
+
+#include "config.hpp"
+#include "etc.hpp"
+
+Config g_config;
+
+Scheduler g_ts;
+
+std::vector<int> ledPins;
+
+void ledOffCallback();
+void ledOnCallback();
+Task tLedBlinker(500, TASK_FOREVER, &ledOnCallback, &g_ts, false);
+
+int8_t systemMode = 0;
+
+#ifdef ESP32
+
+#if not defined(LED_BUILTIN) // check if the default LED pin is defined
+#define LED_BUILTIN 5        // define the default LED pin if it isn't defined
 #endif
 
-String strTitleMsg = "FireBolt ESP32 Exam Ble\n";
+#endif
 
-String strHelpMsg = "\
-command list\n\
-help : show this message\n\
-reboot : reboot esp32\n\
-";
+void ledOnCallback()
+{
+  digitalWrite(LED_BUILTIN, HIGH); // turn the LED on (HIGH is the voltage level)
+  tLedBlinker.setCallback(&ledOffCallback);
+}
 
-// CCongifData g_Config;
+void ledOffCallback()
+{
+  digitalWrite(LED_BUILTIN, LOW); // turn the LED off by making the voltage LOW
+  tLedBlinker.setCallback(&ledOnCallback);
+  // Serial.println("led blink");
+  // Serial.println(LED_BUILTIN);
+}
 
-tonkey g_MainParser;
-Scheduler runner;
+extern String parseCmd(String _strLine);
 
-Task task_Blink(
-    250, TASK_FOREVER, []()
-    {
-      static bool _state = false;
-      _state = !_state;
-      digitalWrite(ledPins[0], _state); });
+Task task_Cmd(100, TASK_FOREVER, []()
+              {
 
-Task task_Cmd(
-    100, TASK_FOREVER, []()
-    {
+#ifdef MEGA2560
+
+    if(Serial1.available() > 0) {
+        String _strLine = Serial1.readStringUntil('\n');
+        _strLine.trim();
+        Serial1.println(_strLine);
+    }
+#endif
+
     if (Serial.available() > 0)
     {
         String _strLine = Serial.readStringUntil('\n');
         _strLine.trim();
-        // Serial.println(_strLine);
-        g_MainParser.parse(_strLine);
+        Serial.println(parseCmd(_strLine));
 
-        if(g_MainParser.getTokenCount() > 0) {
-          String cmd = g_MainParser.getToken(0);
-          String _result = "";
+    } }, &g_ts, true);
 
-          if(cmd=="help") {
-            _result = strTitleMsg + "\n";
-            _result += strHelpMsg;
-          }
-          else if(cmd=="reboot") {
-            Serial.println("rebooting...");
-            delay(1000);
-            ESP.restart();
-          }
-          else if(cmd=="stop_blink") {
-            task_Blink.disable();
-            digitalWrite(ledPins[0], LOW);
-          }
-          else if(cmd=="start_blink") {
-            task_Blink.enable();
-          }
-          else {
-            _result = "unknown command";
-          }
+void startBlink()
+{
+  tLedBlinker.enable();
+}
 
-          Serial.println(_result + "\nOK\n");
-        }
-    } });
+void stopBlink()
+{
+  tLedBlinker.disable();
+}
+
+void ledOn(int pinIndex)
+{
+  if (pinIndex == -1)
+  {
+    for (int i = 0; i < ledPins.size(); i++)
+    {
+      int pin = ledPins[i];
+      digitalWrite(pin, HIGH); // turn the LED on (HIGH is the voltage level)
+    }
+  }
+  else
+  {
+    int pin = ledPins[pinIndex];
+    digitalWrite(pin, HIGH); // turn the LED on (HIGH is the voltage level)
+  }
+}
+
+void ledOff(int pinIndex)
+{
+  if (pinIndex == -1)
+  {
+    for (int i = 0; i < ledPins.size(); i++)
+    {
+      int pin = ledPins[i];
+      digitalWrite(pin, LOW); // turn the LED on (HIGH is the voltage level)
+    }
+  }
+  else
+  {
+    int pin = ledPins[pinIndex];
+    digitalWrite(pin, LOW); // turn the LED on (HIGH is the voltage level)
+  }
+}
 
 //------------------------------------------------ ble start
 BLEServer *pServer = NULL;
@@ -115,78 +145,104 @@ class MyCharateristicCallbacks : public BLECharacteristicCallbacks
   void onWrite(BLECharacteristic *pCharacteristic)
   {
     Serial.println("Characteristic write event");
-    std::string value = pCharacteristic->getValue();
 
-    if (value.length() >= sizeof(S_Ble_Header_Req_Packet_V1))
+    if (systemMode == 0)
     {
-      S_Ble_Header_Req_Packet_V1 *packet = (S_Ble_Header_Req_Packet_V1 *)value.data();
+      // ascii mode
+      std::string value = pCharacteristic->getValue();
 
-      if (packet->checkCode == CHECK_CODE)
+      if (value.length() > 0) {
+            Serial.println("Received BLE command:");
+            Serial.println(value.c_str());
+
+            String response = parseCmd(String(value.c_str()));
+            Serial.println("Response:");
+            Serial.println(response);
+
+            // printMtuSize(pServer);
+
+            // BLE를 통해 응답 전송
+            pCharacteristic->setValue(response.c_str());
+            pCharacteristic->notify();
+        }
+    }
+    else
+    {
+      //binary mode
+
+      std::string value = pCharacteristic->getValue();
+
+      if (value.length() >= sizeof(S_Ble_Header_Req_Packet_V1))
       {
-        switch (packet->cmd)
+        S_Ble_Header_Req_Packet_V1 *packet = (S_Ble_Header_Req_Packet_V1 *)value.data();
+
+        if (packet->checkCode == CHECK_CODE)
         {
-        case 0x01:
-        {
-          S_Ble_Header_Res_Packet_V1 resPacket;
-          resPacket.checkCode = CHECK_CODE;
-          resPacket.cmd = 0x01;
-          resPacket.parm[0] = packet->parm[0];
+          switch (packet->cmd)
+          {
+          case 0x01:
+          {
+            S_Ble_Header_Res_Packet_V1 resPacket;
+            resPacket.checkCode = CHECK_CODE;
+            resPacket.cmd = 0x01;
+            resPacket.parm[0] = packet->parm[0];
 
-          Serial.println("Echoing first parameter:");
-          Serial.println(packet->parm[0], HEX);
+            Serial.println("Echoing first parameter:");
+            Serial.println(packet->parm[0], HEX);
 
-          pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
-        }
-
-        break;
-        case 0x02:
-        {
-          int nPinIndex = packet->parm[0];
-
-          digitalWrite(ledPins[nPinIndex], HIGH);
-        }
-
-          // for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++)
-          // {
-          //     digitalWrite(ledPins[i], HIGH);
-          // }
-          Serial.printf("LEDs ON: %d\n", packet->parm[0]);
-          break;
-        case 0x03:
-        {
-          int nPinIndex = packet->parm[0];
-
-          digitalWrite(ledPins[nPinIndex], LOW);
-        }
-          Serial.printf("LEDs OFF: %d\n", packet->parm[0]);
+            pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
+          }
 
           break;
-        case 0x04:
-        {
-          S_Ble_Header_Res_Packet_V1 resPacket;
-          resPacket.checkCode = CHECK_CODE;
-          resPacket.cmd = 0x04;
-          resPacket.parm[0] = 1;
-          resPacket.parm[1] = 2;
-          resPacket.parm[2] = 3;
-          // notify the client of the new value
-          pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
-          // delay(500);
-          pCharacteristic->notify();
-          break;
+          case 0x02:
+          {
+            int nPinIndex = packet->parm[0];
+
+            digitalWrite(ledPins[nPinIndex], HIGH);
+          }
+
+            // for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++)
+            // {
+            //     digitalWrite(ledPins[i], HIGH);
+            // }
+            Serial.printf("LEDs ON: %d\n", packet->parm[0]);
+            break;
+          case 0x03:
+          {
+            int nPinIndex = packet->parm[0];
+
+            digitalWrite(ledPins[nPinIndex], LOW);
+          }
+            Serial.printf("LEDs OFF: %d\n", packet->parm[0]);
+
+            break;
+          case 0x04:
+          {
+            S_Ble_Header_Res_Packet_V1 resPacket;
+            resPacket.checkCode = CHECK_CODE;
+            resPacket.cmd = 0x04;
+            resPacket.parm[0] = 1;
+            resPacket.parm[1] = 2;
+            resPacket.parm[2] = 3;
+            // notify the client of the new value
+            pCharacteristic->setValue((uint8_t *)&resPacket, sizeof(resPacket));
+            // delay(500);
+            pCharacteristic->notify();
+            break;
+          }
+          default:
+            Serial.println("Unknown command");
+          }
         }
-        default:
-          Serial.println("Unknown command");
+        else
+        {
+          Serial.println("Invalid check code");
         }
       }
       else
       {
-        Serial.println("Invalid check code");
+        Serial.println("Received value too short");
       }
-    }
-    else
-    {
-      Serial.println("Received value too short");
     }
   }
 };
@@ -195,7 +251,10 @@ class MyServerCallbacks : public BLEServerCallbacks
 {
   void onConnect(BLEServer *pServer)
   {
-    task_Blink.disable();
+    // task_Blink.disable();
+
+    stopBlink();
+
     digitalWrite(ledPins[0], LOW);
     deviceConnected = true;
 
@@ -207,7 +266,8 @@ class MyServerCallbacks : public BLEServerCallbacks
   {
     deviceConnected = false;
 
-    task_Blink.enable();
+    // task_Blink.enable();
+    startBlink();
 
     Serial.println("Client disconnected");
     pServer->getAdvertising()->start(); // 클라이언트가 연결 해제되면 광고 다시 시작
@@ -219,36 +279,12 @@ class MyServerCallbacks : public BLEServerCallbacks
 void setup()
 {
 
-  Serial.begin(115200);
-  delay(500);
-
-  String chipId = String((uint32_t)ESP.getEfuseMac(), HEX);
-  chipId.toUpperCase(); // 대문자로 변환
-
-  Serial.printf("now start , chipId:%s\n", chipId.c_str());
-
-  // io setup
-  for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++)
-  {
-    pinMode(ledPins[i], OUTPUT);
-    digitalWrite(ledPins[i], LOW);
-  }
-
-  for (int i = 0; i < sizeof(buttonPins) / sizeof(buttonPins[0]); i++)
-  {
-    pinMode(buttonPins[i], INPUT_PULLUP); // LOW: button pressed
-  }
-
-  for (int i = 0; i < sizeof(analogPins) / sizeof(analogPins[0]); i++)
-  {
-    pinMode(analogPins[i], INPUT);
-  }
+  String strDeviceName = "ESP32_BLE" + String(getChipID().c_str());
 
   /////////////////////////////////////////////////////////
   // ble setup ---------------------------------------------
   //  Create the BLE Device
-  BLEDevice::init("ESP32_BLE" + std::string(getChipID().c_str()));
-  // BLEDevice::init("MyESP32");
+  BLEDevice::init(strDeviceName.c_str());
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
@@ -278,19 +314,55 @@ void setup()
   //------------------------------------------------ble end
   /////////////////////////////////////////////////////////
 
-  // task setup
-  runner.init();
-  runner.addTask(task_Cmd);
-  runner.addTask(task_Blink);
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
 
-  task_Cmd.enable();
-  task_Blink.enable();
+  Serial.begin(115200);
 
-  delay(1000);
-  Serial.println(strTitleMsg);
+  g_config.load();
+
+  delay(500);
+
+  systemMode = g_config.get<int>("mode", 0);
+
+  Serial.println("system mode : " + String(systemMode));
+
+  JsonDocument _doc_ledpins;
+  g_config.getArray("ledpin", _doc_ledpins);
+
+  JsonArray ledpin = _doc_ledpins.as<JsonArray>();
+
+  for (JsonVariant v : ledpin)
+  {
+
+    int pin = v.as<int>();
+
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
+    ledPins.push_back(pin);
+
+    Serial.print("led pin : " + String(pin) + "\n");
+  }
+  Serial.println(":-]");
+  Serial.println("Serial connected");
+  Serial.println("LED_BUILTIN: " + String(LED_BUILTIN));
+  Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
+
+  // // print device name and info
+  Serial.println("Ble Ready , Device name: " + strDeviceName);
+
+  startBlink();
+
+#ifdef ESP8266
+  Serial.println("ESP8266");
+#endif
+
+  g_ts.startNow();
 }
 
 void loop()
 {
-  runner.execute();
+  // runner.execute();
+  g_ts.execute();
 }
