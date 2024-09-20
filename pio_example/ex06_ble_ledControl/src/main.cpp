@@ -281,6 +281,45 @@ void setup()
 
   String strDeviceName = "ESP32_BLE" + String(getChipID().c_str());
 
+  //------------------------------------------------ble end
+  /////////////////////////////////////////////////////////
+
+  delay(500); // service 시작 후 딜레이 필요
+
+  Serial.begin(115200);
+
+  g_config.load();
+
+  systemMode = g_config.get<int>("mode", 0);
+
+  Serial.println("system mode : " + String(systemMode));
+
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
+
+  JsonDocument _doc_ledpins;
+  g_config.getArray("ledpin", _doc_ledpins);
+
+  JsonArray ledpin = _doc_ledpins.as<JsonArray>();
+
+  for (JsonVariant v : ledpin)
+  {
+
+    int pin = v.as<int>();
+
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
+    ledPins.push_back(pin);
+
+    Serial.print("led pin : " + String(pin) + "\n");
+  }
+  Serial.println(":-]");
+  Serial.println("Serial connected");
+  Serial.println("LED_BUILTIN: " + String(LED_BUILTIN));
+  Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
+
+  // // print device name and info
   /////////////////////////////////////////////////////////
   // ble setup ---------------------------------------------
   //  Create the BLE Device
@@ -311,45 +350,6 @@ void setup()
   pServer->getAdvertising()->start();
   Serial.printf("Waiting a client connection to notify...%s \n", getChipID().c_str());
 
-  //------------------------------------------------ble end
-  /////////////////////////////////////////////////////////
-
-  // initialize digital pin LED_BUILTIN as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
-
-  Serial.begin(115200);
-
-  g_config.load();
-
-  delay(500);
-
-  systemMode = g_config.get<int>("mode", 0);
-
-  Serial.println("system mode : " + String(systemMode));
-
-  JsonDocument _doc_ledpins;
-  g_config.getArray("ledpin", _doc_ledpins);
-
-  JsonArray ledpin = _doc_ledpins.as<JsonArray>();
-
-  for (JsonVariant v : ledpin)
-  {
-
-    int pin = v.as<int>();
-
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
-    ledPins.push_back(pin);
-
-    Serial.print("led pin : " + String(pin) + "\n");
-  }
-  Serial.println(":-]");
-  Serial.println("Serial connected");
-  Serial.println("LED_BUILTIN: " + String(LED_BUILTIN));
-  Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
-
-  // // print device name and info
   Serial.println("Ble Ready , Device name: " + strDeviceName);
 
   startBlink();
