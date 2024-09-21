@@ -11,7 +11,7 @@
 class Config
 {
 public:
-    int version = 2;
+    const static int SystemVersion = 3;
 
 #ifdef ESP8266
     static const size_t EEPROM_SIZE = 1024;
@@ -71,17 +71,6 @@ public:
         {
             jsonDoc = String(buffer);
         }
-
-        // if(!hasKey("password"))
-        // {
-        //     set("password", "1111");
-        // }
-
-        // if(!hasKey("debounceDelay"))
-        // {
-        //     set("debounceDelay", 50);
-        // }
-
     }
 
     void save()
@@ -141,7 +130,8 @@ public:
             return defaultValue;
         }
 
-        if (!doc.containsKey(key))
+        // Use the new API to check if the key exists and has the correct type
+        if (!doc[key].is<T>())
         {
             return defaultValue;
         }
@@ -161,7 +151,8 @@ public:
             return false;
         }
 
-        return doc.containsKey(key);
+        // return doc.containsKey(key);
+        return doc[key].is<JsonVariant>(); // 원하는 타입으로 변경 가능 (예: is<int>(), is<char*>(), is<String>(), 등)
     }
 
     void getArray(const char *key, JsonDocument &_doc) const
