@@ -20,7 +20,7 @@ The UUIDs for the service and characteristic are defined in the `ble_led_control
 **setup led pins** : Setup the pins for the LED  
 
 ```txt
-config setA ledpin [0,2,12,15,4,13,14,16,17] 
+config setA ledpin [2,12,15,4,13,14,16,17,18] 
 config save
 reboot
 ```

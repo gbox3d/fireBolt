@@ -16,7 +16,7 @@ from optionDialog import OptionDialog
 # 업로드 스레드 클래스 임포트
 from uploadThread import FirmwareUploadThread  # uploadThread.py에서 클래스 임포트
 
-__VERSION__ = "0.7.9"
+__VERSION__ = "0.8.0"
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -42,6 +42,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         ### end of Serial Terminal UI
         
+        ### Egcs Setup UI
+        self.btnEgcsSave.clicked.connect(self.save_egcs_setup)
+        self.btnEgcsLoad.clicked.connect(self.load_egcs_setup)
+        self.cbSystemMode.addItems(["BLE","WIFI","ESPNOW"])
+        
         # Firmware upload UI
         # self.firmware_file = ""
         self.folder_path = ""
@@ -63,6 +68,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btnBleTCSave.clicked.connect(self.save_ble_tc)
         
         ### end of BleTC UI
+        
+    @Slot()
+    def save_egcs_setup(self):
+        """Save the EGCS setup to a file."""
+        # Get the values from the line edits
+        
+        try :
+            egcs_setup = {
+                "systemMode": self.cbSystemMode.currentIndex(),
+                "ssid": self.le_ssid.text(),
+                "password": self.lePasswd.text(),
+                "trigger_delay" : int(self.leTriggerDelay.text()),
+                "remoteHost" : self.leRemoteHost.text()
+            }
+            
+            if  "systemMode" in egcs_setup and egcs_setup['systemMode'] is not None:
+                self._sendSerialData(f"config set systemMode {egcs_setup['systemMode']}\n")
+            if "ssid" in egcs_setup and egcs_setup['ssid'] is not None:
+                self._sendSerialData(f"config set ssid {egcs_setup['ssid']}\n")
+            if "password" in egcs_setup and egcs_setup['password'] is not None:
+                self._sendSerialData(f"config set password {egcs_setup['password']}\n")
+            if "trigger_delay" in egcs_setup and egcs_setup['trigger_delay'] is not None:
+                self._sendSerialData(f"config set trigger_delay {egcs_setup['trigger_delay']}\n")
+            if "remoteHost" in egcs_setup and egcs_setup['remoteHost'] is not None and isinstance(egcs_setup['remoteHost'], str):
+                self._sendSerialData(f"config set remoteHost {egcs_setup['remoteHost']}\n")
+                
+            self._sendSerialData("config save\n")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to save configuration: {e}")
+        
+    def load_egcs_setup(self):
+        """Load the EGCS setup from a file."""
+        self._sendSerialData("config dump\n")
     
     @Slot()
     def show_about_dialog(self):
@@ -168,14 +206,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, "Warning", "Please select a serial port.")
 
 
-    def _sendSerialData(self,data):
+    def _sendSerialData(self, data):
         if self.serial_thread and self.serial_thread.serial_port.is_open:
             if data:
-                self.serial_thread.serial_port.write(data.encode('utf-8'))
+                try:
+                    self.serial_thread.serial_port.write(data.encode('utf-8'))
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Failed to send data: {e}")
             else:
                 QMessageBox.warning(self, "Warning", "Please enter data to send.")
         else:
             QMessageBox.warning(self, "Warning", "No serial port connected.")
+
     
     @Slot()
     def send_data(self):
@@ -195,7 +237,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot(str)
     def update_received_data(self, data):
         """Update the QTextEdit with received data."""
-        self.teRecvData.append(data)
+        
         
         #현제 활성화된 탭의 이름을 출력
         # print(self.tabWidget.currentWidget().objectName())
@@ -222,11 +264,49 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except json.JSONDecodeError:
                 print("유효한 JSON 데이터가 아닙니다.")
         elif self.tabWidget.currentWidget().objectName() == "tabTerminal":
-            pass
+            self.teRecvData.append(data)
+            
         elif self.tabWidget.currentWidget().objectName() == "tabEgcsSetup":
-            pass
-        
-        
+            try :
+                json_data = json.loads(data)  # JSON 데이터를 파싱
+                if "ms" in json_data :
+                    if isinstance(json_data["ms"], str):
+                        strResult = json_data["ms"]
+                        if strResult == "config saved":
+                            QMessageBox.information(self, "Success", "Configuration saved successfully!")
+                        else :
+                            print(strResult)
+                    elif isinstance(json_data["ms"], dict):
+                        _config_json = json_data["ms"]
+
+                        # "ssid" 키가 존재하고 값이 유효한지 확인
+                        if "ssid" in _config_json :
+                            self.le_ssid.setText(_config_json["ssid"])
+
+                        # "password" 키가 존재하고 값이 유효한지 확인
+                        if "password" in _config_json:
+                            self.lePasswd.setText(_config_json["password"])
+
+                        # "systemMode" 키가 존재하고 값이 정수인지 확인
+                        if "systemMode" in _config_json:
+                            if isinstance(_config_json["systemMode"], str):
+                                self.cbSystemMode.setCurrentIndex(int(_config_json["systemMode"]))
+                            else :
+                                self.cbSystemMode.setCurrentIndex(_config_json["systemMode"])
+
+                        # "trigger_delay" 키가 존재하고 값이 정수인지 확인 (setText는 문자열을 받으므로 str로 변환)
+                        if "trigger_delay" in _config_json:
+                            if isinstance(_config_json["trigger_delay"], int):
+                                self.leTriggerDelay.setText(str(_config_json["trigger_delay"]))
+                            else :
+                                self.leTriggerDelay.setText(_config_json["trigger_delay"])
+
+                        # "remoteHost" 키가 존재하고 값이 유효한지 확인
+                        if "remoteHost" in _config_json and isinstance(_config_json["remoteHost"], str):
+                            self.leRemoteHost.setText(_config_json["remoteHost"])
+                        
+            except json.JSONDecodeError:
+                print("유효한 JSON 데이터가 아닙니다.")
 
     @Slot()
     def open_option_dialog(self):
