@@ -13,7 +13,7 @@
 class Config
 {
 public:
-    const static int SystemVersion = 3;
+    const static int SystemVersion = 4;
 
 #ifdef ESP8266
     static const size_t EEPROM_SIZE = 1024;
