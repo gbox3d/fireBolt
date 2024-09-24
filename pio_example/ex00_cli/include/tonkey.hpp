@@ -27,8 +27,8 @@ public:
         mTokenCount = StringCount;
     }
 
-    inline int getTokenCount() { return mTokenCount; }
-    inline String getToken(int _index) { return mTokens[_index]; }
+    inline int getTokenCount() const { return mTokenCount; }
+    inline String getToken(int _index) const { return mTokens[_index]; }
 };
 
 #endif // TONKEY_HPP
