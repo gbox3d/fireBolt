@@ -1,0 +1,17 @@
+### gpio hello
+http://localhost:8001/
+
+### led on
+http://localhost:8001/api/gpio?led=0&state=1
+
+### pwm 
+http://localhost:8001/api/gpio?pwm=2&state=20
+
+### pwm 
+http://localhost:8001/api/gpio?pwm=2
+
+### led off
+http://localhost:8001/api/gpio?led=1&state=0
+
+### pwm 
+http://localhost:8001/api/gpio?pwm=2&state=50
