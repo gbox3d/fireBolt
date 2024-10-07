@@ -79,9 +79,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 "systemMode": self.cbSystemMode.currentIndex(),
                 "ssid": self.le_ssid.text(),
                 "password": self.lePasswd.text(),
-                "trigger_delay" : int(self.leTriggerDelay.text()),
+                # "trigger_delay" : int(self.leTriggerDelay.text()),
                 "remoteHost" : self.leRemoteHost.text()
             }
+            
+            # trigger_delay 값이 공백이 아니면 int로 변환하여 추가
+            trigger_delay_text = self.leTriggerDelay.text()
+            if trigger_delay_text.strip():  # 공백 제거 후 값이 있는지 확인
+                egcs_setup["trigger_delay"] = int(trigger_delay_text)
             
             if  "systemMode" in egcs_setup and egcs_setup['systemMode'] is not None:
                 self._sendSerialData(f"config set systemMode {egcs_setup['systemMode']}\n")
@@ -149,8 +154,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         #for loop dict
         for port in ports:
-            self.cbPortList.addItem(port['description'],port)
-            # print(ports[key])
+            self.cbPortList.addItem(f"{port['device']}[{port['description']}]",port)
+            print(port)
         
         # for port in ports:
         #     print(port.device)
@@ -306,7 +311,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             self.leRemoteHost.setText(_config_json["remoteHost"])
                         
             except json.JSONDecodeError:
-                print("유효한 JSON 데이터가 아닙니다.")
+                print("유효한 JSON 데이터가 아닙니다." , data)
 
     @Slot()
     def open_option_dialog(self):
