@@ -37,46 +37,46 @@ export default function ({ dbclient }) {
         const query = req.body;
         query.rdate = moment().format('YYYY-MM-DD HH:mm:ss');
         query.address = req.ip;
-    
+
         try {
-          const result = await dbclient
-            .db(process.env.DB_NAME)
-            .collection(collectionName)
-            .insertOne(query);
-          res.json({
-            r: 'ok',
-            data: {
-              sid: result.insertedId,
-              rdate: query.rdate,
-            },
-          });
+            const result = await dbclient
+                .db(process.env.DB_NAME)
+                .collection(collectionName)
+                .insertOne(query);
+            res.json({
+                r: 'ok',
+                data: {
+                    sid: result.insertedId,
+                    rdate: query.rdate,
+                },
+            });
         } catch (err) {
-          console.log(err);
-          res.json({ r: 'fail', info: err });
+            console.log(err);
+            res.json({ r: 'fail', info: err });
         }
-      });
-    
+    });
+
     //로그 리스트
     router.route('/list').post(async (req, res) => {
         let query = req.body;
         let skip = (query.page - 1) * query.unit || 0;
         let limit = query.unit || 10;
-    
+
         try {
             // 전체 로그 개수 조회
             const count = await dbclient.db(process.env.DB_NAME).collection(collectionName).countDocuments(query.option);
-    
+
             const lastPage = Math.ceil(count / limit);
-    
+
             // 전체 페이지 수 계산
             const pageCount = Math.ceil(count / limit);
-    
+
             // 현재 페이지가 전체 페이지 수보다 큰 경우 마지막 페이지에 해당하는 리스트 조회
             if (query.page > pageCount && pageCount > 0) {
                 // query.page = pageCount;
                 skip = (pageCount - 1) * query.unit || 0;
             }
-    
+
             //get list array
             const _list = await dbclient.db(process.env.DB_NAME).collection(collectionName)
                 .find(query.option,
@@ -85,14 +85,14 @@ export default function ({ dbclient }) {
                             title: 1,
                             _id: 1,
                             rdate: 1,
-                            tags : 1,
+                            tags: 1,
                         }
                     })
                 .sort({ rdate: -1 })
                 .skip(parseInt(skip))
                 .limit(parseInt(limit))
                 .toArray();
-    
+
             console.log(`find count ${_list.length} ok`);
             res.json({ r: 'ok', list: _list, count: count, lastPage: lastPage });
         } catch (err) {
@@ -100,12 +100,12 @@ export default function ({ dbclient }) {
             res.json({ r: 'fail', data: err });
         }
     });
-    
+
     //detail
     router.route('/detail').post(async (req, res) => {
         let query = req.body;
         console.log(`/detail , id : ${query.id}`);
-    
+
         try {
             const result = await dbclient.db(process.env.DB_NAME)
                 .collection(collectionName)
@@ -113,7 +113,7 @@ export default function ({ dbclient }) {
                     _id: new ObjectId(query.id)
                     // creator: req.decoded.userId
                 });
-    
+
             console.log(result);
             res.json({ r: 'ok', data: result });
         } catch (err) {
@@ -121,7 +121,8 @@ export default function ({ dbclient }) {
             res.json({ r: 'fail', data: err });
         }
     });
-    
+
+    //delete
     router.route('/delete').post(async (req, res) => {
         // console.log(req.body)
         let query = req.body
@@ -129,7 +130,7 @@ export default function ({ dbclient }) {
         // console.log(`/clear , sid : ${query.id}`)
         console.log(`/clear , query : ${JSON.stringify(query)}`)
 
-        if(query._id){
+        if (query._id) {
             query._id = new ObjectId(query._id)
         }
 
@@ -146,6 +147,56 @@ export default function ({ dbclient }) {
         catch (err) {
             console.log(err)
             res.json({ r: 'fail', info: err })
+        }
+    });
+
+    //update
+    /**
+     * Example usage:
+    
+POST http://localhost:21037/api/logs/detail
+Content-Type: application/json
+
+{
+  "id": "67050c21aaab604d05e69d08",
+    "update": {
+        "title": "title update",
+        "content": "content update"
+    }
+}
+     */
+
+    router.route('/update').post(async (req, res) => {
+        let query = req.body;
+        console.log(`/update , id : ${query.id}`);
+
+        // id와 update 데이터가 제대로 왔는지 확인
+        if (!query.id || !query.update) {
+            return res.json({ r: 'fail', info: 'Invalid request: missing id or update data' });
+        }
+
+        // id를 ObjectId로 변환
+        let objectId;
+        try {
+            objectId = new ObjectId(query.id);
+        } catch (err) {
+            return res.json({ r: 'fail', info: 'Invalid id format' });
+        }
+
+        try {
+            // 데이터베이스 업데이트
+            const result = await dbclient.db(process.env.DB_NAME)
+                .collection(collectionName)
+                .updateOne(
+                    { _id: objectId },
+                    { $set: query.update }
+                );
+
+            console.log(`update count ${result.modifiedCount} ok`);
+            res.json({ r: 'ok', data: `update count : ${result.modifiedCount}` });
+        } catch (err) {
+            console.log(err);
+            res.json({ r: 'fail', info: err });
         }
     });
 

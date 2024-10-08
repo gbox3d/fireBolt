@@ -1,8 +1,8 @@
 ### help
-GET http://localhost:22035/api/logs
+GET http://localhost:21037/api/logs
 
 ### insert
-POST http://localhost:22035/api/logs/insert
+POST http://localhost:21037/api/logs/insert
 Content-Type: application/json
 
 {
@@ -14,7 +14,7 @@ Content-Type: application/json
 }
 
 ### list
-POST http://localhost:22035/api/logs/list
+POST http://localhost:21037/api/logs/list
 Content-Type: application/json
 
 {
@@ -23,18 +23,32 @@ Content-Type: application/json
 }
 
 ### detail
-POST http://localhost:22035/api/logs/detail
+POST http://localhost:21037/api/logs/detail
 Content-Type: application/json
 
 {
-  "id": "6450d1abe63ecfc4d2a79a46"
+  "id": "67050c21aaab604d05e69d08"
 }
 
 
 ### delete
-POST http://localhost:22035/api/logs/delete
+POST http://localhost:21037/api/logs/delete
 Content-Type: application/json
 
 {
   "_id": "6450d61f9a2470789cc44403"
+}
+
+
+### update
+POST http://localhost:21037/api/logs/update
+Content-Type: application/json
+
+{
+  "id": "67050c21aaab604d05e69d08",
+    "update": {
+        "message": "message update",
+        "title": "title update",
+        "content": "content update"
+    }
 }
