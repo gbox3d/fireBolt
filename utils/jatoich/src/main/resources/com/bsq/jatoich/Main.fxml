@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<Pane id="rootPanel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="480.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bsq.jatoich.AppController">
+   <children>
+      <ImageView fitHeight="74.0" fitWidth="49.0" layoutX="577.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@icon.png" />
+         </image>
+      </ImageView>
+      <Button fx:id="btnScan" layoutX="390.0" layoutY="47.0" mnemonicParsing="false" onAction="#OnClickScanBtn" text="Scan" />
+      <Label layoutX="14.0" layoutY="47.0" prefHeight="27.0" prefWidth="65.0" text="Port" />
+      <Button fx:id="btnConnect" layoutX="451.0" layoutY="47.0" mnemonicParsing="false" onAction="#OnClickConnectBtn" text="Connect" />
+      <ComboBox fx:id="cbPortList" layoutX="91.0" layoutY="47.0" prefHeight="27.0" prefWidth="282.0" />
+      <Pane layoutY="94.0" prefHeight="386.0" prefWidth="640.0">
+         <children>
+            <ScrollPane layoutX="6.0" layoutY="14.0" prefHeight="136.0" prefViewportHeight="131.0" prefViewportWidth="627.0" prefWidth="629.0">
+               <content>
+                  <TextArea fx:id="taOutput" layoutX="7.0" layoutY="8.0" prefHeight="131.0" prefWidth="627.0" />
+               </content>
+            </ScrollPane>
+            <TextField fx:id="edtCommand" layoutX="14.0" layoutY="166.0" onAction="#OnCommandEnter" prefHeight="27.0" prefWidth="439.0" />
+            <Button fx:id="btnSend" layoutX="461.0" layoutY="166.0" mnemonicParsing="false" onAction="#OnClickSendBtn" text="Send" />
+            <Button fx:id="btnClear" layoutX="514.0" layoutY="166.0" mnemonicParsing="false" onAction="#OnClickClearBtn" text="Clear" />
+            <TabPane layoutX="14.0" layoutY="199.0" prefHeight="173.0" prefWidth="612.0" tabClosingPolicy="UNAVAILABLE">
+              <tabs>
+                <Tab text="Basic">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <Button fx:id="btnDump" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#OnClickDumpBtn" text="Dump" />
+                              <Button fx:id="btnConfSave" layoutX="14.0" layoutY="57.0" mnemonicParsing="false" onAction="#OnClickConfSaveBtn" text="Conf Save" />
+                              <Button fx:id="btnConfLoad" layoutX="100.0" layoutY="57.0" mnemonicParsing="false" onAction="#OnClickConfLoadBtn" text="Conf Load" />
+                              <Button fx:id="btnReboot" layoutX="74.0" layoutY="14.0" mnemonicParsing="false" onAction="#OnClickRebootBtn" text="Reboot" />
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </Tab>
+                <Tab onSelectionChanged="#OnSelectWifiTab" text="wifi">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <TextField fx:id="edtWifiSSID" layoutX="65.0" layoutY="14.0" />
+                              <TextField fx:id="edtWifiPasswd" layoutX="65.0" layoutY="57.0" />
+                              <Label layoutX="14.0" layoutY="19.0" text="ssid" />
+                              <Label layoutX="14.0" layoutY="62.0" text="passwd" />
+                              <Button layoutX="180.0" layoutY="99.0" mnemonicParsing="false" onAction="#OnClickWifiSetBtn" text="Set" />
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </Tab>
+                  <Tab onSelectionChanged="#OnSelecRemoteTab" text="Remote">
+                    <content>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <Label layoutX="34.0" layoutY="29.0" text="Host" />
+                              <TextField fx:id="edRemoteHost" layoutX="84.0" layoutY="24.0" />
+                              <Label layoutX="34.0" layoutY="62.0" text="Port" />
+                              <TextField fx:id="edRemotePort" layoutX="84.0" layoutY="57.0" />
+                              <Button fx:id="btnRemoteInfoSet" layoutX="535.0" layoutY="99.0" mnemonicParsing="false" onAction="#onClickRemoteSetBtn" text="Set" />
+                              <Button fx:id="btnRemoteInfoRefresh" layoutX="461.0" layoutY="99.0" mnemonicParsing="false" onAction="#onClickRefreshBtn" text="Refresh" />
+                           </children>
+                        </AnchorPane>
+                    </content>
+                  </Tab>
+                  <Tab onSelectionChanged="#OnSelectDEviceTab" text="device">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <Button layoutX="189.0" layoutY="99.0" mnemonicParsing="false" onAction="#OnClickDeviceSetBtn" prefHeight="27.0" prefWidth="49.0" text="Set" />
+                              <Label layoutX="14.0" layoutY="15.0" text="Dev ID : " />
+                              <TextField fx:id="edtDeviceID" layoutX="77.0" layoutY="10.0" />
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+                  <Tab onSelectionChanged="#OnSelectAboutTab" text="About">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                           <children>
+                              <Label layoutX="24.0" layoutY="21.0" prefHeight="19.0" prefWidth="32.0" text="OS: " />
+                              <Label fx:id="txAboutOs" layoutX="103.0" layoutY="21.0" prefHeight="19.0" prefWidth="140.0" />
+                              <Label fx:id="txAboutChipID" layoutX="103.0" layoutY="51.0" prefHeight="19.0" prefWidth="140.0" />
+                              <Label layoutX="24.0" layoutY="51.0" prefHeight="19.0" prefWidth="46.0" text="chip ID" />
+                              <Label layoutX="24.0" layoutY="77.0" prefHeight="19.0" prefWidth="46.0" text="app" />
+                              <Label fx:id="txAboutApp" layoutX="87.0" layoutY="77.0" prefHeight="19.0" prefWidth="140.0" />
+                              <Label layoutX="24.0" layoutY="105.0" prefHeight="19.0" prefWidth="80.0" text="Firm Version" />
+                              <Label fx:id="txAboutFWVersion" layoutX="121.0" layoutY="105.0" prefHeight="19.0" prefWidth="140.0" />
+                           </children>
+                        </AnchorPane>
+                     </content>
+                  </Tab>
+              </tabs>
+            </TabPane>
+            <Button layoutX="567.0" layoutY="166.0" mnemonicParsing="false" onAction="#OnClickFlushBtn" text="Flush" />
+         </children>
+      </Pane>
+   </children>
+</Pane>

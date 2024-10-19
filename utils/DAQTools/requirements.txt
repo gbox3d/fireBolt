@@ -1,0 +1,7 @@
+# requirements.txt
+
+click==8.1.7
+colorama==0.4.6
+numpy==2.0.1
+pyqtgraph==0.13.7
+python-dotenv==1.0.1

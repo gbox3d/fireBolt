@@ -1,0 +1,72 @@
+### hello rest 
+GET http://localhost:8080/api/v1
+Content-Type: application/octet-stream
+auth-token : 5874
+
+### file list
+GET http://localhost:8080/api/v1/filelist?cwd=./
+auth-token : 5874
+
+### Post test 바이너리 (raw) 바디파서
+POST http://localhost:8080/api/v1/write
+write-name : test.bin
+write-directory : ./uploads
+Content-Type: application/octet-stream
+auth-token : 5874
+
+hello post body express
+
+### Post write text ,텍스프 바디파서 
+POST http://localhost:8080/api/v1/write
+write-name : test.txt
+write-directory : ./uploads
+Content-Type: text/plain
+auth-token : 5874
+
+hello express post body text parser 
+
+### Post read file , json 바디 파서 
+POST http://localhost:8080/api/v1/read
+Content-Type: application/json
+auth-token : 5874
+
+{"path":"./uploads","file":"test.txt"}
+
+### hello bolt
+GET http://localhost:8080/api/v1/bolt
+Content-Type: text/plain
+auth-token : 5874
+
+### get bolt list
+GET http://localhost:8080/api/v1/bolt/device
+Content-Type: text/plain
+auth-token : 5874
+
+### send bolt command read analog 0
+POST http://localhost:8080/api/v1/bolt/cmd
+Content-Type: application/x-www-form-urlencoded
+auth-token: 5874
+
+deviceid=BOLT-F81CB2B0&cmd=analog 0
+
+### send bolt command wtring digital 0
+POST http://localhost:8080/api/v1/bolt/cmd
+Content-Type: application/x-www-form-urlencoded
+auth-token: 5874
+
+deviceid=BOLT-F81CB2B0&cmd=led 0 1
+
+### send bolt command read digital 0
+POST http://localhost:8080/api/v1/bolt/cmd
+Content-Type: application/x-www-form-urlencoded
+auth-token: 5874
+
+deviceid=BOLT-F81CB2B0&cmd=button 0
+
+### send bolt command dht11
+POST http://localhost:8080/api/v1/bolt/cmd
+Content-Type: application/x-www-form-urlencoded
+auth-token: 5874
+
+deviceid=BOLT-F81CB2B0&cmd=dht11
+

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<Pane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="480.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bsq.udpterminal.Appcontroller">
+   <children>
+      <ChoiceBox fx:id="cbDevices" layoutX="14.0" layoutY="32.0" prefHeight="27.0" prefWidth="458.0" />
+      <TextArea fx:id="TAOutput" layoutX="14.0" layoutY="78.0" prefHeight="227.0" prefWidth="606.0" />
+      <TextField fx:id="TFCommand" layoutX="14.0" layoutY="322.0" prefHeight="27.0" prefWidth="465.0" />
+      <Button fx:id="btnSend" layoutX="499.0" layoutY="322.0" mnemonicParsing="false" onAction="#onClickSendBtn" prefHeight="27.0" prefWidth="121.0" text="Send" />
+   </children>
+</Pane>
