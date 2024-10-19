@@ -29,6 +29,32 @@ $ npm run dev
 $ npm run start
 ```
 
+pm2 를 사용하여 프로덕션 모드로 실행하려면 다음 명령을 실행하십시오.
+
+```bash
+$ npm run pm2
+```
+
+vscode 디버깅을 사용하여 디버깅 모드로 실행하려면 다음 명령을 실행하십시오.
+
+디랙토리 구조는 workspaceFolder/server 이어야 합니다.  
+
+```json
+{
+            "name": "Degbug FireBoltServer",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"],
+            "cwd": "${workspaceFolder}/server",
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "dev"
+            }
+        }
+```
+
+
 ## API 명세
 
 # Log Management API Documentation
