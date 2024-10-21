@@ -24,6 +24,7 @@ Config g_config;
 
 String g_ApiUrl;
 int g_restCallTerm; // REST API 호출 주기
+String g_LogID;
 
 extern String parseCmd(String _strLine);
 
@@ -82,7 +83,8 @@ Task task_RestCall(10000, TASK_FOREVER, []()
         JsonDocument doc;
 
         // JSON 데이터 추가
-        doc["id"] = "67136f184d4d7e4e6371a943"; //log id
+        // doc["id"] = "67136f184d4d7e4e6371a943"; //log id
+        doc["id"] = g_LogID;
         JsonObject update = doc["update"].to<JsonObject>(); // 명시적으로 JsonObject로 변환
         update["devid"] = getChipID();
         update["temperature"] = temperature;
@@ -117,6 +119,7 @@ Task task_RestCall(10000, TASK_FOREVER, []()
 
 
 #ifdef ESP32
+
 void WiFiEvent(WiFiEvent_t event, arduino_event_info_t info)
 {
     switch (event)
@@ -162,7 +165,6 @@ void WiFiEvent(WiFiEvent_t event, arduino_event_info_t info)
 WiFiEventHandler staConnectedHandler;
 WiFiEventHandler staGotIPHandler;
 WiFiEventHandler staDisconnectedHandler;
-
 #endif
 
 void setup()
@@ -190,10 +192,15 @@ void setup()
 
     g_ApiUrl = g_config.get<String>("api_url", "http://gears001.iptime.org:21037");
     g_restCallTerm = g_config.get<int>("rest_call_term", 10000);
+    g_LogID = g_config.get<String>("log_id", "67136f184d4d7e4e6371a943");
 
     Serial.println("try to connect WiFi.....");
     Serial.printf("ssid: %s\n", ssid.c_str());
     Serial.printf("password: %s\n", password.c_str());
+
+    Serial.printf("API URL: %s\n", g_ApiUrl.c_str());
+    Serial.printf("REST Call Term: %d\n", g_restCallTerm);
+    Serial.printf("Log ID: %s\n", g_LogID.c_str());
 
     #ifdef ESP32
     WiFi.onEvent(WiFiEvent);
