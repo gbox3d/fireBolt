@@ -3,10 +3,14 @@ import dotenv from 'dotenv'
 import fs from 'fs-extra'
 import https from 'https'
 import http from 'http'
-import { version as mongodbVer } from 'mongodb/package.json'
-import { version as expressVer } from 'express/package.json'
-import {version as fireBoltVer} from './package.json'
+// import { version as mongodbVer } from 'mongodb/package.json'
+// import { version as expressVer } from 'express/package.json'
+// import {version as fireBoltVer} from './package.json'
 import { MongoClient } from 'mongodb'
+
+import pkgMongoDB from 'mongodb/package.json' assert { type: 'json' };
+import pkgExpress from 'express/package.json' assert { type: 'json' };
+import pkgFireBolt from './package.json' assert { type: 'json' };
 
 import baseRouter from './routers/base.js'
 import logsRouter from './routers/logs.js'
@@ -14,6 +18,12 @@ import logsRouter from './routers/logs.js'
 dotenv.config();
 
 (async () => {
+
+    
+
+    const mongodbVer = pkgMongoDB.version;
+    const expressVer = pkgExpress.version;
+    const fireBoltVer = pkgFireBolt.version;
 
     console.log('server start fireBoltVer : ', fireBoltVer);
 

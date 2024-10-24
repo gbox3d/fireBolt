@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>FireBolt LogServer</title>
+
+    <style>
+        @import url('./main.css');
+    </style>
+</head>
+
+<body>
+    <h1>Well come to fire bolt Logserver</h1>
+
+    <div class="ButtonBar-container">
+        <button id="btnGetList">Get List</button>
+        <button id="btnInsert">Insert</button>
+        <button id="btnDel">Delete</button>
+        <button id="btnUpdate">Update</button>
+    </div>
+
+    <div class="container" >
+
+        <div id="logList">
+            <ul>
+            </ul>
+        </div>
+        
+        <div id="detail-view">
+            <h2>Detail View</h2>
+            <textarea id="detail-view-textarea"
+                style="width:100%;height:300px;"
+            
+            ></textarea>
+        </div>
+
+    </div>
+
+    
+
+    <script type="importmap">
+        {
+            "imports": {
+                "md5" : "https://gbox3d.github.io/ideon/modules/comLibs/md5.min.js",
+                "ideon/" : "https://gbox3d.github.io/ideon/modules/comModules/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import main from './index.js';
+        main(); 
+    </script>
+
+</body>
+
+</html>

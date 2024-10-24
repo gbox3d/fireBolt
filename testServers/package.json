@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
+  
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "udp_server": "babel-node udp_server.js",
     "udp" : "babel-node udp.js",
-    "tcp" : "babel-node tcp.js"
+    "tcp" : "babel-node tcp.js",
+    "hello" : "node hello.js"
   },
   "author": "gbox3d",
   "license": "ISC",

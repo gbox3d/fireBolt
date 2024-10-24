@@ -32,7 +32,8 @@ $ npm run start
 pm2 를 사용하여 프로덕션 모드로 실행하려면 다음 명령을 실행하십시오.
 
 ```bash
-$ npm run pm2
+$ pm2 start npm --name "fireBoltServer" -- run dev
+$ pm2 start npm --name "fireBoltServer" -- run start
 ```
 
 vscode 디버깅을 사용하여 디버깅 모드로 실행하려면 다음 명령을 실행하십시오.

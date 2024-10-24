@@ -45,10 +45,10 @@ POST http://localhost:21037/api/logs/update
 Content-Type: application/json
 
 {
-  "id": "67050c21aaab604d05e69d08",
+  "id": "67136f184d4d7e4e6371a943",
     "update": {
         "message": "message update",
-        "title": "title update",
+        "title": "title update1",
         "content": "content update"
     }
 }

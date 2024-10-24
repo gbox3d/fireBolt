@@ -130,15 +130,17 @@ export default function ({ dbclient }) {
         // console.log(`/clear , sid : ${query.id}`)
         console.log(`/clear , query : ${JSON.stringify(query)}`)
 
-        if (query._id) {
-            query._id = new ObjectId(query._id)
-        }
+        // if (query.id) {
+        //     query._id = new ObjectId(query._id)
+        // }
 
         try {
             let result = await dbclient.db(process.env.DB_NAME)
                 .collection(collectionName)
                 .deleteMany(
-                    query
+                    {
+                        _id : new ObjectId(query.id)
+                    }
                 )
 
             console.log(`delete count ${result.deletedCount} ok`)
@@ -170,10 +172,15 @@ Content-Type: application/json
         let query = req.body;
         console.log(`/update , id : ${query.id}`);
 
+        console.log(query.update)
+
         // id와 update 데이터가 제대로 왔는지 확인
         if (!query.id || !query.update) {
             return res.json({ r: 'fail', info: 'Invalid request: missing id or update data' });
         }
+
+        // 업데이트 시간 추가
+        query.update.rdate = moment().format('YYYY-MM-DD HH:mm:ss');
 
         // id를 ObjectId로 변환
         let objectId;

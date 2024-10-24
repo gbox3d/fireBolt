@@ -1,0 +1,42 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    height: 400px;
+}
+.ButtonBar-container {
+    margin-bottom: 10px;
+}
+
+#logList {
+    width: 30%;
+    border: 1px solid #000;
+    padding: 10px;
+    
+}
+
+#logList ul {
+    list-style-type: none;
+    padding: 0;
+
+
+}
+
+#logList ul li:hover {
+    background-color: gray;
+}
+
+#logList ul li {
+    overflow: scroll;
+    white-space: nowrap; /* 한 줄로 유지 */
+}
+
+#logList ul li.selected {
+    background-color: red;
+    color: white;
+}
+
+#detail-view {
+    width: 70%;
+    border: 1px solid #000;
+    padding: 10px;
+}
