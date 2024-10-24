@@ -58,7 +58,7 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                 _res_doc["result"] = "ok";
                 _res_doc["title"] = "exaple 07 - udp";
                 _res_doc["version"] = "1.0.0";
-                _res_doc['CHIPID'] = ESP.getChipId();
+                _res_doc["CHIPID"] = ESP.getChipId();
             }
             else if (cmd == "set")
             {

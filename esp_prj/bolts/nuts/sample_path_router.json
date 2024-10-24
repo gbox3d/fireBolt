@@ -1,0 +1,11 @@
+[
+    {
+        "name" : "threejs",
+        "path" : "../../../cdn/three.js-r151"
+
+    },
+    {
+        "name": "dallos",
+        "path": "../../dejavue/dallos"
+    }
+]

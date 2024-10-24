@@ -1,0 +1,9 @@
+{
+    "ignore": [
+      "package.json",
+      "./node_modules/*"
+      
+    ],
+    "exec": "babel-node app.js"
+  }
+  

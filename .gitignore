@@ -58,5 +58,17 @@ arduino/libraries
 
 package-lock.json
 node_modules/
+temp/
+config.yaml
+config.json
+
+outputs/
+
+__pycache__/
+.DS_Store
+
+package-lock.json
+
+
 
 .venv/
