@@ -1,6 +1,5 @@
 # filename : uploadThread.py
 # author : gbox3d & GPT4-o
-
 import sys
 import os
 import esptool
@@ -12,35 +11,38 @@ class FirmwareUploadThread(QThread):
     finished_signal = Signal(bool)
 
     def __init__(self, port, folder_path, yaml_file="cmd.yaml"):
+        """Initialize the thread with port, folder path, and YAML config file."""
         super().__init__()
         self.port = port
         self.folder_path = folder_path
         self.yaml_file = os.path.join(self.folder_path, yaml_file)
         self.upload_speed = 921600
         self.flash_files = []
-
-        # YAML 파일 읽기
+        self.chip = None  # 칩 유형을 저장할 변수
         self.load_yaml()
 
     def load_yaml(self):
-        """Load the YAML configuration file."""
+        """Load flash configuration from YAML file."""
         try:
             with open(self.yaml_file, 'r') as file:
                 data = yaml.safe_load(file)
 
-                # 환경설정과 업로드 속도 설정
-                if 'env' not in data or data['env'] != 'esp32':
+                # 지원하는 칩 유형 확인 및 설정
+                supported_chips = ['esp32', 'esp8266']
+                env_chip = data.get('env')
+                if env_chip not in supported_chips:
                     self.output_signal.emit("Error: Unsupported environment in cmd.yaml.")
                     self.finished_signal.emit(False)
                     return
+                else:
+                    self.chip = env_chip  # 칩 유형 설정
 
-                self.upload_speed = data.get('upload_speed', 921600)  # 기본값 921600
+                # 기본 업로드 속도 설정
+                self.upload_speed = data.get('upload_speed', 460800 if self.chip == 'esp8266' else 921600)
                 self.flash_files = data.get('write_flash', [])
-
                 if not self.flash_files:
                     self.output_signal.emit("Error: No flash files specified in cmd.yaml.")
                     self.finished_signal.emit(False)
-                    return
         except FileNotFoundError:
             self.output_signal.emit("Error: cmd.yaml file not found.")
             self.finished_signal.emit(False)
@@ -48,30 +50,33 @@ class FirmwareUploadThread(QThread):
             self.output_signal.emit(f"Error parsing YAML: {e}")
             self.finished_signal.emit(False)
 
+    def build_command(self):
+        """Build the command list for esptool based on YAML configuration."""
+        command = [
+            "--chip", self.chip,
+            "--port", self.port,
+            "--baud", str(self.upload_speed),
+            "write_flash"
+        ]
+        for address_file_pair in self.flash_files:
+            for address, filename in address_file_pair.items():
+                file_path = os.path.join(self.folder_path, filename)
+                if not os.path.exists(file_path):
+                    self.output_signal.emit(f"Error: {filename} not found in the specified folder.")
+                    self.finished_signal.emit(False)
+                    return None
+                command.extend([str(address), file_path])
+        return command
+
     def run(self):
         """Run the firmware upload process using esptool script."""
         if self.flash_files:
             try:
-                # esptool 스크립트 방식으로 플래시 설정
-                command = [
-                    "--chip", "esp32",
-                    "--port", self.port,
-                    "--baud", str(self.upload_speed),
-                    "write_flash"
-                ]
+                command = self.build_command()
+                if command is None:
+                    return
 
-                # cmd.yaml에서 로드한 파일과 주소 추가
-                for address_file_pair in self.flash_files:
-                    for address, filename in address_file_pair.items():
-                        file_path = os.path.join(self.folder_path, filename)
-                        if not os.path.exists(file_path):
-                            self.output_signal.emit(f"Error: {filename} not found in the specified folder.")
-                            self.finished_signal.emit(False)
-                            return
-                        command.append(str(address))
-                        command.append(file_path)
-
-                # esptool의 파이썬 스크립트 호출
+                self.output_signal.emit(f"Executing command: {' '.join(command)}")
                 esptool.main(command)
                 self.output_signal.emit("Firmware upload completed successfully.")
                 self.finished_signal.emit(True)

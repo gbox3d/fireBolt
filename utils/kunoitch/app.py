@@ -4,7 +4,8 @@
 import os
 import sys
 # import subprocess
-import json  # JSON 데이터 처리를 위해 추가
+import json
+from time import sleep  # JSON 데이터 처리를 위해 추가
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtCore import Slot
 from serial_handler import SerialThread, scan_serial_ports
@@ -73,6 +74,72 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_icaman_load.clicked.connect(self.load_iceman)
         self.btn_icaman_save.clicked.connect(self.save_iceman)
         self.btn_iceman_Reboot.clicked.connect(self.rebootIceman)
+        
+        
+        # moai UI
+        # self.moai_btn_load.clicked.connect(self.load_moai)
+        self.moai_btn_load.clicked.connect(lambda : self._sendSerialData("print\n") )
+        self.moai_btn_save.clicked.connect(self.save_moai)
+        self.moai_btn_clear.clicked.connect(self.clear_moai)
+        self.moai_btn_reboot.clicked.connect(lambda : self._sendSerialData("reboot\n") ) 
+        #람다 함수로 처리
+        # self.moai_btn_reboot.clicked.connect(lambda : self._sendSerialData("print\n"))
+    
+    
+    @Slot()
+    def clear_moai(self):
+        self.moai_le_ssid.setText("")
+        self.moai_le_passwd.setText("")
+        self.moai_le_targetip.setText("")
+        self.moai_le_targetport.setText("")
+        self.moai_le_devicenumber.setText("")
+        self.moai_le_triggerdelay.setText("")
+        self.moai_checkbox_imu.setChecked(False)
+    # @Slot()
+    # def load_moai(self):
+    #     self._sendSerialData("print\n")
+    @Slot()
+    def save_moai(self) :
+        try :
+            moai_setup = {
+                "mStrAp": self.moai_le_ssid.text(),
+                "mStrPassword": self.moai_le_passwd.text(),
+                "mTargetIp": self.moai_le_targetip.text(),
+                # "mTargetPort": self.moai_le_targetport.text(),
+                # "mDeviceNumber": self.moai_le_devicenumber.text(),
+                # "mTriggerDelay": self.moai_le_triggerdelay.text(),
+                "mIsUseImu": 1 if self.moai_checkbox_imu.isChecked() else 0
+            }
+            
+            moai_setup["mTargetPort"] = int(self.moai_le_targetport.text())
+            moai_setup["mDeviceNumber"] = int(self.moai_le_devicenumber.text())
+            moai_setup["mTriggerDelay"] = int(self.moai_le_triggerdelay.text())
+            
+            self._sendSerialData(f"wifi connect {moai_setup['mStrAp']} {moai_setup['mStrPassword']}\n")
+            # sleep(0.5)
+            
+            self._sendSerialData(f"config devid {moai_setup['mDeviceNumber']} \n")
+            # sleep(0.5)
+            
+            self._sendSerialData(f"config triggerdelay {moai_setup['mTriggerDelay']} \n")
+            # sleep(0.5)
+            
+            strTemp = f"config target {moai_setup['mTargetIp']} {moai_setup['mTargetPort']} \n"
+            print(strTemp)
+            self._sendSerialData(strTemp)
+            
+            if moai_setup['mIsUseImu'] == 1:
+                self._sendSerialData(f"imu use\n")
+            else :
+                self._sendSerialData(f"imu notuse\n")
+                
+            sleep(0.5)
+            self._sendSerialData("save\n")
+            
+            QMessageBox.information(self, "Success", "Configuration saved successfully!")
+            
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to save configuration: {e}")
     
     @Slot()
     def rebootIceman(self):
@@ -298,7 +365,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         
         #현제 활성화된 탭의 이름을 출력
-        print(self.tabWidget.currentWidget().objectName())
+        # print(self.tabWidget.currentWidget().objectName())
+        print(data)
         
         # 활성화된 탭이 "tabBleTC"일 때만 처리
         if self.tabWidget.currentWidget().objectName() == "tabBleTC":
@@ -406,6 +474,82 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         
             except json.JSONDecodeError:
                 print("유효한 JSON 데이터가 아닙니다." , data)
+        elif self.tabWidget.currentWidget().objectName() == "tabMoai":
+            
+            """
+            data 문자열 형식 
+            mStrAp: redstar0427
+            mStrPassword:     3117-2001
+            mTargetIp:        
+            mTargetPort: 0    
+            mDeviceNumber: 0  
+            mTriggerDelay: 150
+            mIsUseImu: 0      
+            mOffsets:
+            offset0: 0
+            offset1: 0
+            offset2: 0
+            offset3: 0
+            offset4: 0
+            offset5: 0
+            """
+            try:
+                # 한 라인씩 분리하고 ':'로 분리해서 딕셔너리로 만들기
+                # _lines = data.split("\n")
+                
+                # current_key = None
+                # for _line in _lines:
+                #     _line = _line.strip()
+                #     if _line == "":
+                #         continue
+                #     if ":" in _line:
+                #         _key, _value = _line.split(":", 1)
+                #         _key = _key.strip()
+                #         _value = _value.strip()
+                        
+                #         # 오프셋 키 값을 리스트 형태로 저장
+                #         if "offset" in _key:
+                #             if "mOffsets" not in _moai_setup:
+                #                 _moai_setup["mOffsets"] = []
+                #             _moai_setup["mOffsets"].append(int(_value))
+                #         else:
+                #             _moai_setup[_key] = _value
+                
+                # : 가 있는지 검사
+                if ":"  in data:
+                        
+                    
+                    _key, _value = data.split(":", 1)
+                    
+                    #앞뒤 공백 제거
+                    _key = _key.strip()
+                    _value = _value.strip()
+                    
+                    if _key == "mStrAp":
+                        self.moai_le_ssid.setText(_value)
+                    elif _key == "mStrPassword":
+                        self.moai_le_passwd.setText(_value)
+                    elif _key == "mTargetIp":
+                        self.moai_le_targetip.setText(_value)
+                    elif _key == "mTargetPort":
+                        self.moai_le_targetport.setText(_value)
+                    elif _key == "mDeviceNumber":
+                        self.moai_le_devicenumber.setText(_value)
+                    elif _key == "mTriggerDelay":
+                        self.moai_le_triggerdelay.setText(_value)
+                    elif _key == "mIsUseImu":
+                        self.moai_checkbox_imu.setChecked(int(_value))
+                    
+                # print(_moai_setup)
+            
+            except ValueError as e:
+                print(f"Error parsing line: {data}, {str(e)}")
+            except Exception as e:
+                print(f"Unexpected error: {str(e)}")
+
+                
+                
+              
     @Slot()
     def open_option_dialog(self):
         """Open the option dialog."""

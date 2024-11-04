@@ -46,7 +46,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabTerminal">
        <property name="minimumSize">
@@ -89,6 +89,214 @@
           </widget>
          </item>
         </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabMoai">
+       <attribute name="title">
+        <string>Moai</string>
+       </attribute>
+       <widget class="QPushButton" name="moai_btn_save">
+        <property name="geometry">
+         <rect>
+          <x>390</x>
+          <y>290</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Save</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="moai_btn_load">
+        <property name="geometry">
+         <rect>
+          <x>490</x>
+          <y>290</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Load</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="moai_le_ssid">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>30</y>
+          <width>171</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_14">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>10</y>
+          <width>48</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>ssid</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="moai_le_passwd">
+        <property name="geometry">
+         <rect>
+          <x>270</x>
+          <y>30</y>
+          <width>201</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_15">
+        <property name="geometry">
+         <rect>
+          <x>270</x>
+          <y>10</y>
+          <width>48</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>passwd</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="moai_le_targetip">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>100</y>
+          <width>201</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_16">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>80</y>
+          <width>48</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>targetIP</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_17">
+        <property name="geometry">
+         <rect>
+          <x>270</x>
+          <y>80</y>
+          <width>61</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>target port</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="moai_le_targetport">
+        <property name="geometry">
+         <rect>
+          <x>270</x>
+          <y>100</y>
+          <width>101</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_18">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>150</y>
+          <width>81</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>device number</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_19">
+        <property name="geometry">
+         <rect>
+          <x>150</x>
+          <y>150</y>
+          <width>71</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>trigger delay</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="moai_checkbox_imu">
+        <property name="geometry">
+         <rect>
+          <x>290</x>
+          <y>170</y>
+          <width>76</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>IMU</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="moai_le_devicenumber">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>170</y>
+          <width>113</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="moai_le_triggerdelay">
+        <property name="geometry">
+         <rect>
+          <x>150</x>
+          <y>170</y>
+          <width>113</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="moai_btn_clear">
+        <property name="geometry">
+         <rect>
+          <x>290</x>
+          <y>290</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Clear</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="moai_btn_reboot">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>290</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Reboot</string>
+        </property>
        </widget>
       </widget>
       <widget class="QWidget" name="tabEgcsSetup">
@@ -323,73 +531,6 @@
         </property>
        </widget>
       </widget>
-      <widget class="QWidget" name="tabFWUploader">
-       <attribute name="title">
-        <string>Uploader</string>
-       </attribute>
-       <widget class="QPushButton" name="btnFWUpload">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>40</y>
-          <width>75</width>
-          <height>24</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Upload</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lineEdit">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>501</width>
-          <height>22</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnFindFWFile">
-        <property name="geometry">
-         <rect>
-          <x>530</x>
-          <y>10</y>
-          <width>75</width>
-          <height>24</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Browse</string>
-        </property>
-       </widget>
-       <widget class="QPlainTextEdit" name="teUploadLog">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>70</y>
-          <width>601</width>
-          <height>271</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnClearUploadLog">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>40</y>
-          <width>75</width>
-          <height>24</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Clear</string>
-        </property>
-       </widget>
-      </widget>
       <widget class="QWidget" name="tabIcaman">
        <attribute name="title">
         <string>IceMan</string>
@@ -564,6 +705,73 @@ padding-left : 2px;</string>
         </property>
         <property name="text">
          <string>Reboot</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabFWUploader">
+       <attribute name="title">
+        <string>Uploader</string>
+       </attribute>
+       <widget class="QPushButton" name="btnFWUpload">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Upload</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>501</width>
+          <height>22</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btnFindFWFile">
+        <property name="geometry">
+         <rect>
+          <x>530</x>
+          <y>10</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Browse</string>
+        </property>
+       </widget>
+       <widget class="QPlainTextEdit" name="teUploadLog">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>601</width>
+          <height>271</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btnClearUploadLog">
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>40</y>
+          <width>75</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Clear</string>
         </property>
        </widget>
       </widget>
