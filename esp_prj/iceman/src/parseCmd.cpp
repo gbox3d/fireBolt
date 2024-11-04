@@ -26,8 +26,8 @@ String parseCmd(String _strLine)
             /* code */
             _res_doc["result"] = "ok";
             _res_doc["os"] = "cronos-v1";
-            _res_doc["app"] = "example-00 cli";
-            _res_doc["version"] = "1.0.1";
+            _res_doc["app"] = "ice man";
+            _res_doc["version"] = "1.0.0";
             _res_doc["author"] = "gbox3d";
 // esp8266 chip id
 #ifdef ESP8266

@@ -93,6 +93,8 @@ Task task_RestCall(10000, TASK_FOREVER, []()
         String jsonData;
         serializeJson(doc, jsonData);
 
+        Serial.println("Send JSON data: " + jsonData);
+
         // HTTP 요청 보내기
         http.addHeader("Content-Type", "application/json");
         int httpResponseCode = http.POST(jsonData);

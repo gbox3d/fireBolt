@@ -69,6 +69,56 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         ### end of BleTC UI
         
+        # ice man UI
+        self.btn_icaman_load.clicked.connect(self.load_iceman)
+        self.btn_icaman_save.clicked.connect(self.save_iceman)
+        self.btn_iceman_Reboot.clicked.connect(self.rebootIceman)
+    
+    @Slot()
+    def rebootIceman(self):
+        self.lineEdit_iceman_ssid.setText("")
+        self.lineEdit_iceman_passwd.setText("")
+        self.lineEdit_icaman_apiurl.setText("")
+        self.lineEdit_iceman_restcall_term.setText("")
+        self.lineEdit_iceman_logid.setText("")
+        self.label_iceman_devid.setText("device id : ")
+        self._sendSerialData("reboot\n")
+        
+    @Slot()
+    def load_iceman(self):
+        self._sendSerialData("config dump\n")
+    
+    @Slot()
+    def save_iceman(self):
+        
+        """Save the iceman setup to a file."""
+        
+        print("save iceman")
+        try :
+            iceman_setup = {
+                "ssid": self.lineEdit_iceman_ssid.text(),
+                "password": self.lineEdit_iceman_passwd.text(),
+                "api_url": self.lineEdit_icaman_apiurl.text(),
+                "rest_call_term": self.lineEdit_iceman_restcall_term.text(),
+                "log_id": self.lineEdit_iceman_logid.text()
+            }
+            
+            if "ssid" in iceman_setup and iceman_setup['ssid'] is not None:
+                self._sendSerialData(f"config set ssid {iceman_setup['ssid']}\n")
+            if "password" in iceman_setup and iceman_setup['password'] is not None:
+                self._sendSerialData(f"config set password {iceman_setup['password']}\n")
+            if "api_url" in iceman_setup and iceman_setup['api_url'] is not None:
+                self._sendSerialData(f"config set api_url {iceman_setup['api_url']}\n")
+            if "rest_call_term" in iceman_setup and iceman_setup['rest_call_term'] is not None:
+                self._sendSerialData(f"config set rest_call_term {iceman_setup['rest_call_term']}\n")
+            if "log_id" in iceman_setup and iceman_setup['log_id'] is not None:
+                self._sendSerialData(f"config set log_id {iceman_setup['log_id']}\n")
+                
+            self._sendSerialData("config save\n")
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to save configuration: {e}")
+        
+        
     @Slot()
     def save_egcs_setup(self):
         """Save the EGCS setup to a file."""
@@ -203,6 +253,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.btnConnect.setText("Disconnect")
                 # self.btnConnect.setEnabled(True)
                 
+                self._sendSerialData("about\n")
+                
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Could not open serial port: {e}")
                 self.btnConnect.setText("Connect")
@@ -239,13 +291,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # else:
         #     QMessageBox.warning(self, "Warning", "No serial port connected.")
     
+    
     @Slot(str)
     def update_received_data(self, data):
         """Update the QTextEdit with received data."""
         
         
         #현제 활성화된 탭의 이름을 출력
-        # print(self.tabWidget.currentWidget().objectName())
+        print(self.tabWidget.currentWidget().objectName())
         
         # 활성화된 탭이 "tabBleTC"일 때만 처리
         if self.tabWidget.currentWidget().objectName() == "tabBleTC":
@@ -312,7 +365,47 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         
             except json.JSONDecodeError:
                 print("유효한 JSON 데이터가 아닙니다." , data)
-
+        elif self.tabWidget.currentWidget().objectName() == "tabIcaman":
+            
+            try :
+                json_data = json.loads(data)  # JSON 데이터를 파싱
+                if "ms" in json_data :
+                    if isinstance(json_data["ms"], str):
+                        strResult = json_data["ms"]
+                        if strResult == "config saved":
+                            QMessageBox.information(self, "Success", "Configuration saved successfully!")
+                        else :
+                            print(strResult)
+                    elif isinstance(json_data["ms"], dict):
+                        _config_json = json_data["ms"]
+                        
+                        if "ssid" in _config_json :
+                            self.lineEdit_iceman_ssid.setText(_config_json["ssid"])
+                        # else : # default value
+                        #     print("ssid not found and set default value")
+                        #     self.lineEdit_iceman_ssid.setText("redstar0427")
+                        if "password" in _config_json:
+                            self.lineEdit_iceman_passwd.setText(_config_json["password"])
+                        # else : # default value
+                        #     print("password not found and set default value")
+                        #     self.lineEdit_iceman_passwd.setText("123456789a")
+                        if "api_url" in _config_json :
+                            self.lineEdit_icaman_apiurl.setText(_config_json["api_url"])
+                        if "rest_call_term" in _config_json :
+                            if isinstance(_config_json["rest_call_term"], int):
+                                self.lineEdit_iceman_restcall_term.setText(str(_config_json["rest_call_term"]))
+                            else :
+                                self.lineEdit_iceman_restcall_term.setText(_config_json["rest_call_term"])
+                        if "log_id" in _config_json :
+                            self.lineEdit_iceman_logid.setText(_config_json["log_id"])
+                    
+                            
+                        QMessageBox.information(self, "Success", "Configuration loaded successfully!")
+                if "chipid" in json_data :
+                    self.label_iceman_devid.setText(f"device id : {json_data['chipid']}")
+                        
+            except json.JSONDecodeError:
+                print("유효한 JSON 데이터가 아닙니다." , data)
     @Slot()
     def open_option_dialog(self):
         """Open the option dialog."""
@@ -375,6 +468,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def load_ble_tc(self):
         self._sendSerialData("config dump\n")
         
+    @Slot()
     def save_ble_tc(self):
         
         debounceDelay = self.leBleTC_debounceDelay.text()
@@ -389,8 +483,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.serial_thread.stop()
             self.serial_thread.wait()
         event.accept()
-        
-
         
 
 
