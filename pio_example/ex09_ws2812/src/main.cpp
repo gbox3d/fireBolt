@@ -26,7 +26,7 @@
 #ifdef ESP8266
 #define PIN D5 // Pin where NeoPixels are connected to
 #elif SEED_XIAO_ESP32C3
-#define PIN        D1 // On Trinket or Gemma, suggest changing this to 1
+#define PIN        D10 // On Trinket or Gemma, suggest changing this to 1
 #endif
 
 // How many NeoPixels are attached to the Arduino?
@@ -36,7 +36,7 @@
 // strips you might need to change the third parameter -- see the
 // strandtest example for more information on possible values.
 
-int NUMPIXELS = 8;
+int NUMPIXELS;
 Adafruit_NeoPixel *g_pPixels;
 
 
@@ -81,6 +81,45 @@ Task task_neoDemo_1(150, TASK_FOREVER, []() {
     }
 });
 
+Task task_neoDemo_2(300, TASK_FOREVER, []() {
+    static int step = 0;
+
+    static u_int8_t color[3] = {0, 0, 0};
+
+
+    switch (step)
+    {
+        case 0:
+        g_pPixels->clear();
+        g_pPixels->setPixelColor(0, g_pPixels->Color(255, 0, 0));
+        g_pPixels->show();
+            break;
+
+        case 1:
+        g_pPixels->clear();
+        g_pPixels->setPixelColor(0, g_pPixels->Color(0, 255, 0));
+        g_pPixels->show();
+            break;
+
+        case 2:
+        g_pPixels->clear();
+        g_pPixels->setPixelColor(0, g_pPixels->Color(0, 0, 255));
+        g_pPixels->show();
+            break;
+        case 3:
+        g_pPixels->clear();
+        g_pPixels->setPixelColor(0, g_pPixels->Color(255,255, 255));
+        g_pPixels->show();
+            break;
+        default:
+            break;
+    }
+
+    step++;
+    if(step > 3) {
+        step = 0;
+    }
+});
 
 
 
@@ -145,6 +184,18 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                             _res_doc["ms"] = "demo stop";
                         }
                     }
+                    else if(demoIndex == 2) {
+                        if(subCmd == "start") {
+                            task_neoDemo_2.enable();
+                            _res_doc["result"] = "ok";
+                            _res_doc["ms"] = "demo start";
+                        }
+                        else {
+                            task_neoDemo_2.disable();
+                            _res_doc["result"] = "ok";
+                            _res_doc["ms"] = "demo stop";
+                        }
+                    }
                     else {
                         _res_doc["result"] = "fail";
                         _res_doc["ms"] = "unknown demo index";
@@ -156,11 +207,8 @@ Task task_Cmd(100, TASK_FOREVER, []() {
                 }
                 
             }
-            
             else if(cmd == "neoclear") {
-                // pixels.clear();
-                // pixels.show();
-
+                
                 g_pPixels->clear();
                 g_pPixels->show();
 
@@ -310,22 +358,15 @@ void setup()
   // END of Trinket-specific code.
 
     g_config.load();
-
-    if(g_config.hasKey("numpixels")) {
-        NUMPIXELS = g_config.get<int>("numpixels");
-    }
+    
+    NUMPIXELS = g_config.get<int>("numpixels",1);
 
     g_pPixels = new Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
-    // pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-
-
     g_pPixels->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
     g_pPixels->clear(); // Set all pixel colors to 'off'
-
-    // pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    // pixels.clear(); // Set all pixel colors to 'off'
-
+    g_pPixels->show();   // Send the updated pixel colors to the hardware.
+    
     Serial.begin(115200);
     
 
@@ -338,7 +379,10 @@ void setup()
 
 
     g_ts.addTask(task_neoDemo_1);
-    task_neoDemo_1.enable();
+    task_neoDemo_1.disable();
+
+    g_ts.addTask(task_neoDemo_2);
+    task_neoDemo_2.disable();
     
     g_ts.startNow();
 

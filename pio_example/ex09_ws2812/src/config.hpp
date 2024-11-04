@@ -4,6 +4,8 @@
 #include <ArduinoJson.h>
 #include <EEPROM.h>
 
+#include <vector>
+
 #ifdef ESP32
 #include <nvs_flash.h>
 #endif
@@ -11,9 +13,7 @@
 class Config
 {
 public:
-
-    int version = 1;
-
+    const static int SystemVersion = 4;
 
 #ifdef ESP8266
     static const size_t EEPROM_SIZE = 1024;
@@ -41,7 +41,11 @@ public:
         ESP_ERROR_CHECK(err);
 #endif
 
+#ifdef AVR
+#else
         EEPROM.begin(EEPROM_SIZE);
+#endif
+
         load();
     }
 
@@ -60,8 +64,6 @@ public:
         Serial.println("data length: " + String(strlen(buffer))); // debug
         Serial.println("data: " + String(buffer));                // debug
 #endif
-
-
         // if empty, set default
         if (buffer[0] != '{' && buffer[0] != '[')
         {
@@ -92,7 +94,12 @@ public:
         Serial.println("data: " + jsonDoc);                         // debug
 #endif
 
+#ifdef AVR
+
+#else
+
         EEPROM.commit();
+#endif
     }
 
     // Generic set and get
@@ -114,23 +121,28 @@ public:
     }
 
     template <typename T>
-    T get(const char *key) const
+    T get(const char *key, T defaultValue = T()) const
     {
-
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, jsonDoc);
         if (error)
         {
             Serial.print(F("deserializeJson() failed: "));
             Serial.println(error.f_str());
-            return T();
+            return defaultValue;
+        }
+
+        // Use the new API to check if the key exists and has the correct type
+        if (!doc[key].is<T>())
+        {
+            return defaultValue;
         }
 
         return doc[key].as<T>();
     }
 
     // check key exist
-    bool hasKey(const char *key) const
+    inline bool hasKey(const char *key) const
     {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, jsonDoc);
@@ -141,10 +153,11 @@ public:
             return false;
         }
 
-        return doc.containsKey(key);
+        // return doc.containsKey(key);
+        return doc[key].is<JsonVariant>(); // 원하는 타입으로 변경 가능 (예: is<int>(), is<char*>(), is<String>(), 등)
     }
 
-    void getArray(const char *key, JsonDocument &_doc) const
+    inline void getArray(const char *key, JsonDocument &_doc) const
     {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, jsonDoc);
@@ -169,20 +182,23 @@ public:
         }
 
         Serial.println(_doc.as<JsonArray>().size());
-        // array = tempDoc.as<JsonArray>();
-        // return tempDoc.as<JsonArray>();
     }
 
-    String dump() const
+    inline String dump() const
     {
         return jsonDoc;
     }
 
-    void clear()
+    inline void clear()
     {
         jsonDoc = "{}";
         save();
     }
+
+    // 토크나이저를 인자로 받아 명령어를 파싱하고 처리하는 함수
+    void parseCmd(std::vector<String> &tokens, JsonDocument &_res_doc);
+    
+
 };
 
 #endif // CONFIG_HPP
