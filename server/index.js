@@ -1,6 +1,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import fs from 'fs-extra'
+import { promises as fsPromises } from 'fs';
 import https from 'https'
 import http from 'http'
 // import { version as mongodbVer } from 'mongodb/package.json'
@@ -8,9 +9,9 @@ import http from 'http'
 // import {version as fireBoltVer} from './package.json'
 import { MongoClient } from 'mongodb'
 
-import pkgMongoDB from 'mongodb/package.json' assert { type: 'json' };
-import pkgExpress from 'express/package.json' assert { type: 'json' };
-import pkgFireBolt from './package.json' assert { type: 'json' };
+// import pkgMongoDB from 'mongodb/package.json' assert { type: 'json' };
+// import pkgExpress from 'express/package.json' assert { type: 'json' };
+// import pkgFireBolt from './package.json' assert { type: 'json' };
 
 import baseRouter from './routers/base.js'
 import logsRouter from './routers/logs.js'
@@ -21,6 +22,16 @@ dotenv.config();
 
     
 
+    // JSON 파일 읽기
+    const pkgMongoDB = JSON.parse(await fsPromises.readFile('./node_modules/mongodb/package.json', 'utf-8'));
+    const pkgExpress = JSON.parse(await fsPromises.readFile('./node_modules/express/package.json', 'utf-8'));
+    const pkgFireBolt = JSON.parse(await fsPromises.readFile('./package.json', 'utf-8'));
+
+    console.log(`mongoDB version : ${pkgMongoDB.version}`);
+    console.log(`1express version : ${pkgExpress.version}`);
+    console.log(`fireBolt version : ${pkgFireBolt.version}`);
+
+
     const mongodbVer = pkgMongoDB.version;
     const expressVer = pkgExpress.version;
     const fireBoltVer = pkgFireBolt.version;
@@ -28,7 +39,7 @@ dotenv.config();
     console.log('server start fireBoltVer : ', fireBoltVer);
 
     const theApp = {
-        versions : {
+        versions: {
             fireBoltVer,
             mongodbVer,
             expressVer

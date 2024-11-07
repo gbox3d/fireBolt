@@ -2,6 +2,6 @@
     "ignore": ["package.json","./node_modules/*"
       
     ],
-    "exec": "babel-node index.js"
+    "exec": "node index.js"
   }
   
