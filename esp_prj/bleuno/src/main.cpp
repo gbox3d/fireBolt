@@ -158,13 +158,13 @@ void setup()
             float t = dht->readTemperature();
             // Check if any reads failed and exit early (to try again)
             if (isnan(h) || isnan(t)) {
-                Serial.println("Failed to read from DHT sensor!");
+                // Serial.println("Failed to read from DHT sensor!");
                 return;
             }
             // Store readings in global variables
             temperature = t;
             humidity = h;
-            Serial.printf("Temperature: %.1f°C Humidity: %.1f%%\n", temperature, humidity);
+            // Serial.printf("Temperature: %.1f°C Humidity: %.1f%%\n", temperature, humidity);
         });
 
         task_ReadDHT.enable(); // Enable the task
