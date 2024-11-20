@@ -28,17 +28,26 @@ Task task_ReadDHT(2000, TASK_FOREVER, NULL, &g_ts, false);
 extern String parseCmd(String _strLine);
 extern void ble_setup(String strDeviceName);
 
-// #ifdef ESP32
+#if defined(BEETLE_C3)
+#elif defined(LOLIN_D32) | defined(LOLIN_D32_PRO) | defined(WROVER_KIT)
+#elif defined(SEED_XIAO_ESP32C3)
+#else
+#endif
+
 // #define LED_BUILTIN 4
 // #endif
 
-#if defined(LOLIN_D32) | defined(LOLIN_D32_PRO) | defined(WROVER_KIT)
-// this device aready defined LED_BUILTIN 4 -> D5 
+// #if not defined(LED_BUILTIN) // check if the default LED pin is defined
 
-#elif defined(SEED_XIAO_ESP32C3)
-#define LED_BUILTIN D10
 
-#endif
+// #if defined(LOLIN_D32) | defined(LOLIN_D32_PRO) | defined(WROVER_KIT)
+// // this device aready defined LED_BUILTIN 4 -> D5 
+
+
+// #elif defined(SEED_XIAO_ESP32C3)
+// #define LED_BUILTIN D10
+
+// #endif
 
 
 Task task_LedBlink(500, TASK_FOREVER, []()
@@ -106,6 +115,7 @@ Task task_Cmd(100, TASK_FOREVER, []()
 // the setup function runs once when you press reset or power the board
 void setup()
 {
+
     String strDeviceName = "ESP32_BLE" + String(getChipID().c_str());
     
   // initialize digital pin LED_BUILTIN as an output.
@@ -171,11 +181,13 @@ void setup()
     }
 
 
+
     Serial.println("system mode : " + String(systemMode));
 
     Serial.println(":-]");
     Serial.println("Serial connected");
-    Serial.println("LED_BUILTIN: " + String(LED_BUILTIN));
+    Serial.println("led built-in : " + String(LED_BUILTIN));
+    
     Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
 
     //BLE setup
