@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#include <WiFi.h>
+// #include <WiFi.h>
 #include <vector>
 
 #include <TaskScheduler.h>
@@ -27,11 +27,16 @@ Task task_ReadDHT(2000, TASK_FOREVER, NULL, &g_ts, false);
 
 extern String parseCmd(String _strLine);
 extern void ble_setup(String strDeviceName);
+extern bool deviceConnected;
 
 #if defined(BEETLE_C3)
 #elif defined(LOLIN_D32) | defined(LOLIN_D32_PRO) | defined(WROVER_KIT)
 #elif defined(SEED_XIAO_ESP32C3)
 #else
+#endif
+
+#if defined(WROVER_KIT) | defined(WROOM32)
+#define LED_BUILTIN 5
 #endif
 
 // #define LED_BUILTIN 4
@@ -52,7 +57,15 @@ extern void ble_setup(String strDeviceName);
 
 Task task_LedBlink(500, TASK_FOREVER, []()
               {
+                #if defined(LED_BUILTIN)
+                if(deviceConnected) {
+                  digitalWrite(LED_BUILTIN, LOW);
+                  Serial.println("LED_BUILTIN : " + String(LED_BUILTIN) + " " + String(digitalRead(LED_BUILTIN)));
+                } else {
+                // Serial.println("LED_BUILTIN : " + String(LED_BUILTIN) + " " + String(digitalRead(LED_BUILTIN)));
                   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+                }
+                #endif
               }, &g_ts, true);
 
 void startBlink()
@@ -63,6 +76,12 @@ void startBlink()
 void stopBlink()
 {
     task_LedBlink.disable();
+    if(deviceConnected) {
+        digitalWrite(LED_BUILTIN, LOW);
+        Serial.println("LED_BUILTIN : " + String(LED_BUILTIN) + " " + String(digitalRead(LED_BUILTIN)));
+    } else {
+        digitalWrite(LED_BUILTIN, HIGH);
+    }
 }
 
 void ledOn(int pinIndex)
@@ -119,8 +138,10 @@ void setup()
     String strDeviceName = "ESP32_BLE" + String(getChipID().c_str());
     
   // initialize digital pin LED_BUILTIN as an output.
+  #if defined(LED_BUILTIN)
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
+#endif
 
     Serial.begin(115200);
 
@@ -129,8 +150,8 @@ void setup()
     delay(250);
 
     // initialize digital pin LED_BUILTIN as an output.
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
+    // pinMode(LED_BUILTIN, OUTPUT);
+    // digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
 
     // LED pins
     JsonDocument _doc_ledpins;
@@ -138,6 +159,7 @@ void setup()
 
     JsonArray ledpin = _doc_ledpins.as<JsonArray>();
 
+    int _index = 0;
     for (JsonVariant v : ledpin)
     {
 
@@ -147,7 +169,9 @@ void setup()
         digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
         ledPins.push_back(pin);
 
-        Serial.print("led pin : " + String(pin) + "\n");
+        Serial.printf("%2d led pin : %d\n",_index, pin);   
+
+        _index++;
     }
 
     // load system mode
