@@ -157,11 +157,15 @@ class MyServerCallbacks : public BLEServerCallbacks
   void onConnect(BLEServer *pServer)
   {
     // task_Blink.disable();
+    deviceConnected = true;
 
     stopBlink();
 
-    digitalWrite(ledPins[0], LOW);
-    deviceConnected = true;
+// #if defined(LED_BUILTIN)
+//     digitalWrite(  LED_BUILTIN, LOW);
+// #endif
+
+    
 
     Serial.println("Client connected");
     pServer->getAdvertising()->stop(); // 클라이언트가 연결되면 광고 중지
@@ -177,6 +181,11 @@ class MyServerCallbacks : public BLEServerCallbacks
     Serial.println("Client disconnected");
     pServer->getAdvertising()->start(); // 클라이언트가 연결 해제되면 광고 다시 시작
   }
+  
+  // void onMtuChanged(BLEServer* pServer,uint16_t mtu) {
+  //   Serial.print("MTU size updated: ");
+  //   Serial.println(mtu);
+  // }
 };
 
 //------------------------------------------------ ble end
