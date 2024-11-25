@@ -32,12 +32,16 @@ extern bool deviceConnected;
 #if defined(BEETLE_C3)
 #elif defined(LOLIN_D32) | defined(LOLIN_D32_PRO) | defined(WROVER_KIT)
 #elif defined(SEED_XIAO_ESP32C3)
+#elif defined(D32Lite)
+    #define LED_BUILTIN 22
 #else
 #endif
 
 #if defined(WROVER_KIT) | defined(WROOM32)
 #define LED_BUILTIN 5
 #endif
+
+
 
 // #define LED_BUILTIN 4
 // #endif
