@@ -170,7 +170,8 @@ void setup()
         int pin = v.as<int>();
 
         pinMode(pin, OUTPUT);
-        digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
+        // digitalWrite(pin, HIGH); // turn the LED off by making the voltage LOW
+        digitalWrite(pin, LOW); // turn the LED on (HIGH is the voltage level)
         ledPins.push_back(pin);
 
         Serial.printf("%2d led pin : %d\n",_index, pin);   
