@@ -3,3 +3,4 @@ package-lock.json
 yarn.lock
 .env
 path_router.json
+.vscode/
