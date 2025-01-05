@@ -1,4 +1,6 @@
 import sys
+import yaml
+
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QSpacerItem, QSizePolicy,
                                QMessageBox,QTextEdit,QLineEdit)
@@ -14,6 +16,7 @@ class MainWindow(QWidget):
         super().__init__()
         
         self.discovered_devices = []  # 발견된 디바이스 정보를 저장할 리스트
+        self.filtered_devices = [] # 필터링된 디바이스 정보를 저장할 리스트
         
         self.target_service_uuid = "457556f0-842a-41ac-b777-cb4af6f47720"
         self.target_characteristic_uuid = "3c3ffbea-1856-460a-b0dd-b8a2a3a8352b"
@@ -21,7 +24,7 @@ class MainWindow(QWidget):
         self.ble_service = None
         self.ble_characteristic = None
         
-        self.load_uuids_from_file()  # UUID 파일에서 값을 로드
+        self.load_uuids_from_yaml()
         
         self.initUI()
         self.initBLE()
@@ -49,6 +52,11 @@ class MainWindow(QWidget):
         self.reset_button = QPushButton("Reset BLE")
         self.reset_button.clicked.connect(self.onClickResetBle)
         button_layout.addWidget(self.reset_button)
+        
+        #save uuid 버튼 추가
+        self.save_uuid_button = QPushButton("Save UUIDs")
+        self.save_uuid_button.clicked.connect(self.save_uuids_to_yaml)
+        button_layout.addWidget(self.save_uuid_button)
         
         # 수평 스페이서 추가 (버튼을 왼쪽으로 밀어냄)
         button_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
@@ -98,6 +106,8 @@ class MainWindow(QWidget):
         
         self.cmdInput = QLineEdit()
         self.cmdInput.setPlaceholderText("Enter command")
+        # Enter 키가 눌렸을 때 send_command 실행
+        self.cmdInput.returnPressed.connect(self.send_command)
         cmdLayout.addWidget(self.cmdInput)
         
         self.btnSend = QPushButton("Send")
@@ -162,8 +172,12 @@ class MainWindow(QWidget):
         self.scan_button.setText("Scan for Peripherals")
     
     def add_device(self, device_info):
+        
+        #기존 목록에 없는 디바이스만 추가
         if device_info not in self.discovered_devices:
             self.discovered_devices.append(device_info)
+            print(f"Device discovered: {device_info.name()} / ({device_info.address().toString()})")
+            
             row_position = self.device_table.rowCount()
             self.device_table.insertRow(row_position)
 
@@ -218,7 +232,7 @@ class MainWindow(QWidget):
         # 현재 설정 저장
         self.target_service_uuid = self.service_uuid_le.text()
         self.target_characteristic_uuid = self.characteristic_uuid_le.text()
-        self.save_uuids_to_file()
+        # self.save_uuids_to_file()
             
         if self.connect_button.text() == "Connect":
             self.connect_button.setText("Disconnect")
@@ -227,21 +241,26 @@ class MainWindow(QWidget):
             self.connect_button.setText("Connect")
             self.disconnect_device()
     
-    def load_uuids_from_file(self):
+    def load_uuids_from_yaml(self):
         try:
-            with open('uuid.txt', 'r') as file:
-                lines = file.readlines()
-                if len(lines) >= 2:
-                    self.target_service_uuid = lines[0].strip()
-                    self.target_characteristic_uuid = lines[1].strip()
+            with open('uuid.yaml', 'r') as file:
+                data = yaml.safe_load(file)
+                self.target_service_uuid = data.get('service_uuid', "")
+                self.target_characteristic_uuid = data.get('characteristic_uuid', "")
         except FileNotFoundError:
-            # 파일이 없으면 기본값 사용
-            print("UUID file not found,use default values")
-            pass
-    def save_uuids_to_file(self):
-        with open('uuid.txt', 'w') as file:
-            file.write(f"{self.target_service_uuid}\n")
-            file.write(f"{self.target_characteristic_uuid}\n")
+            print("UUID file not found, using default values")
+        except yaml.YAMLError as e:
+            print(f"Error reading UUID YAML file: {e}")
+    
+    def save_uuids_to_yaml(self):
+        data = {
+            'service_uuid': self.service_uuid_le.text(),
+            'characteristic_uuid': self.characteristic_uuid_le.text()
+        }
+        with open('uuid.yaml', 'w') as file:
+            yaml.dump(data, file)
+        print("UUIDs saved to YAML file")
+        QMessageBox.information(self, "Success", "UUIDs saved successfully!")
          
     def connect_device(self):
         selected_items = self.device_table.selectedItems()
@@ -283,11 +302,13 @@ class MainWindow(QWidget):
     def device_disconnected(self):
         print("Device disconnected")
         QMessageBox.information(self, "Disconnected", "Device has been disconnected.")
+        self.connect_button.setText("Connect")
 
     def connection_error(self, error):
         error_message = f"Connection error: {error}"
         print(error_message)
         QMessageBox.critical(self, "Error", error_message)
+        
     def update_connect_button(self):
         self.connect_button.setEnabled(len(self.device_table.selectedItems()) > 0)
         
@@ -373,6 +394,7 @@ class MainWindow(QWidget):
     def scan_finished(self):
         print("Scan finished")
         self.stop_scan()
+        # self.check_device_target_uuid() # 스캔 종료 후 타겟 UUID 확인
 
     def closeEvent(self, event):
         print("closeEvent")
