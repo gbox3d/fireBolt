@@ -44,7 +44,7 @@ const int MIC_PINS[] = {32, 33, 25, 26};
 const int LED_PINS[] = {2,12,15};
 const int NUM_CHANNELS = 4;
 const int SAMPLE_RATE = 8000;
-const int BUFFER_SIZE = 8000;  // 각 채널당 1000 샘플
+const int BUFFER_SIZE = 8000;  // sample rate 를 8k 로 설정하면 1초
 
 // SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
 SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
