@@ -1,3 +1,4 @@
 __pycache__/
 *.bin
 .csv
+recently_address.txt
