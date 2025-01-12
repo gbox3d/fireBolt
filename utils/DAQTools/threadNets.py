@@ -12,6 +12,8 @@ import time
 
 import math
 
+import numpy as np
+
 MAGIC_NUMBER = 20240729
 
 # 패킷 타입
@@ -122,62 +124,54 @@ class ClientThread(QThread):
         if self.socket:
             self.socket.sendall(packet)
             
+
 class GraphUpdateThread(QThread):
-    
-    # update_signal = pyqtSignal(list)
-    # update_signal_bufferSize = pyqtSignal(int)
-    
-    update_signal = Signal(list)
+    update_signal = Signal(object)
     update_signal_bufferSize = Signal(int)
     
     maximum_extract_size = 800
     base_extract_size = 80
 
-    def __init__(self, data_queue):
+    def __init__(self, data_queues):
+        """
+        data_queues: [deque, deque, ..., deque]  # 8채널
+        """
         super().__init__()
-        self.data_queue = data_queue
+        self.data_queues = data_queues
         self.running = True
-        
+
     def calculate_extract_size(self, queue_length):
-        
         if queue_length <= 0:
             return self.base_extract_size
-        
-        # 로그 함수를 사용하여 추출 크기 계산
-        log_factor = math.log(queue_length , 2)  
+        log_factor = math.log(queue_length, 2)
         extract_size = int(self.base_extract_size * (1 + log_factor))
-        
         extract_size = self.base_extract_size + int(extract_size/10)
-        
-        # print(f"Queue length: {queue_length}, Extract size: {extract_size}")
-        
-        # 최대 1000으로 제한
         return min(extract_size, self.maximum_extract_size)
 
     def run(self):
         while self.running:
-            
-            if len(self.data_queue) > 0 :
-                time.sleep(0.01)  # 100Hz (초당 100번)
-                data_to_plot = []
-                
-                queue_length =  len(self.data_queue) - 8000
-                if queue_length < 0:
-                    queue_length = 0
-                    
-                extract_size = self.calculate_extract_size(queue_length)
-                
-                # print(f"Queue length: {len(self.data_queue)}, Extract size: {extract_size}")
-                
-                for _ in range(extract_size):
-                    if self.data_queue:
-                        data_to_plot.append(self.data_queue.popleft())
-                        self.update_signal_bufferSize.emit(len(self.data_queue))
-                    else:
-                        break
-                # print(f"Data to plot: {len(data_to_plot)}")
-                if data_to_plot:
-                    self.update_signal.emit(data_to_plot)
+            time.sleep(0.01)  # ~100Hz
+
+            # 각 채널별로 데이터가 얼마나 쌓였는지 확인
+            queue_lengths = [len(dq) for dq in self.data_queues]
+            min_len = min(queue_lengths)  # 가장 적은 길이를 기준으로 추출
+
+            if min_len > 0:
+                extract_size = self.calculate_extract_size(min_len)
+                extract_size = min(extract_size, min_len)
+
+                # 2차원 numpy array 생성: shape = (extract_size, 8)
+                data_to_plot = np.zeros((extract_size, 8), dtype=np.float32)
+
+                for i in range(extract_size):
+                    for ch in range(8):
+                        data_to_plot[i, ch] = self.data_queues[ch].popleft()
+
+                # 시그널 emit: 여기서 data_to_plot은 2차원 np.ndarray
+                self.update_signal.emit(data_to_plot)
+
+                total_left = sum(len(dq) for dq in self.data_queues)
+                self.update_signal_bufferSize.emit(total_left)
 
     def stop(self):
         self.running = False
