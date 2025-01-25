@@ -43,18 +43,12 @@ uint16_t udp_port_broadcast;
 const int MIC_PINS[] = {32, 33, 25, 26};
 const int LED_PINS[] = {2,12,15};
 const int NUM_CHANNELS = 4;
-const int SAMPLE_RATE = 8000;
-const int BUFFER_SIZE = 8000;  // sample rate 를 8k 로 설정하면 1초
+const int SAMPLE_RATE = 24000;
+const int BUFFER_SIZE = 8000;  // 0.33초 
 
 // SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
 SamplingModule sampler(MIC_PINS, NUM_CHANNELS, SAMPLE_RATE, BUFFER_SIZE);
 TcpServer *g_pTcpServer = nullptr;
-
-// #if defined(ESP8266)
-// #elif defined(ESP32)
-// int g_analog_pins[] = {34, 35, 36, 39};
-// int g_digital_pins[] = {32, 33, 25, 26};//, 27}; // , 14, 12, 13, 23, 22, 21, 19, 18, 5, 17, 16, 4, 0, 2, 15};
-// #endif
 
 String chipid = "DAQ_";
 
@@ -102,13 +96,6 @@ Task task_Broadcast(5000, TASK_FOREVER, []()
     udp.broadcastTo(broadcastMessage.c_str(), udp_port_broadcast);
   } }, &g_ts, false);
 
-// Task task_SendBuffer(50, TASK_FOREVER, []() {
-
-//     // sampling_module::sendUdpData(udp, targetIP, udp_port_data);
-  
-// }, &g_ts, true);
-
-
 // Task2를 위한 FreeRTOS 태스크 함수
 void Task2(void * pvParameters) {
     for(;;) {
@@ -118,7 +105,6 @@ void Task2(void * pvParameters) {
 }
 
 Task task_SendData(250, TASK_FOREVER, []() {
-  
   g_pTcpServer->sendDataByEvent();
 
 }, &g_ts2, true);
