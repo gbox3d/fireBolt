@@ -33,6 +33,7 @@ class DataForm(QWidget, UI.dataProcBasic_ui.Ui_Form):
         # 버튼 연결
         self.btnLoadData.clicked.connect(self.load_data)
         self.btnFindNext.clicked.connect(self.onClickFindNextBtn)
+        self.btnCal.clicked.connect(self.onCalculated)
         
         # 위젯 참조
         self.labelInfo = self.findChild(QLabel, 'labelInfo')
@@ -83,27 +84,129 @@ class DataForm(QWidget, UI.dataProcBasic_ui.Ui_Form):
             x_min, x_max = self.plot_widget.viewRange()[0]
             self.current_index = int((x_min + x_max) / 2)
             self.updateCurrentIndexLine()
-    
-    
+            
+    def measure_signal_length(self,channel_data, start_idx, max_length=500):
+        """
+        신호의 길이를 측정합니다.
+
+        Args:
+            channel_data: 채널 데이터 배열 (0/1 값)
+            start_idx: 신호가 시작된 인덱스
+            max_length: 최소 0이 지속되어야 하는 길이 (기본값: 500)
+
+        Returns:
+            int: 신호의 길이 (샘플 개수 기준)
+        """
+        length = 0
+        end_idx = len(channel_data)
+
+        # 신호가 시작된 이후로 탐색
+        for i in range(start_idx, end_idx):
+            if channel_data[i] == 0:
+                # 0이 지속되는지 확인
+                if i + max_length <= end_idx and all(channel_data[i:i + max_length] == 0):
+                    # 500개의 0이 연속되면 끝으로 간주
+                    break
+            length += 1
+
+        return length
+
+            
+    def onCalculated(self):
+        """
+        현재 인덱스(self.current_index) 이후 각 채널에서 0이 아닌 첫 번째 신호가 나타나는 인덱스를 계산하고,
+        그 시차(초)를 출력 + 신호 길이를 측정.
+        """
+        if self.ChannelDatas is None:
+            print("No data loaded.")
+            return
+        
+        self.teLogText.clear()
+        
+        # 샘플링 레이트 설정
+        sampling_rate = 24000  # Hz
+        time_per_sample = 1 / sampling_rate  # 초 단위 시간 간격
+
+        # 데이터 정보
+        num_samples, num_channels = self.ChannelDatas.shape
+
+        # 결과 저장
+        results = []
+
+        for ch in range(num_channels):
+            # 현재 인덱스 이후 데이터를 탐색 (채널별 slice)
+            channel_data = self.ChannelDatas[self.current_index:, ch]
+
+            # 0이 아닌 값의 상대 인덱스들
+            non_zero_indices = np.where(channel_data != 0)[0]
+
+            if len(non_zero_indices) > 0:
+                # 첫 번째 신호 시작 (절대 인덱스)
+                first_index = self.current_index + non_zero_indices[0]
+                
+                # 신호 길이(샘플 단위) 계산
+                signal_len_samples = self.measure_signal_length(
+                    channel_data,    # 해당 채널의 current_index 이후 slice
+                    non_zero_indices[0]  # slice 내부에서의 시작 위치
+                
+                )
+                
+                # 신호 길이(초 단위)
+                signal_len_seconds = signal_len_samples * time_per_sample
+
+                # 첫 신호까지의 시차(초)
+                time_difference = (first_index - self.current_index) * time_per_sample
+
+                results.append((ch, first_index, time_difference, signal_len_samples, signal_len_seconds))
+            else:
+                # 해당 채널에 신호가 없음
+                results.append((ch, None, None, 0, 0.0))
+
+        # 결과 출력
+        print(f"Current Index: {self.current_index}")
+        for ch, first_index, time_diff, sig_len_samples, sig_len_seconds in results:
+            if first_index is not None:
+                print(
+                    f"Channel {ch}: First signal at index {first_index}"
+                    f" (delay={time_diff:.6f}s), length={sig_len_samples} samples ({sig_len_seconds:.6f}s)"
+                )
+                self.teLogText.appendPlainText(f"Channel {ch}: First signal at index {first_index} (delay={time_diff:.6f}s), length={sig_len_samples} samples ({sig_len_seconds:.6f}s)")
+            else:
+                print(f"Channel {ch}: No signal found")
+
         
     def load_data(self):
+        # 파일 로드 다이얼로그
         file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt)")
         if file_name:
             self.labelInfo.setText(f"Loaded file: {file_name}")
-            self.ChannelDatas = read_and_process_data(file_name) # 8채널 데이터 읽기 및 처리    
             
-            channel_0 = self.ChannelDatas[:,0]
+            # 8채널 데이터 읽기 및 처리
+            self.ChannelDatas = read_and_process_data(file_name)  # shape: (N, 8)
             
-            print(f"data length: {len(channel_0)}")
-            # 데이터 플로팅
-            self.plot_widget.clear()  # 기존 플롯 지우기
-            # self.plot_widget.plot(len(channel_0),channel_0, pen='b')  # 파란색 선으로 플로팅
+            # 데이터 길이 확인
+            num_samples, num_channels = self.ChannelDatas.shape
+            print(f"Data loaded: {num_samples} samples, {num_channels} channels")
             
-            x = np.arange(len(channel_0))
-            self.plot_widget.plot(x, channel_0, pen='b')
+            # 기존 플롯 초기화
+            self.plot_widget.clear()
+            
+            # 채널별로 그래프 그리기
+            x = np.arange(num_samples)  # X축: 인덱스
+            colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k', 'orange']  # 채널별 색상 (필요 시 확장)
+            
+            for ch in range(num_channels):
+                y = self.ChannelDatas[:, ch] + ch  # Y축: 채널 데이터 + 오프셋
+                color = colors[ch % len(colors)]  # 색상 순환
+                self.plot_widget.plot(x, y, pen=color, name=f"Channel {ch}")
+            
+            # 그래프 Y축 범위 설정 (모든 채널을 포함하도록)
+            self.plot_widget.setYRange(-0.5, num_channels + 0.5, padding=0.1)
             
             # 초기 current_index 설정
             self.current_index = 0
+            self.updateCurrentIndexLine()
+
             
             
     def findNextData(self,channalIndex,currentIndex):

@@ -15,8 +15,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QPushButton,
-    QSizePolicy, QSpacerItem, QWidget)
+from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QPlainTextEdit,
+    QPushButton, QSizePolicy, QSpacerItem, QWidget)
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -52,6 +52,12 @@ class Ui_Form(object):
         self.labelCurIndex = QLabel(Form)
         self.labelCurIndex.setObjectName(u"labelCurIndex")
         self.labelCurIndex.setGeometry(QRect(20, 90, 201, 16))
+        self.btnCal = QPushButton(Form)
+        self.btnCal.setObjectName(u"btnCal")
+        self.btnCal.setGeometry(QRect(20, 390, 75, 24))
+        self.teLogText = QPlainTextEdit(Form)
+        self.teLogText.setObjectName(u"teLogText")
+        self.teLogText.setGeometry(QRect(20, 420, 711, 201))
 
         self.retranslateUi(Form)
 
@@ -64,5 +70,6 @@ class Ui_Form(object):
         self.btnFindNext.setText(QCoreApplication.translate("Form", u"FindNextData", None))
         self.labelInfo.setText(QCoreApplication.translate("Form", u"info text", None))
         self.labelCurIndex.setText(QCoreApplication.translate("Form", u"current index", None))
+        self.btnCal.setText(QCoreApplication.translate("Form", u"Calculate", None))
     # retranslateUi
 

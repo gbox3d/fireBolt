@@ -38,9 +38,6 @@ PACKET_DAQ_FORMAT = "<LL"  # L: sequence, L: data size
 
 
 class ClientThread(QThread):
-    # connection_result = pyqtSignal(bool, str)
-    # response_received = pyqtSignal(int,int,bytes)
-    # daq_data_received = pyqtSignal(int,bytes)
     connection_result = Signal(bool, str)
     response_received = Signal(int, int, bytes)
     daq_data_received = Signal(int, bytes)
@@ -59,72 +56,117 @@ class ClientThread(QThread):
             self.socket.connect((self.ip, self.port))
             self.connection_result.emit(True, "Connected successfully")
             
+            # 스레드 실행 상태
             self.is_running = True
             
             while self.is_running:
-                
-                try :
+                try:
+                    # 헤더 수신
                     header = self.socket.recv(16)
-                    
-                    magic, chip_id, packet_type, packet_size, _ = struct.unpack(PACKET_HEADER_FORMAT, header)
+                    if not header:
+                        print("Connection closed by peer.")
+                        break
+
+                    magic, chip_id, packet_type, packet_size, _ = struct.unpack(
+                        PACKET_HEADER_FORMAT, header
+                    )
                     
                     if magic != MAGIC_NUMBER:
                         print("Invalid magic number")
                         continue
 
                     if packet_type == PacketType.DAQ:
-                        # print("DAQ packet received")
+                        # DAQ packet
                         daq_header = self.socket.recv(8)
                         sequence, data_size = struct.unpack(PACKET_DAQ_FORMAT, daq_header)
-                        # print(f"Sequence: {sequence}, Data size: {data_size}")
                         
                         data = bytearray()
                         while len(data) < data_size:
                             try:
                                 packet = self.socket.recv(min(4096, data_size - len(data)))
                                 if not packet:
-                                    print("Connection closed")
+                                    print("Connection closed during DAQ")
                                     break
                                 data.extend(packet)
-                                # print(f"Received {len(packet)} bytes, Total: {len(data)}/{data_size}")
                             except socket.timeout:
-                                print("Socket timeout, retrying...")
+                                print("Socket timeout, retrying DAQ...")
                                 continue
-                            except Exception as e:
-                                print(f"Error receiving data: {str(e)}")
-                                break
-                            
-                        # print(f"Sequence: {sequence} , Data received: {len(data)} / {data_size}")
-                        self.daq_data_received.emit(sequence, bytes(data))
+                            except OSError as e:
+                                # 소켓이 이미 종료된 경우 등
+                                if not self.is_running:
+                                    # stop() 요청으로 종료된 경우면 로그 없이 break
+                                    break
+                                else:
+                                    print(f"Error receiving data: {str(e)}")
+                                    break
+                        
+                        # 받은 데이터 emit
+                        if len(data) > 0:
+                            self.daq_data_received.emit(sequence, bytes(data))
                         
                     else:
-                        print(f"header size:{len(header)}")
-                        body = self.socket.recv(packet_size - 16)
-                        self.response_received.emit(packet_type, packet_size - 16,body)
+                        # 일반(REQ/RES/SYS) 패킷 처리
+                        if packet_size > 16:
+                            body_size = packet_size - 16
+                            body = self.socket.recv(body_size)
+                            self.response_received.emit(packet_type, body_size, body)
+                        else:
+                            # packet_size가 16 이하라면 body 없음
+                            self.response_received.emit(packet_type, 0, b"")
+                            
+                    print(f"Received packet: {packet_type}, {packet_size} , device : {chip_id}")
+                        
                 except socket.timeout:
-                    pass
+                    # timeout이면 그냥 다시 loop
+                    continue
+                except OSError as e:
+                    if not self.is_running:
+                        # stop() 호출된 상태라면 조용히 종료
+                        break
+                    else:
+                        print(f"Error receiving data: {str(e)}")
+                        break
                 except Exception as e:
                     print(f"Error receiving data: {str(e)}")
                     break
-                
+        
         except Exception as e:
             print(f"Error: {str(e)}")
             self.connection_result.emit(False, f"Connection failed: {str(e)}")
 
-    def stop(self):
-        try:
-            self.is_running = False
-            # sleep(0.1)
+        finally:
+            # 루프 종료 후 정리
             if self.socket:
+                try:
+                    self.socket.close()
+                except:
+                    pass
+            self.socket = None
+
+    def stop(self):
+        """스레드 밖에서 호출되어, 소켓과 루프를 종료."""
+        self.is_running = False
+
+        # 이미 소켓이 열려 있다면 shutdown & close
+        if self.socket:
+            try:
+                self.socket.shutdown(socket.SHUT_RDWR)
+            except:
+                pass
+            try:
                 self.socket.close()
-        except Exception as e:
-            print(f"Error stopping client thread: {str(e)}")
+            except:
+                pass
+            self.socket = None
 
     def send_packet(self, packet):
-        if self.socket:
-            self.socket.sendall(packet)
-            
-
+        """소켓이 살아있다면 패킷 전송."""
+        if self.socket and self.is_running:
+            try:
+                self.socket.sendall(packet)
+            except Exception as e:
+                print(f"Error sending packet: {e}")
+                
 class GraphUpdateThread(QThread):
     update_signal = Signal(object)
     update_signal_bufferSize = Signal(int)

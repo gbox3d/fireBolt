@@ -199,6 +199,8 @@ class MainWindow(QtWidgets.QMainWindow, mainWindow_ui.Ui_MainWindow):
         self.btnConnect.setEnabled(True)
         self.btnPing.setEnabled(False)
         self.btn_startDAQ.setEnabled(False)
+        
+        print("Disconnected")
 
     def on_connection_result(self, success, message):
         self.btnConnect.setEnabled(True)
@@ -213,6 +215,8 @@ class MainWindow(QtWidgets.QMainWindow, mainWindow_ui.Ui_MainWindow):
             self.btnPing.setEnabled(True)
             self.btn_startDAQ.setEnabled(True)
             self.btn_startDAQ.setText("Start DAQ")
+            
+            print("Connection success")
 
         self.statusBar().showMessage(message)
 
