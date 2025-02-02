@@ -20,22 +20,32 @@ Config g_config;
 
 extern String parseCmd(String _strLine);
 
-// #ifdef ESP32
-// #define LED_BUILTIN 4
-// #endif
 
-#if defined(LOLIN_D32) | defined(LOLIN_D32_PRO) | defined(WROVER_KIT)
-// this device aready defined LED_BUILTIN 4 -> D5 
 
-#elif defined(SEED_XIAO_ESP32C3)
-#define LED_BUILTIN D10
+#if not defined(BUILTIN_LED)
+
+
+
+    #if defined(LOLIN_D32) | defined(LOLIN_D32_PRO)
+    // this device aready defined LED_BUILTIN 4 -> D5 
+    #elif defined(WROVER_KIT)
+    #define BUILTIN_LED 5
+
+    #elif defined(SEED_XIAO_ESP32C3)
+    #define BUILTIN_LED D10
+
+    #endif
+
+
 
 #endif
 
 
+
+
 Task task_LedBlink(500, TASK_FOREVER, []()
               {
-                  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+                  digitalWrite(BUILTIN_LED, !digitalRead(BUILTIN_LED));
               }, &g_ts, true);
 
 Task task_Cmd(100, TASK_FOREVER, []()
@@ -64,8 +74,8 @@ Task task_Cmd(100, TASK_FOREVER, []()
 void setup()
 {
   // initialize digital pin LED_BUILTIN as an output.
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH); // turn the LED off by making the voltage LOW
+    pinMode(BUILTIN_LED, OUTPUT);
+    digitalWrite(BUILTIN_LED, HIGH); // turn the LED off by making the voltage LOW
 
     Serial.begin(115200);
 
@@ -81,7 +91,7 @@ void setup()
 
     //보드에 대한 정보를 출력
     Serial.printf("Board: %s\n", ARDUINO_BOARD);
-    Serial.println("LED_BUILTIN: " + String(LED_BUILTIN));
+    Serial.println("LED_BUILTIN: " + String(BUILTIN_LED));
     
     
     Serial.printf("Config System Revision: %d\n", Config::SystemVersion);
