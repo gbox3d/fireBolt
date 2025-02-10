@@ -1,65 +1,78 @@
-#include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/i2s.h"
-#include "string.h"
+#include "driver/ledc.h"
+#include "esp_err.h"
+#include "esp_log.h"
 
-// I2S 설정
-#define I2S_NUM         I2S_NUM_0
-// 31,250 Hz 샘플레이트: 스테레오 16비트일 경우 BCK = 31,250 * 16 * 2 = 1MHz
-#define SAMPLE_RATE     31250
-#define I2S_BITS        I2S_BITS_PER_SAMPLE_16BIT
-#define I2S_CHANNEL_FMT I2S_CHANNEL_FMT_RIGHT_LEFT
-#define I2S_COMM_FMT    I2S_COMM_FORMAT_I2S
-
-// 클럭 핀 (BCK: 18, WS: 19)
-// 데이터 출력은 사용하지 않으므로 I2S_PIN_NO_CHANGE로 설정합니다.
-#define BCK_PIN         18
-#define WS_PIN          19
-#define DATA_OUT_PIN    I2S_PIN_NO_CHANGE
+static const char *TAG = "EXTERNAL_CLOCK";
 
 void app_main(void)
 {
-    // I2S 드라이버 설정
-    i2s_config_t i2s_config = {
-        .mode = I2S_MODE_MASTER | I2S_MODE_TX,  // 마스터 모드, TX 전용
-        .sample_rate = SAMPLE_RATE,
-        .bits_per_sample = I2S_BITS,
-        .channel_format = I2S_CHANNEL_FMT,
-        .communication_format = I2S_COMM_FMT,
-        .intr_alloc_flags = 0,
-        .dma_buf_count = 8,
-        .dma_buf_len = 1024,
-        .use_apll = false,
-        .tx_desc_auto_clear = true, // 송신 DMA 버퍼가 비어도 자동으로 클리어
-        .fixed_mclk = 0
+    esp_err_t err;
+
+    // ------------------------------
+    // 1. BCK (Bit Clock) 생성: 1.6 MHz, 출력 GPIO18
+    // ------------------------------
+    ledc_timer_config_t ledc_timer_bck = {
+        .speed_mode       = LEDC_HIGH_SPEED_MODE,
+        .timer_num        = LEDC_TIMER_0,
+        .duty_resolution  = LEDC_TIMER_2_BIT,   // 2비트: 0 ~ 3
+        .freq_hz          = 1600000,            // 1.6 MHz
+        .clk_cfg          = LEDC_AUTO_CLK
     };
+    err = ledc_timer_config(&ledc_timer_bck);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "BCK 타이머 설정 실패");
+    }
 
-    // I2S 핀 설정: BCK와 WS에 외부 클럭 출력
-    i2s_pin_config_t pin_config = {
-        .bck_io_num = BCK_PIN,
-        .ws_io_num = WS_PIN,
-        .data_out_num = DATA_OUT_PIN,
-        .data_in_num = I2S_PIN_NO_CHANGE
+    ledc_channel_config_t ledc_channel_bck = {
+        .speed_mode     = LEDC_HIGH_SPEED_MODE,
+        .channel        = LEDC_CHANNEL_0,
+        .timer_sel      = LEDC_TIMER_0,
+        .intr_type      = LEDC_INTR_DISABLE,
+        .gpio_num       = 18,       // BCK 출력 핀
+        .duty           = 2,        // 2비트 기준 50% 듀티 (0~3 중 약 50%)
+        .hpoint         = 0
     };
+    err = ledc_channel_config(&ledc_channel_bck);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "BCK 채널 설정 실패");
+    }
 
-    // I2S 드라이버 설치 및 핀 설정
-    i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL);
-    i2s_set_pin(I2S_NUM, &pin_config);
+    // ------------------------------
+    // 2. WS (Word Select) 생성: 100 kHz, 출력 GPIO19
+    //    기존 10비트 해상도 대신 8비트 해상도로 변경하여 분주기 계산 문제 해결
+    // ------------------------------
+    ledc_timer_config_t ledc_timer_ws = {
+        .speed_mode       = LEDC_HIGH_SPEED_MODE,
+        .timer_num        = LEDC_TIMER_1,
+        .duty_resolution  = LEDC_TIMER_8_BIT,   // 8비트 해상도 사용 (0~255)
+        .freq_hz          = 100000,             // 100 kHz
+        .clk_cfg          = LEDC_AUTO_CLK
+    };
+    err = ledc_timer_config(&ledc_timer_ws);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "WS 타이머 설정 실패");
+    }
 
-    // 클럭을 계속 발생시키기 위해, 더미 데이터를 지속적으로 전송합니다.
-    // 스테레오 16비트이므로 한 프레임은 4바이트입니다.
-    // DMA 버퍼에 전송할 더미 데이터(0으로 채운 버퍼)를 준비합니다.
-    const size_t buffer_size = 1024;
-    uint8_t dummy_buffer[buffer_size];
-    memset(dummy_buffer, 0, buffer_size);
+    ledc_channel_config_t ledc_channel_ws = {
+        .speed_mode     = LEDC_HIGH_SPEED_MODE,
+        .channel        = LEDC_CHANNEL_1,
+        .timer_sel      = LEDC_TIMER_1,
+        .intr_type      = LEDC_INTR_DISABLE,
+        .gpio_num       = 19,       // WS 출력 핀
+        .duty           = 128,      // 8비트 기준 50% 듀티 (128/255 ≒ 50%)
+        .hpoint         = 0
+    };
+    err = ledc_channel_config(&ledc_channel_ws);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "WS 채널 설정 실패");
+    }
 
-    size_t bytes_written = 0;
+    ESP_LOGI(TAG, "GPIO18(BCK, 약 1.6MHz)와 GPIO19(WS, 약 100kHz)에서 외부 클럭 신호 생성 중");
+
+    // 무한 루프: 태스크가 종료되지 않도록 함.
     while (1) {
-        // i2s_write를 통해 더미 데이터를 전송하면, I2S 하드웨어가
-        // BCK와 WS 클럭 신호를 계속 생성합니다.
-        i2s_write(I2S_NUM, dummy_buffer, buffer_size, &bytes_written, portMAX_DELAY);
-        // 약간의 딜레이를 주어 CPU 사용률을 낮춥니다.
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
