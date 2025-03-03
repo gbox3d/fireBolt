@@ -1,76 +1,69 @@
 #include <Arduino.h>
-#include <driver/i2s.h>
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
 
-#define I2S_PORT I2S_NUM_0
-#define GPIO_I2S_DATA_IN 27 // 디지털 신호 입력 핀
-#define SAMPLE_RATE 100000  // 샘플링 속도 (100kHz)
-#define DMA_BUF_LEN 1024    // DMA 버퍼 크기
-#define DMA_BUF_COUNT 4     // DMA 버퍼 개수
+// 아날로그 핀 설정 (ADC1 채널)
+#define CHANNEL_COUNT 4
+const adc1_channel_t ADC_CHANNELS[CHANNEL_COUNT] = {
+    ADC1_CHANNEL_0,  // GPIO 36 (VP)
+    ADC1_CHANNEL_3,  // GPIO 39 (VN)
+    ADC1_CHANNEL_4,  // GPIO 32
+    ADC1_CHANNEL_5   // GPIO 33
+};
+
+// 실제 GPIO 핀 번호 (참조용)
+const int ADC_GPIO[CHANNEL_COUNT] = {36, 39, 32, 33};
+
+// ADC 값 저장 변수
+uint16_t adc_values[CHANNEL_COUNT];
+
+// 마지막 읽기 시간
+unsigned long last_read_time = 0;
+const int READ_INTERVAL = 500; // 0.5초(500ms) 간격
 
 void setup() {
-  Serial.begin(115200);
-  delay(1000); // 시리얼 모니터 초기화 대기
-
-  // I2S 구성
-  i2s_config_t i2s_config = {
-    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX), // I2S 마스터 및 RX 모드
-    .sample_rate = SAMPLE_RATE,
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_8BIT, // 16비트 샘플
-    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT, // 단일 채널
-    .communication_format = I2S_COMM_FORMAT_STAND_I2S, // 최신 표준 I2S 프로토콜
-    .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
-    .dma_buf_count = DMA_BUF_COUNT,
-    .dma_buf_len = DMA_BUF_LEN,
-    .use_apll = false,
-    .tx_desc_auto_clear = false,
-    .fixed_mclk = 0,
-  };
-
-  // I2S 초기화
-  if (i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL) != ESP_OK) {
-    Serial.println("I2S Driver install failed");
-    return;
-  }
-
-  // I2S 핀 설정
-  i2s_pin_config_t pin_config = {
-    .bck_io_num = I2S_PIN_NO_CHANGE,      // 비트 클럭 사용 안 함
-    .ws_io_num = I2S_PIN_NO_CHANGE,       // 워드 선택 사용 안 함
-    .data_out_num = I2S_PIN_NO_CHANGE,    // 출력 핀 없음
-    .data_in_num = GPIO_I2S_DATA_IN,      // 입력 데이터 핀
-  };
-
-  
-  if (i2s_set_pin(I2S_PORT, &pin_config) != ESP_OK) {
-    Serial.println("I2S Pin setup failed");
-    return;
-  }
-
-  Serial.println("I2S initialized");
+    // 시리얼 통신 초기화
+    Serial.begin(115200);
+    delay(1000);  // 시리얼 연결 안정화 대기
+    
+    Serial.println("ESP32 0.5초 간격 ADC 읽기 예제");
+    Serial.println("읽을 핀:");
+    
+    // ADC 초기화
+    for (int i = 0; i < CHANNEL_COUNT; i++) {
+        // ADC 설정 (12비트 해상도, 감쇠 없음)
+        adc1_config_width(ADC_WIDTH_BIT_12);
+        adc1_config_channel_atten(ADC_CHANNELS[i], ADC_ATTEN_DB_0);
+        
+        Serial.printf("채널 %d: GPIO %d (ADC1_CH%d)\n", 
+                     i, ADC_GPIO[i], ADC_CHANNELS[i]);
+    }
+    
+    Serial.println("시작...");
 }
 
 void loop() {
-  // 데이터 버퍼
-  uint16_t data_buffer[DMA_BUF_LEN];
-  size_t bytes_read = 0;
-
-  // I2S 데이터 읽기
-  esp_err_t result = i2s_read(I2S_PORT, (void *)data_buffer, DMA_BUF_LEN * sizeof(uint16_t), &bytes_read, portMAX_DELAY);
-  if (result != ESP_OK) {
-    Serial.printf("I2S read error: %s\n", esp_err_to_name(result));
-    return;
-  }
-
-  // 읽은 샘플 개수
-  size_t num_samples = bytes_read / sizeof(uint16_t);
-
-  // 신호 분석
-  for (size_t i = 0; i < num_samples; i++) {
-    if (data_buffer[i] > 1000) { // 임계값 설정
-      Serial.printf("Signal detected! Value: %d, %d\n", data_buffer[i],i);
-      break; // 신호를 검출하면 종료
+    // 현재 시간 확인
+    unsigned long current_time = millis();
+    
+    // 0.5초(500ms)마다 ADC 값 읽기
+    if (current_time - last_read_time >= READ_INTERVAL) {
+        // 현재 시간 갱신
+        last_read_time = current_time;
+        
+        // 모든 채널 읽기
+        for (int i = 0; i < CHANNEL_COUNT; i++) {
+            adc_values[i] = adc1_get_raw(ADC_CHANNELS[i]);
+        }
+        
+        // 읽은 값 출력
+        Serial.printf("시간: %lu ms, 값: ", current_time);
+        for (int i = 0; i < CHANNEL_COUNT; i++) {
+            Serial.printf("GPIO%d: %d, ", ADC_GPIO[i], adc_values[i]);
+        }
+        Serial.println();
     }
-  }
-
-  delay(10); // CPU 부하 방지
+    
+    // 짧은 지연 (CPU 부하 감소)
+    delay(10);
 }
