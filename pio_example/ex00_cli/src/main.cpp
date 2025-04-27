@@ -21,11 +21,14 @@ Config g_config;
 extern String parseCmd(String _strLine);
 
 
+#if defined(TENSTARC3)
+
+#undef BUILTIN_LED
+#define BUILTIN_LED 8
+
+#else
 
 #if not defined(BUILTIN_LED)
-
-
-
     #if defined(LOLIN_D32) | defined(LOLIN_D32_PRO)
     // this device aready defined LED_BUILTIN 4 -> D5 
     #elif defined(WROVER_KIT)
@@ -35,12 +38,9 @@ extern String parseCmd(String _strLine);
     #define BUILTIN_LED D10
 
     #endif
-
-
-
 #endif
 
-
+#endif
 
 
 Task task_LedBlink(500, TASK_FOREVER, []()
