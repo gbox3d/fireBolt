@@ -25,6 +25,13 @@ Config g_config;
 #ifdef SEED_XIAO_ESP32C3
 #define LED_BUILTIN D10
 #define SENSOR_PIN D8
+
+
+#elif defined(TENSTAR_ESP32C3)
+
+#define LED_BUILTIN 8
+#define SENSOR_PIN 0
+
 #elif LOLIN_D32
 #define SENSOR_PIN 4
 #endif
@@ -54,7 +61,7 @@ Task Task_Sensor(100, TASK_FOREVER, []()
         oldValue = _value;
     }
 
-    Serial.println("Sensor Value: " + String(A3144::getSensorValue()));
+    // Serial.println("Sensor Value: " + String(A3144::getSensorValue()));
 
     if(A3144::getSensorValue() == 0) {
         digitalWrite(LED_BUILTIN, LOW);
@@ -92,7 +99,7 @@ void setup()
     Serial.println(":-]");
     Serial.println("Serial connected");
 
-
+    startSensorTask();
     
     g_ts.startNow();
 }
