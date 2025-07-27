@@ -1,0 +1,10 @@
+.venv
+uuid.txt
+uuid.yaml
+firmware*/
+build/
+*.pyc
+dist/
+*.egg-info/ 
+.spec
+__pycache__/
